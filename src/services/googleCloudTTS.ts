@@ -56,10 +56,18 @@ export const synthesizeSpeech = async (text: string, language: string = 'en-US')
     };
 
     const response = await axios.post(
+<<<<<<< HEAD
       `${GOOGLE_TTS_API_URL}?key=${process.env.REACT_APP_GOOGLE_CLOUD_API_KEY}`,
       request,
       {
         headers: {
+=======
+      GOOGLE_TTS_API_URL,
+      request,
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.REACT_APP_GOOGLE_CLOUD_API_KEY}`,
+>>>>>>> 2beeaa2221b658742b9f66cd4380decd3352cd86
           'Content-Type': 'application/json'
         }
       }

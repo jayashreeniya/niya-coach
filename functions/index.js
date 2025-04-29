@@ -3,8 +3,11 @@ const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+<<<<<<< HEAD
 const functions = require("firebase-functions");
 const axios = require("axios");
+=======
+>>>>>>> 2beeaa2221b658742b9f66cd4380decd3352cd86
 
 initializeApp();
 
@@ -28,6 +31,7 @@ exports.cleanupOldMessages = onSchedule("every 24 hours", async (event) => {
   await Promise.all(deletions);
   return null;
 });
+<<<<<<< HEAD
 
 // Proxy for OpenAI API
 exports.openaiProxy = onRequest(async (req, res) => {
@@ -55,3 +59,5 @@ exports.openaiProxy = onRequest(async (req, res) => {
     res.status(error.response?.status || 500).json({ error: error.response?.data || error.message });
   }
 });
+=======
+>>>>>>> 2beeaa2221b658742b9f66cd4380decd3352cd86
