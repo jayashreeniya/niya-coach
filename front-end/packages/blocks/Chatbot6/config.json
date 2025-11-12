@@ -1,0 +1,65 @@
+{
+  "id": "Chatbot6",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/Chatbot6",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Chatbot6"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Chatbot6": {
+        "file": "Chatbot6.tsx",
+        "extends": "Chatbot6Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "Chatbot6Controller",
+            "path": "./Chatbot6Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./Chatbot6Controller"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Chatbot6"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Chatbot6": {
+        "file": "Chatbot6.web.tsx",
+        "extends": "Chatbot6Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "Chatbot6Controller",
+            "path": "./Chatbot6Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./Chatbot6Controller"
+          }
+        ]
+      }
+    }
+  }
+}

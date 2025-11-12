@@ -1,0 +1,84 @@
+FROM ruby:2.7.5-alpine3.13
+
+# Set environment variables
+ENV RAILS_ENV=production
+ENV RAILS_SERVE_STATIC_FILES=true
+ENV RAILS_LOG_TO_STDOUT=true
+
+# Install system dependencies
+RUN apk update && apk add --no-cache \
+    build-base \
+    libxml2-dev \
+    libxslt-dev \
+    mysql-dev \
+    nodejs \
+    yarn \
+    git \
+    curl \
+    bash \
+    tzdata
+
+# Create app directory
+RUN mkdir /app
+WORKDIR /app
+
+# Create a minimal Rails app
+RUN gem install zeitwerk -v 2.6.18
+RUN gem install nokogiri -v 1.15.7
+RUN gem install net-imap -v 0.4.22
+RUN gem install rails -v 6.1.7.6
+RUN gem install puma -v 4.3.12
+RUN gem install mysql2 -v 0.5.7
+
+# Fix ActiveSupport Logger compatibility issue
+RUN sed -i '1i require "logger"' /usr/local/bundle/gems/activesupport-6.1.7.6/lib/active_support/logger_thread_safe_level.rb
+
+# Install compatible ffi gem version for RubyGems 3.1.6
+RUN gem install ffi -v 1.15.5
+
+# Create a simple Rails app
+RUN rails new . --skip-git --skip-bundle --skip-test --skip-system-test --api --database=mysql
+
+# Create a simple controller
+RUN echo 'class ApplicationController < ActionController::API' > app/controllers/application_controller.rb && \
+    echo '  def hello' >> app/controllers/application_controller.rb && \
+    echo '    render json: { message: "Hello from Rails!" }' >> app/controllers/application_controller.rb && \
+    echo '  end' >> app/controllers/application_controller.rb && \
+    echo 'end' >> app/controllers/application_controller.rb
+
+# Create routes
+RUN echo 'Rails.application.routes.draw do' > config/routes.rb && \
+    echo '  get "/", to: "application#hello"' >> config/routes.rb && \
+    echo '  get "/healthcheck", to: proc { [200, {}, ["Ok"]] }' >> config/routes.rb && \
+    echo 'end' >> config/routes.rb
+
+# Update database config for production
+RUN echo 'production:' > config/database.yml && \
+    echo '  adapter: mysql2' >> config/database.yml && \
+    echo '  encoding: utf8mb4' >> config/database.yml && \
+    echo '  database: niya_admin_db' >> config/database.yml && \
+    echo '  username: niya_admin' >> config/database.yml && \
+    echo '  password: AdminPassword123!' >> config/database.yml && \
+    echo '  host: localhost' >> config/database.yml && \
+    echo '  port: 3306' >> config/database.yml
+
+# Create a custom Gemfile with compatible versions
+RUN echo 'source "https://rubygems.org"' > Gemfile && \
+    echo 'git_source(:github) { |repo| "https://github.com/#{repo}.git" }' >> Gemfile && \
+    echo '' >> Gemfile && \
+    echo 'ruby "2.7.5"' >> Gemfile && \
+    echo '' >> Gemfile && \
+    echo 'gem "rails", "~> 6.1.7"' >> Gemfile && \
+    echo 'gem "puma", "~> 4.3"' >> Gemfile && \
+    echo 'gem "mysql2", "~> 0.5"' >> Gemfile && \
+    echo 'gem "bootsnap", ">= 1.4.2", require: false' >> Gemfile && \
+    echo 'gem "ffi", "~> 1.15.5"' >> Gemfile
+
+# Install gems
+RUN bundle install
+
+# Expose port
+EXPOSE 3000
+
+# Start the application
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]

@@ -1,0 +1,2 @@
+class FocusAreaCal < ApplicationRecord
+end

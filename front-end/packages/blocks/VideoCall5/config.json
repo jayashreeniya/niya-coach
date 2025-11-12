@@ -1,0 +1,65 @@
+{
+  "id": "VideoCall5",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/VideoCall5",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "VideoCall5"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "VideoCall5": {
+        "file": "VideoCall5.tsx",
+        "extends": "VideoCall5Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "VideoCall5Controller",
+            "path": "./VideoCall5Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./VideoCall5Controller"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "VideoCall5"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "VideoCall5": {
+        "file": "VideoCall5.web.tsx",
+        "extends": "VideoCall5Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "VideoCall5Controller",
+            "path": "./VideoCall5Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./VideoCall5Controller"
+          }
+        ]
+      }
+    }
+  }
+}

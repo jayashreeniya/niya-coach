@@ -1,0 +1,15 @@
+diff --git a/node_modules/react-native-permissions/ios/BluetoothPeripheral/RNPermissionHandlerBluetoothPeripheral.m b/node_modules/react-native-permissions/ios/BluetoothPeripheral/RNPermissionHandlerBluetoothPeripheral.m
+index 22d75e6..195e159 100644
+--- a/node_modules/react-native-permissions/ios/BluetoothPeripheral/RNPermissionHandlerBluetoothPeripheral.m
++++ b/node_modules/react-native-permissions/ios/BluetoothPeripheral/RNPermissionHandlerBluetoothPeripheral.m
+@@ -29,8 +29,8 @@ - (void)checkWithResolver:(void (^ _Nonnull)(RNPermissionStatus))resolve
+   return resolve(RNPermissionStatusNotAvailable);
+ #else
+
+-  if (@available(iOS 13.0, *)) {
+-    switch ([[CBManager new] authorization]) {
++  if (@available(iOS 13.1, *)) {
++    switch ([CBManager authorization]) {
+       case CBManagerAuthorizationNotDetermined:
+         return resolve(RNPermissionStatusNotDetermined);
+       case CBManagerAuthorizationRestricted:

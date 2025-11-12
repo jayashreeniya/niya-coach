@@ -1,0 +1,65 @@
+{
+  "id": "MatchAlgorithm2",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/MatchAlgorithm2",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "MatchAlgorithm2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "MatchAlgorithm2": {
+        "file": "MatchAlgorithm2.tsx",
+        "extends": "MatchAlgorithm2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "MatchAlgorithm2Controller",
+            "path": "./MatchAlgorithm2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./MatchAlgorithm2Controller"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "MatchAlgorithm2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "MatchAlgorithm2": {
+        "file": "MatchAlgorithm2.web.tsx",
+        "extends": "MatchAlgorithm2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "MatchAlgorithm2Controller",
+            "path": "./MatchAlgorithm2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./MatchAlgorithm2Controller"
+          }
+        ]
+      }
+    }
+  }
+}

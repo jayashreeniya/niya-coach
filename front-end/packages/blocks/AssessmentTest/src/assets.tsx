@@ -1,0 +1,11 @@
+export const imgPasswordVisible = require("../assets/ic_password_visible.png");
+export const imgPasswordInVisible = require("../assets/ic_password_invisible.png");
+export const headerbg = require("../assets/headerasstest.png");
+export const headerRightImg = require("../assets/niya.png");
+export const qsBckgrnd = require("../assets/qsBckgrnd.png");
+export const niya_smily_whale = require("../assets/niya_smily_whale.png");
+export const imgScoreBg = require("../assets/imgScoreBg.png");
+export const bgAssessment = require("../assets/bgAssessment.png");
+export const emptyCircle = require("../assets/emptyCircle.png");
+export const imagenav_tick = require("../assets/imagenav_tick.png");
+export const arrow_score= require("../../dashboard/assets/audio.png");

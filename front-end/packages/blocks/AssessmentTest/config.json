@@ -1,0 +1,65 @@
+{
+  "id": "AssessmentTest",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/AssessmentTest",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "AssessmentTest"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "AssessmentTest": {
+        "file": "AssessmentTest.tsx",
+        "extends": "AssessmentTestController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "AssessmentTestController",
+            "path": "./AssessmentTestController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./AssessmentTestController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "AssessmentTest"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "AssessmentTest": {
+        "file": "AssessmentTest.web.tsx",
+        "extends": "AssessmentTestController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "AssessmentTestController",
+            "path": "./AssessmentTestController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./AssessmentTestController"
+          }
+        ]
+      }
+    }
+  }
+}

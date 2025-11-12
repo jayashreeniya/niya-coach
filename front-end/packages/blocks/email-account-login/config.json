@@ -1,0 +1,159 @@
+{
+  "id": "email-account-login",
+  "version": "2.0.0",
+  "status": "",
+  "path": "./packages/blocks/email-account-login",
+  "assembler-adapters": [
+    "EmailAccountLogInAdapter"
+  ],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "EmailAccountLoginBlock"
+    ],
+    "assembler-messages": {
+      "output": {
+        "accountLogInButton": [
+          "LoginMobileSuccessMessage"
+        ]
+      },
+      "input": {
+        "navigation": [
+          "NavigationEmailLogInMessage"
+        ]
+      }
+    },
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities",
+      "email-account-registration",
+      "forgot-password"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "EmailAccountLoginBlock": {
+        "file": "EmailAccountLoginBlock.tsx",
+        "extends": "EmailAccountLoginController",
+        "ui-elements": [
+          {
+            "id": "txtInputEmail",
+            "testID": "txtInputEmail",
+            "props": "{...this.txtInputEmailProps}",
+            "elementType": "TextInput"
+          },
+          {
+            "id": "txtInputPassword",
+            "testID": "txtInputPassword",
+            "props": "{...this.txtInputPasswordProps}",
+            "elementType": "TextInput"
+          },
+          {
+            "id": "btnPasswordShowHide",
+            "testID": "btnPasswordShowHide",
+            "props": "{...this.btnPasswordShowHideProps}",
+            "elementType": "TouchableOpacity"
+          },
+          {
+            "id": "btnPasswordShowHideImage",
+            "testID": "btnPasswordShowHideImage",
+            "props": "{...this.btnPasswordShowHideImageProps}",
+            "elementType": "Image"
+          },
+          {
+            "id": "CustomCheckBox",
+            "testID": "CustomCheckBox",
+            "props": "{...this.CustomCheckBoxProps}",
+            "elementType": "CustomCheckBox"
+          },
+          {
+            "id": "CustomCheckBox",
+            "testID": "CustomCheckBox",
+            "props": "{...this.CustomCheckBoxProps}",
+            "elementType": "CustomCheckBox"
+          },
+          {
+            "id": "btnRememberMe",
+            "testID": "btnRememberMe",
+            "props": "{...this.btnRememberMeProps}",
+            "elementType": "Text"
+          },
+          {
+            "id": "btnEmailLogIn",
+            "testID": "btnEmailLogIn",
+            "props": "{...this.btnEmailLogInProps}",
+            "elementType": "Button"
+          },
+          {
+            "id": "btnSocialLogin",
+            "testID": "btnSocialLogin",
+            "props": "{...this.btnSocialLoginProps}",
+            "elementType": "Text"
+          }
+        ],
+        "imports": [
+          {
+            "value": "CustomCheckBox",
+            "path": "../../../../components/src/CustomCheckBox"
+          },
+          {
+            "value": "EmailAccountLoginController",
+            "path": "./EmailAccountLoginController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./EmailAccountLoginController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "EmailAccountLoginBlock"
+    ],
+    "assembler-messages": {
+      "output": {
+        "accountLogInButton": [
+          "LoginWebSuccessMessage"
+        ]
+      },
+      "input": {
+        "navigation": [
+          "NavigationEmailLogInMessage"
+        ]
+      }
+    },
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities",
+      "email-account-registration",
+      "forgot-password"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "EmailAccountLoginBlock": {
+        "file": "EmailAccountLoginBlock.web.tsx",
+        "extends": "EmailAccountLoginController",
+        "configURL": "/login/login",
+        "validationRulesURL": "/profile/validations",
+        "imports": [
+          {
+            "value": "CustomCheckBox",
+            "path": "../../../../components/src/CustomCheckBox"
+          },
+          {
+            "value": "EmailAccountLoginController",
+            "path": "./EmailAccountLoginController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./EmailAccountLoginController"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "id": "Scheduling",
+  "verion": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/scheduling",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Scheduling"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Scheduling": {
+        "file": "Scheduling.tsx",
+        "extends": "SchedulingController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "SchedulingController",
+            "path": "./SchedulingController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./SchedulingController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Scheduling"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Scheduling": {
+        "file": "Scheduling.tsx",
+        "extends": "SchedulingController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "SchedulingController",
+            "path": "./SchedulingController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./SchedulingController"
+          }
+        ]
+      }
+    }
+  },
+}

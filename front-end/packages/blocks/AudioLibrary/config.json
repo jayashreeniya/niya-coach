@@ -1,0 +1,65 @@
+{
+  "id": "AudioLibrary",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/AudioLibrary",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "AudioLibrary"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "AudioLibrary": {
+        "file": "AudioLibrary.tsx",
+        "extends": "AudioLibraryController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "AudioLibraryController",
+            "path": "./AudioLibraryController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./AudioLibraryController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "AudioLibrary"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "AudioLibrary": {
+        "file": "AudioLibrary.web.tsx",
+        "extends": "AudioLibraryController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "AudioLibraryController",
+            "path": "./AudioLibraryController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./AudioLibraryController"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testExecutions version="1">
+    <file path="/data/home/ubuntu/Desktop/niya-178517-react-native/src/packages/blocks/forgot-password/__tests__/step-definitions/ForgotPasswordOTP-scenario.steps.tsx">
+        <testCase name="ForgotPassword User navigates to forgot password" duration="600"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/niya-178517-react-native/src/packages/blocks/forgot-password/__tests__/step-definitions/PasswordCreatedSuccessfully-scenario.steps.tsx">
+        <testCase name="PasswordCreatedSuccessfully User navigates to Password Created Successfully" duration="520"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/niya-178517-react-native/src/packages/blocks/forgot-password/__tests__/step-definitions/forgot-password-scenario.steps.tsx">
+        <testCase name="ForgotPassword User navigates to forgot password" duration="575"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/niya-178517-react-native/src/packages/blocks/forgot-password/__tests__/step-definitions/NewPassword-scenario.steps.tsx">
+        <testCase name="NewPassword User navigates to New Password" duration="756"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/niya-178517-react-native/src/packages/blocks/forgot-password/__tests__/step-definitions/EnterEmail-scenario.steps.tsx">
+        <testCase name="EnterEmail User navigates to Enter Email" duration="370"/>
+    </file>
+    <file path="/data/home/ubuntu/Desktop/niya-178517-react-native/src/packages/blocks/forgot-password/__tests__/step-definitions/EnterPhone-scenario.steps.tsx">
+        <testCase name="EnterPhone User navigates to Enter Phone" duration="331"/>
+    </file>
+</testExecutions>

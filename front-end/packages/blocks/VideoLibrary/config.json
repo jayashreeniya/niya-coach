@@ -1,0 +1,65 @@
+{
+  "id": "VideoLibrary",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/VideoLibrary",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "VideoLibrary"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "VideoLibrary": {
+        "file": "VideoLibrary.tsx",
+        "extends": "VideoLibraryController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "VideoLibraryController",
+            "path": "./VideoLibraryController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./VideoLibraryController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "VideoLibrary"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "VideoLibrary": {
+        "file": "VideoLibrary.web.tsx",
+        "extends": "VideoLibraryController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "VideoLibraryController",
+            "path": "./VideoLibraryController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./VideoLibraryController"
+          }
+        ]
+      }
+    }
+  }
+}

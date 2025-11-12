@@ -1,0 +1,65 @@
+{
+  "id": "FeedbackCollection",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/FeedbackCollection",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "FeedbackCollection"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "FeedbackCollection": {
+        "file": "FeedbackCollection.tsx",
+        "extends": "FeedbackCollectionController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "FeedbackCollectionController",
+            "path": "./FeedbackCollectionController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FeedbackCollectionController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "FeedbackCollection"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "FeedbackCollection": {
+        "file": "FeedbackCollection.web.tsx",
+        "extends": "FeedbackCollectionController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "FeedbackCollectionController",
+            "path": "./FeedbackCollectionController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./FeedbackCollectionController"
+          }
+        ]
+      }
+    }
+  }
+}

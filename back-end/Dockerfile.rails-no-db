@@ -1,0 +1,79 @@
+FROM ruby:2.7.5-alpine3.13
+
+# Set environment variables
+ENV RAILS_ENV=production
+ENV RAILS_SERVE_STATIC_FILES=true
+ENV RAILS_LOG_TO_STDOUT=true
+
+# Install system dependencies including SSH
+RUN apk update && apk add --no-cache \
+    build-base \
+    libxml2-dev \
+    libxslt-dev \
+    mysql-dev \
+    postgresql-dev \
+    nodejs \
+    yarn \
+    git \
+    curl \
+    bash \
+    tzdata \
+    openssh \
+    sudo
+
+# Create app directory
+RUN mkdir /app
+WORKDIR /app
+
+# Copy Gemfile and install gems
+COPY Gemfile.deploy ./Gemfile
+RUN gem install bundler -v 2.4.22
+RUN bundle config set --local without 'development test'
+RUN bundle install
+
+# Copy application code
+COPY . .
+
+# Create a non-root user with sudo access
+RUN addgroup -g 1000 -S appgroup && \
+    adduser -u 1000 -S appuser -G appgroup && \
+    echo 'appuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Set up SSH
+RUN ssh-keygen -A && \
+    echo 'root:admin123' | chpasswd && \
+    echo 'appuser:admin123' | chpasswd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Create SSH directory and set permissions
+RUN mkdir -p /home/appuser/.ssh && \
+    chown -R appuser:appgroup /home/appuser/.ssh && \
+    chmod 700 /home/appuser/.ssh
+
+# Set ownership of app directory
+RUN chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose ports
+EXPOSE 3000 22
+
+# Create startup script that skips database initialization
+RUN echo '#!/bin/bash' > /app/start.sh && \
+    echo 'sudo /usr/sbin/sshd -D &' >> /app/start.sh && \
+    echo 'bundle exec rails server -b 0.0.0.0 -p 3000 --skip-db-check' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/healthcheck || exit 1
+
+# Start the application with SSH
+CMD ["/app/start.sh"]
+
+
+
+
+

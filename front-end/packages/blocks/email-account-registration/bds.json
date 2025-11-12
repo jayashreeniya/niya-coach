@@ -1,0 +1,130 @@
+{
+  "bds": {
+    "name": "Email Account Registration",
+    "id": "email-account-registration",
+    "platform": [
+      "desktop",
+      "mobile"
+    ],
+    "author": "CMT",
+    "summary": null,
+    "license": "BSD",
+    "version": "1.0.0",
+    "pages": [
+      {
+        "EmailAccountRegistration": {
+          "hotspots": [
+            {
+              "type": "input",
+              "id": "txtInputFirstName",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "input",
+              "id": "txtInputLastName",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "input",
+              "id": "txtInputEmailAddress",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "input",
+              "id": "txtInputPassword",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "output",
+              "id": "imgEnablePasswordField",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "output",
+              "id": "imgEnablePasswordField",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "input",
+              "id": "txtInputPassword",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "output",
+              "id": "imgEnableRePasswordField",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "input",
+              "id": "txtInputConfirmPassword",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "edit",
+              "id": "CountryCodeSelector",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "input",
+              "id": "txtInputPhoneNumber",
+              "options": [
+                "mandatory",
+                "enabled"
+              ]
+            },
+            {
+              "type": "navigation",
+              "id": "accountSignUpButton",
+              "options": [
+                "target",
+                "navigationTransition",
+                "navigationType",
+                "enabled"
+              ]
+            },
+            {
+              "type": "navigation",
+              "id": "accountLogInButton",
+              "options": [
+                "target",
+                "navigationTransition",
+                "navigationType",
+                "enabled"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

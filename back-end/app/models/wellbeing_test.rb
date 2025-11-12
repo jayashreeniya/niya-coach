@@ -1,0 +1,2 @@
+class WellbeingTest < ApplicationRecord
+end

@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "65646712382",
+    "project_id": "niya-project",
+    "storage_bucket": "niya-project.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:65646712382:android:c614ad37d276aeb399e36f",
+        "android_client_info": {
+          "package_name": "com.Niya"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "65646712382-eq6bsrbajub3lptpj08vvpdbke3irlmp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Niya",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "65646712382-ncbrecchen8b6ne0j0gj5ik2somsg68d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Niya",
+            "certificate_hash": "86f80572f9fdc8fc9a2a0f16961be0f2f109ec68"
+          }
+        },
+        {
+          "client_id": "65646712382-1voat2g4s262g4ldna6j04113q55oufd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNaiP919uC-j-8XR32CavQrsXj8FCul50"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "65646712382-1voat2g4s262g4ldna6j04113q55oufd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "65646712382-ggjnrit94n5deg3p772rhb5c5mi0ugm8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.niya.niyaapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,35 @@
+FROM ruby:2.7.5-alpine3.13
+ARG RAILS_ENV=production
+ENV RAILS_ENV="${RAILS_ENV}"
+ENV APP_VERSION=${TAG}
+RUN apk update
+RUN apk add bash build-base libxml2-dev libxslt-dev mysql-dev nodejs vim yarn libc6-compat curl git which wkhtmltopdf ttf-ubuntu-font-family imagemagick vips-dev tzdata
+RUN mkdir /app
+WORKDIR /app
+
+# Copy only the essential files for deployment
+COPY Gemfile.deploy ./Gemfile
+COPY config/ ./config/
+COPY app/ ./app/
+COPY db/ ./db/
+COPY lib/ ./lib/
+COPY public/ ./public/
+COPY vendor/ ./vendor/
+COPY bin/ ./bin/
+COPY config.ru ./
+COPY Rakefile ./
+COPY .ruby-version ./
+
+# Install gems
+RUN gem install bundler -v 2.4.22
+RUN bundle install
+
+# Fix ActiveSupport Logger issue for Ruby 2.7.5
+RUN echo 'require "logger"' > /usr/local/bundle/gems/activesupport-6.1.7.6/lib/active_support/logger_thread_safe_level_patch.rb
+RUN sed -i '1i require "logger"' /usr/local/bundle/gems/activesupport-6.1.7.6/lib/active_support/logger_thread_safe_level.rb
+
+# Set up the application (skip asset precompilation for now)
+# RUN bundle exec rails assets:precompile RAILS_ENV=production
+
+EXPOSE 3000
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]

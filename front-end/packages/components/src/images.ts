@@ -1,0 +1,13 @@
+export const chevronRight = require("./right-chevron.png");
+export const chevronLeft = require("./left-chevron.png");
+export const transparentImage = require("./transparent.png");
+export const clock = require("./clock.png");
+export const call = require("./call.png");
+export const mic = require("./mic.png");
+export const video = require("./video.png");
+export const micOff = require("./mic-off.png");
+export const videoOff = require("./video-off.png");
+export const pause = require("./pause.png");
+export const play = require("./play.png");
+export const fullscreen = require("./fullscreen.png");
+export const minimize = require("./not-fullscreen.png");

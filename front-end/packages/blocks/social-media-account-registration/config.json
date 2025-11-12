@@ -1,0 +1,69 @@
+{
+  "id": "social-media-account-registration",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/social-media-account-registration",
+  "assembler-adapters": [
+    "SocialMediaLogInAdapter"
+  ],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "SocialMediaAccountRegistrationScreen"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "social-media-account"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "SocialMediaAccountRegistrationScreen": {
+        "file": "SocialMediaAccountRegistrationScreen.tsx",
+        "extends": "SociaMediaAccountMobileController",
+        "configURL": "/login/login",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "SociaMediaAccountMobileController",
+            "path": "./SociaMediaAccountMobileController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./SociaMediaAccountMobileController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "SocialMediaAccountRegistrationScreen"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "social-media-account"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "SocialMediaAccountRegistrationScreen": {
+        "file": "SocialMediaAccountRegistrationScreen.web.tsx",
+        "extends": "SocialMediaAccountWebController",
+        "configURL": "/login/login",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "SocialMediaAccountWebController",
+            "path": "./SocialMediaAccountWebController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./SocialMediaAccountWebController"
+          }
+        ]
+      }
+    }
+  }
+}

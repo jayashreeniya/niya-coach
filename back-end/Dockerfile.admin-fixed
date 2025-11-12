@@ -1,0 +1,88 @@
+FROM ruby:2.7.5-alpine3.13
+
+# Set environment variables
+ENV RAILS_ENV=production
+ENV RAILS_SERVE_STATIC_FILES=true
+ENV RAILS_LOG_TO_STDOUT=true
+
+# Install system dependencies
+RUN apk update && apk add --no-cache \
+    build-base \
+    libxml2-dev \
+    libxslt-dev \
+    mysql-dev \
+    postgresql-dev \
+    nodejs \
+    yarn \
+    git \
+    curl \
+    bash \
+    tzdata \
+    openssh \
+    sudo
+
+# Create app directory
+RUN mkdir /app
+WORKDIR /app
+
+# Install specific gem versions to avoid compatibility issues
+RUN gem install zeitwerk -v 2.6.18
+RUN gem install nokogiri -v 1.15.7
+RUN gem install net-imap -v 0.4.22
+RUN gem install rails -v 6.1.7.6
+RUN gem install puma -v 4.3.12
+RUN gem install mysql2 -v 0.5.7
+
+# Fix ActiveSupport Logger compatibility issue for any version
+RUN find /usr/local/bundle/gems/activesupport-*/lib/active_support/logger_thread_safe_level.rb -exec sed -i '1i require "logger"' {} \; 2>/dev/null || true
+
+# Install compatible ffi gem version for RubyGems 3.1.6
+RUN gem install ffi -v 1.15.5
+
+# Copy Gemfile.deploy and install gems
+COPY Gemfile.deploy ./Gemfile
+RUN gem install bundler -v 2.1.4
+RUN bundle _2.1.4_ config set --local without 'development test'
+RUN bundle _2.1.4_ install
+
+# Copy application code
+COPY . .
+
+# Ensure we keep the production Gemfile after copying application code
+COPY Gemfile.deploy ./Gemfile
+
+# Create a non-root user and configure sudo
+RUN addgroup -g 1000 -S appgroup && \
+    adduser -u 1000 -S appuser -G appgroup && \
+    echo 'appuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Configure SSH
+RUN ssh-keygen -A && \
+    echo 'root:admin123' | chpasswd && \
+    echo 'appuser:admin123' | chpasswd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+# Create .ssh directory for appuser
+RUN mkdir -p /home/appuser/.ssh && \
+    chown -R appuser:appgroup /home/appuser/.ssh && \
+    chmod 700 /home/appuser/.ssh
+
+# Set ownership of /app
+RUN chown -R appuser:appgroup /app
+USER appuser
+
+# Expose ports
+EXPOSE 3000 22
+
+# Create a startup script (removed SSH daemon for Azure Container Apps compatibility)
+RUN echo '#!/bin/bash' > /app/start.sh && \
+    echo 'bundle _2.1.4_ exec rails server -b 0.0.0.0 -p 3000' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/healthcheck || exit 1
+
+# Start the application
+CMD ["/app/start.sh"]

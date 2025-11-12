@@ -1,0 +1,20 @@
+diff --git a/node_modules/react-native-push-notification/android/src/main/java/com/dieam/reactnativepushnotification/modules/RNPushNotificationHelper.java b/node_modules/react-native-push-notification/android/src/main/java/com/dieam/reactnativepushnotification/modules/RNPushNotificationHelper.java
+index 4a60694..e93e9cd 100644
+--- a/node_modules/react-native-push-notification/android/src/main/java/com/dieam/reactnativepushnotification/modules/RNPushNotificationHelper.java
++++ b/node_modules/react-native-push-notification/android/src/main/java/com/dieam/reactnativepushnotification/modules/RNPushNotificationHelper.java
+@@ -450,8 +450,13 @@ public class RNPushNotificationHelper {
+ 
+             int notificationID = Integer.parseInt(notificationIdString);
+ 
+-            PendingIntent pendingIntent = PendingIntent.getActivity(context, notificationID, intent,
+-                    PendingIntent.FLAG_UPDATE_CURRENT);
++            PendingIntent pendingIntent = null;
++            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
++                pendingIntent = PendingIntent.getActivity(context, notificationID, intent, PendingIntent.FLAG_MUTABLE);
++            }
++            else {
++                pendingIntent = PendingIntent.getActivity(context, notificationID, intent, PendingIntent.FLAG_UPDATE_CURRENT);
++            }
+ 
+             NotificationManager notificationManager = notificationManager();
+ 

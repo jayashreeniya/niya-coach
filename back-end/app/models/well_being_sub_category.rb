@@ -1,0 +1,2 @@
+class WellBeingSubCategory < ApplicationRecord
+end

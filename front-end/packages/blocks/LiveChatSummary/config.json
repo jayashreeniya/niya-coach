@@ -1,0 +1,65 @@
+{
+  "id": "LiveChatSummary",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/LiveChatSummary",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "LiveChatSummary"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "LiveChatSummary": {
+        "file": "LiveChatSummary.tsx",
+        "extends": "LiveChatSummaryController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "LiveChatSummaryController",
+            "path": "./LiveChatSummaryController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./LiveChatSummaryController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "LiveChatSummary"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "LiveChatSummary": {
+        "file": "LiveChatSummary.web.tsx",
+        "extends": "LiveChatSummaryController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "LiveChatSummaryController",
+            "path": "./LiveChatSummaryController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./LiveChatSummaryController"
+          }
+        ]
+      }
+    }
+  }
+}

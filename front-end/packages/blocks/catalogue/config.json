@@ -1,0 +1,65 @@
+{
+  "id": "catalogue",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/catalogue",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Catalogue"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Catalogue": {
+        "file": "Catalogue.tsx",
+        "extends": "CatalogueController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "CatalogueController",
+            "path": "./CatalogueController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./CatalogueController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Catalogue"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "CatalogueBlock": {
+        "file": "CatalogueBlock.tsx",
+        "extends": "CatalogueController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "CatalogueController",
+            "path": "./CatalogueController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./CatalogueController"
+          }
+        ]
+      }
+    }
+  }
+}

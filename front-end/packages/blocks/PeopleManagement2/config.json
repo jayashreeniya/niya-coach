@@ -1,0 +1,65 @@
+{
+  "id": "PeopleManagement2",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/PeopleManagement2",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "PeopleManagement2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "PeopleManagement2": {
+        "file": "PeopleManagement2.tsx",
+        "extends": "PeopleManagement2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "PeopleManagement2Controller",
+            "path": "./PeopleManagement2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./PeopleManagement2Controller"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "PeopleManagement2"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "PeopleManagement2": {
+        "file": "PeopleManagement2.web.tsx",
+        "extends": "PeopleManagement2Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "PeopleManagement2Controller",
+            "path": "./PeopleManagement2Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./PeopleManagement2Controller"
+          }
+        ]
+      }
+    }
+  }
+}

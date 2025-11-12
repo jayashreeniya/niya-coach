@@ -1,0 +1,67 @@
+{
+  "id": "TimeTrackingBilling",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/TimeTrackingBilling",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "TimeTrackingBilling"
+    ],
+  
+  "assembler-dependencies": ["\"react-native-linear-gradient\": \"^2.6.2\""],
+    
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "TimeTrackingBilling": {
+        "file": "TimeTrackingBilling.tsx",
+        "extends": "TimeTrackingBillingController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "TimeTrackingBillingController",
+            "path": "./TimeTrackingBillingController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TimeTrackingBillingController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "TimeTrackingBilling"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "TimeTrackingBilling": {
+        "file": "TimeTrackingBilling.web.tsx",
+        "extends": "TimeTrackingBillingController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "TimeTrackingBillingController",
+            "path": "./TimeTrackingBillingController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TimeTrackingBillingController"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>65646712382-ggjnrit94n5deg3p772rhb5c5mi0ugm8.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.65646712382-ggjnrit94n5deg3p772rhb5c5mi0ugm8</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>65646712382-eq6bsrbajub3lptpj08vvpdbke3irlmp.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyAKsn53gRcRBshghRLyH1qUnGX5dSlypgw</string>
+	<key>GCM_SENDER_ID</key>
+	<string>65646712382</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.niya.niyaapp</string>
+	<key>PROJECT_ID</key>
+	<string>niya-project</string>
+	<key>STORAGE_BUCKET</key>
+	<string>niya-project.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:65646712382:ios:0e36cf65cf66c6c399e36f</string>
+</dict>
+</plist>

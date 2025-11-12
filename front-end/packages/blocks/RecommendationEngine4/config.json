@@ -1,0 +1,65 @@
+{
+  "id": "RecommendationEngine4",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/RecommendationEngine4",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "RecommendationEngine4"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "RecommendationEngine4": {
+        "file": "RecommendationEngine4.tsx",
+        "extends": "RecommendationEngine4Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "RecommendationEngine4Controller",
+            "path": "./RecommendationEngine4Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./RecommendationEngine4Controller"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "RecommendationEngine4"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "RecommendationEngine4": {
+        "file": "RecommendationEngine4.web.tsx",
+        "extends": "RecommendationEngine4Controller",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "RecommendationEngine4Controller",
+            "path": "./RecommendationEngine4Controller"
+          },
+          {
+            "value": "{Props}",
+            "path": "./RecommendationEngine4Controller"
+          }
+        ]
+      }
+    }
+  }
+}

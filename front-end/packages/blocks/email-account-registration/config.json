@@ -1,0 +1,98 @@
+{
+  "id": "email-account-registration",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "assembler-adapters": ["EmailAccountSignUpAdapter"],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": ["EmailAccountRegistration"],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+        "core",
+        "country-code-selector"
+        ],
+    "assembler-messages": {
+      "output": {
+        "accountSignUpButton": [
+          "AccoutResgistrationSuccess"
+        ],
+        "accountLogInButton": [
+          "NavigationEmailLogInMessage"
+        ]
+      },
+      "input": {
+        "navigation": [
+          "NavigateEmailSignUpMessage"
+        ]
+      }
+    },
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "EmailAccountRegistration": {
+        "file": "EmailAccountRegistration.tsx",
+        "extends": "EmailAccountRegistrationController",
+        "imports": [
+          {
+            "value": "CountryCodeSelector",
+            "path": "../../country-code-selector/src/CountryCodeSelector"
+          },
+          {
+            "value": "EmailAccountRegistrationController",
+            "path": "./EmailAccountRegistrationController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./EmailAccountRegistrationController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "EmailAccountRegistration"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+        "core",
+        "country-code-selector"
+        ],
+    "assembler-messages": {
+      "output": {
+        "accountSignUpButton": [
+          "AccoutResgistrationSuccess"
+        ],
+        "accountLogInButton": [
+          "NavigationEmailLogInMessage"
+        ]
+      },
+      "input": {
+        "navigation": [
+          "NavigateEmailSignUpMessage"
+        ]
+      }
+    },
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "EmailAccountRegistration": {
+        "file": "EmailAccountRegistration.tsx",
+        "extends": "EmailAccountRegistrationController",
+        "imports": [
+          {
+            "value": "CountryCodeSelector",
+            "path": "../../country-code-selector/src/CountryCodeSelector"
+          },
+          {
+            "value": "EmailAccountRegistrationController",
+            "path": "./EmailAccountRegistrationController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./EmailAccountRegistrationController"
+          }
+        ]
+      }
+    }
+  }
+}

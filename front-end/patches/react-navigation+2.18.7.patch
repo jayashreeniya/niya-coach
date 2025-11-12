@@ -1,0 +1,40 @@
+
+diff --git a/node_modules/react-navigation/src/createNavigationContainer.js b/node_modules/react-navigation/src/createNavigationContainer.js
+index 3cfc5e3..6a711f1 100644
+--- a/node_modules/react-navigation/src/createNavigationContainer.js
++++ b/node_modules/react-navigation/src/createNavigationContainer.js
+@@ -1,6 +1,7 @@
+ import React from 'react';
+-import { AsyncStorage, Linking, Platform, BackHandler } from 'react-native';
++import { Linking, Platform, BackHandler } from 'react-native';
+ import { polyfill } from 'react-lifecycles-compat';
++import AsyncStorage from "@react-native-async-storage/async-storage";
+
+ import NavigationActions from './NavigationActions';
+ import getNavigation from './getNavigation';
+diff --git a/node_modules/react-navigation/node_modules/react-navigation-stack/dist/views/Header/Header.js b/node_modules/react-navigation/node_modules/react-navigation-stack/dist/views/Header/Header.js
+index 3cfc5e3..6a711f1 100644
+--- a/node_modules/react-navigation/node_modules/react-navigation-stack/dist/views/Header/Header.js
++++ b/node_modules/react-navigation/node_modules/react-navigation-stack/dist/views/Header/Header.js
+@@ -1,1 +1,2 @@
+-import { Animated, Image, Platform, StyleSheet, View, I18nManager, MaskedViewIOS } from 'react-native';
++import { Animated, Image, Platform, StyleSheet, View, I18nManager } from 'react-native';
++//import MaskedViewIOS from '@react-native-masked-view/masked-view';
+@@ -333,8 +333,1 @@
+-      return <MaskedViewIOS {...wrapperProps} maskElement={<View style={styles.iconMaskContainer}>
+-              <Image source={require('../assets/back-icon-mask.png')} style={styles.iconMask} />
+-              <View style={styles.iconMaskFillerRect} />
+-            </View>}>
+-          {title}
+-          {left}
+-          {right}
+-        </MaskedViewIOS>;
++      return <></>;
+react-navigation+2.18.7.patch
+You're currently signed in as
+tnguyenanh@pentalog.com
+
+Tu Nguyen
+Change account
+OK
+Displaying react-navigation+2.18.7.patch.

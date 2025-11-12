@@ -1,0 +1,65 @@
+{
+  "id": "ChatBackuprestore",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/ChatBackuprestore",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "ChatBackuprestore"
+    ],
+    "assembler-dependencies": ["\"react-native-linear-gradient\": \"^2.6.2\""],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+       "merge-engine-screens": {
+      "ChatBackuprestore": {
+        "file": "ChatBackuprestore.tsx",
+        "extends": "ChatBackuprestoreController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "ChatBackuprestoreController",
+            "path": "./ChatBackuprestoreController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ChatBackuprestoreController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "ChatBackuprestore"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": ["\"react-infinite-scroll-component\": \"^6.1.0\""],
+    "merge-engine-screens": {
+      "ChatBackuprestore": {
+        "file": "ChatBackuprestore.web.tsx",
+        "extends": "ChatBackuprestoreController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "ChatBackuprestoreController",
+            "path": "./ChatBackuprestoreController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ChatBackuprestoreController"
+          }
+        ]
+      }
+    }
+  }
+}

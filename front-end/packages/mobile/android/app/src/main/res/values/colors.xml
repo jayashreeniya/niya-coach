@@ -1,0 +1,10 @@
+<resources>
+    <item name="red" type="color">#FC0303</item>
+    <integer-array name="androidcolors">
+    <item>@color/red</item>
+   </integer-array>
+    <item name="niyacolor" type="color">#9AE9F1</item>
+    <integer-array name="androidcolors_notification">
+    <item>@color/niyacolor</item>
+    </integer-array>
+</resources>

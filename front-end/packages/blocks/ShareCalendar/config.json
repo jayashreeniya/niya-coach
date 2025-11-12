@@ -1,0 +1,65 @@
+{
+  "id": "ShareCalendar",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/ShareCalendar",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "ShareCalendar"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "ShareCalendar": {
+        "file": "ShareCalendar.tsx",
+        "extends": "ShareCalendarController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "ShareCalendarController",
+            "path": "./ShareCalendarController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ShareCalendarController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "ShareCalendar"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "ShareCalendar": {
+        "file": "ShareCalendar.web.tsx",
+        "extends": "ShareCalendarController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "ShareCalendarController",
+            "path": "./ShareCalendarController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./ShareCalendarController"
+          }
+        ]
+      }
+    }
+  }
+}

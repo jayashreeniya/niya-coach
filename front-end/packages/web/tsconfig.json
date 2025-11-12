@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": [
+      "@types",
+      "../../node_modules/@types"
+    ],
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src",
+    "../components/src"
+  ],
+  "references": [
+    {
+      "path": "../components"
+    }
+  ]
+}

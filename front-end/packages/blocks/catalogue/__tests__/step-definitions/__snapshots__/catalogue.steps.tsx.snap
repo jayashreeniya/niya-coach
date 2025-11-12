@@ -1,0 +1,135 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`catalogue User navigates to catalogue 1`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#ffffffff",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View>
+      <View
+        style={
+          Array [
+            Object {
+              "backgroundColor": "white",
+              "flex": 1,
+              "justifyContent": "center",
+              "width": "100%",
+            },
+            Object {
+              "display": "flex",
+              "flexDirection": "row",
+            },
+          ]
+        }
+      >
+        <FlatList
+          columnWrapperStyle={
+            Object {
+              "flex": 1,
+              "justifyContent": "space-between",
+            }
+          }
+          data={Array []}
+          disableVirtualization={false}
+          extraData={
+            Object {
+              "arrayHolder": Array [],
+              "token": "",
+            }
+          }
+          horizontal={false}
+          initialNumToRender={10}
+          keyExtractor={[Function]}
+          maxToRenderPerBatch={10}
+          numColumns={2}
+          onEndReachedThreshold={2}
+          removeClippedSubviews={false}
+          renderItem={[Function]}
+          scrollEventThrottle={50}
+          updateCellsBatchingPeriod={50}
+          windowSize={21}
+        />
+      </View>
+    </View>
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;
+
+exports[`catalogue User navigates to catalogue 2`] = `
+<ScrollViewMock
+  keyboardShouldPersistTaps="always"
+  style={
+    Object {
+      "backgroundColor": "#ffffffff",
+      "flex": 1,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "maxWidth": 650,
+      "width": "100%",
+    }
+  }
+>
+  <TouchableWithoutFeedback
+    onPress={[Function]}
+  >
+    <View>
+      <View
+        style={
+          Array [
+            Object {
+              "backgroundColor": "white",
+              "flex": 1,
+              "justifyContent": "center",
+              "width": "100%",
+            },
+            Object {
+              "display": "flex",
+              "flexDirection": "row",
+            },
+          ]
+        }
+      >
+        <FlatList
+          columnWrapperStyle={
+            Object {
+              "flex": 1,
+              "justifyContent": "space-between",
+            }
+          }
+          data={Array []}
+          disableVirtualization={false}
+          extraData={
+            Object {
+              "arrayHolder": Array [],
+              "token": "",
+            }
+          }
+          horizontal={false}
+          initialNumToRender={10}
+          keyExtractor={[Function]}
+          maxToRenderPerBatch={10}
+          numColumns={2}
+          onEndReachedThreshold={2}
+          removeClippedSubviews={false}
+          renderItem={[Function]}
+          scrollEventThrottle={50}
+          updateCellsBatchingPeriod={50}
+          windowSize={21}
+        />
+      </View>
+    </View>
+  </TouchableWithoutFeedback>
+</ScrollViewMock>
+`;

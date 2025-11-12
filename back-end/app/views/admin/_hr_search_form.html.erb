@@ -1,0 +1,7 @@
+<%= form_tag admin_company_path(object), method: :get, class: "search-form" do %>
+  <div class="field">
+    <%= label_tag "hr_name", "Search HRs by Name" %>
+    <%= text_field_tag "hr_name", params[:hr_name], class: "search-input" %>
+  </div>
+  <%= submit_tag "Search", class: "search-button" %>
+<% end %>

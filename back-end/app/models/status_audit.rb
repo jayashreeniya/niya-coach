@@ -1,0 +1,2 @@
+class StatusAudit < ApplicationRecord
+end

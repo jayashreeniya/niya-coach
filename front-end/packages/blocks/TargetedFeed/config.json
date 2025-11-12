@@ -1,0 +1,65 @@
+{
+  "id": "TargetedFeed",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/TargetedFeed",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "TargetedFeed"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "TargetedFeed": {
+        "file": "TargetedFeed.tsx",
+        "extends": "TargetedFeedController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "TargetedFeedController",
+            "path": "./TargetedFeedController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TargetedFeedController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "TargetedFeed"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "TargetedFeed": {
+        "file": "TargetedFeed.web.tsx",
+        "extends": "TargetedFeedController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "TargetedFeedController",
+            "path": "./TargetedFeedController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./TargetedFeedController"
+          }
+        ]
+      }
+    }
+  }
+}

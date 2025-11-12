@@ -1,0 +1,65 @@
+{
+  "id": "videos",
+  "version": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/videos",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Videos"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "Videos": {
+        "file": "Videos.tsx",
+        "extends": "VideosController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "VideosController",
+            "path": "./VideosController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./VideosController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "Videos"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "VideosBlock": {
+        "file": "Videos.web.tsx",
+        "extends": "VideosController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "VideosController",
+            "path": "./VideosController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./VideosController"
+          }
+        ]
+      }
+    }
+  }
+}

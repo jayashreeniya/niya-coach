@@ -1,0 +1,65 @@
+{
+  "id": "BulkUploading",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/BulkUploading",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "BulkUploading"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "BulkUploading": {
+        "file": "BulkUploading.tsx",
+        "extends": "BulkUploadingController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "BulkUploadingController",
+            "path": "./BulkUploadingController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./BulkUploadingController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "BulkUploading"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "BulkUploading": {
+        "file": "BulkUploading.web.tsx",
+        "extends": "BulkUploadingController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "BulkUploadingController",
+            "path": "./BulkUploadingController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./BulkUploadingController"
+          }
+        ]
+      }
+    }
+  }
+}

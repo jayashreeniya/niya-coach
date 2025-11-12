@@ -1,0 +1,56 @@
+{
+  "id": "email-account-login",
+  "label": "Email Account Log In",
+  "author": "CMT",
+  "license": "BSD",
+  "summary": "",
+  "version": "2.0.2",
+  "platform": [
+    "mobile",
+    "desktop"
+  ],
+  "mobile": [
+    {
+        "EmailAccountLoginBlock": {
+          "hotspots": [
+              {       
+                  "type": "input",
+                "id": "txtInputEmail",
+                "label": "Email Field"
+            },
+            {       
+                "type": "edit",
+                "id": "btnRememberMe",
+                "label": "Rember Me Button"
+            },
+            {       
+                "type": "edit",
+                "id": "btnPasswordShowHide",
+                "label": "Show/Hide Password Button"
+            },
+            {       
+                "type": "input",
+                "id": "txtInputPassword",
+                "label": "Password Field"
+            },
+            {       
+                "type": "navigation",
+                "id": "btnForgotPassword",
+                "label": "Forgot Password Button"
+            },
+            {
+
+            "type": "navigation",
+            "id": "btnEmailLogIn",
+            "label": "Log In Button"
+            }, {
+                "type": "navigation",
+                "id": "btnSocialLogin",
+                "label": "Social LogIn Button"
+            }
+          ]
+        }
+    }
+  ],
+  "web": []
+}

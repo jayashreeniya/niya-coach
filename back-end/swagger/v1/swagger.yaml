@@ -1,0 +1,1964 @@
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+servers:
+- url: http://{defaultHost}
+  variables:
+    defaultHost:
+      default: localhost:3000
+- url: https://{developmentHost}
+  variables:
+    developmentHost:
+      default: niya-178517-ruby.b178517.dev.eastus.az.svc.builder.cafe
+- url: https://{productionHost}
+  variables:
+    productionHost:
+      default: niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai
+     
+tags:
+  - name: signup_login
+  - name: forgot_password
+  - name: personality_test
+  - name: Assess_Yourself
+  - name: focus_area&goals
+  - name: Emo Journey
+  - name: Appoint_Booking
+  - name: coach
+  - name: Push Notifications
+  - name: WellBeing
+  - name: Company
+  - name: audio_video_management
+  - name: Employee-Coach
+  - name: Admin
+  - name: Chats
+  - name: Rating
+  - name: HR
+  - name: Grouping API
+  - name: time_track
+  - name: videocall timetrack
+  - name: bulk upload
+  - name: chat backup and restore
+  - name: action items
+paths:
+  /account_block/accounts:
+    post:
+      tags:
+        - signup_login
+      summary: sign up
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                data:
+                  type: email_account
+                  attributes:
+                    full_name: kush
+                    email: kushagra.jaiswal1841@gmail.com
+                    full_phone_number: '919169817869'
+                    password: Test@12345
+                    password_confirmation: Test@12345
+                    access_code: LYvdP399
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    put:
+      tags:
+        - coach
+      summary: update_coach_profile
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                account[first_name]:
+                  type: string
+                  example: demo
+                account[last_name]:
+                  type: string
+                  example: demo
+                account[lgenders]:
+                  type: integer
+                  example: '1'
+                account[email]:
+                  type: string
+                  example: coach16@gmail.com
+                account[phone_number]:
+                  type: integer
+                  example: '917564425857'
+                account[image]:
+                  type: string
+                  format: binary
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MTY1LCJleHAiOjE2NjU4MTY2MzEsInRva2VuX3R5cGUiOiJsb2dpbiJ9.lNIGeUeEd_AianVBUsY9GfgNgB4gTX0m9w4SCKHw29_7X1oxEwSxuV_KUABxA1Nr_shTBLI3ltR7BjRH2APE_g
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_login/logins:
+    post:
+      tags:
+        - signup_login
+      summary: log in
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                data:
+                  type: email_account
+                  attributes:
+                    email: himanshuuatsign@yopmail.com
+                    password: Test@12345
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /update_profile:
+    put:
+      tags:
+        - signup_login
+      summary: update_bio
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profile[full_name]:
+                  type: string
+                  example: Avs
+                profile[email]:
+                  type: string
+                  example: samemail@yopmail.com
+                profile[access_code]:
+                  type: string
+                  example: NeSLJeo
+                profile[gender]:
+                  type: string
+                  example: Male
+                profile[full_phone_number]:
+                  type: integer
+                  example: '917867867866'
+                profile[image]:
+                  type: string
+                  format: binary
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /profile_details:
+    get:
+      tags:
+        - signup_login
+      summary: profile details
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_forgot_password/otps:
+    post:
+      tags:
+        - forgot_password
+      summary: otp send
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                full_phone_number: '911234567890'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_forgot_password/otp_confirmations:
+    post:
+      tags:
+        - forgot_password
+      summary: confirm otp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                otp: '818933'
+                token: >-
+                  eyJhbGciOiJIUzUxMiJ9.eyJpZCI6OTksImV4cCI6MTY2MzY1MzE1NiwidHlwZSI6IkFjY291bnRCbG9jazo6RW1haWxBY2NvdW50IiwiYWNjb3VudF9pZCI6OTksInRva2VuX3R5cGUiOiJmb3Jnb3RfcGFzc3dvcmQiLCJhY3RpdmF0ZWQiOmZhbHNlfQ.TBVPA_mp2fLMAhLxF9_YuNXF3QrlTVI-Ypkdm3MLZ8iqjUloLc_TQpVKaJCsG-UykMYmV3c2RQ8erNBP83ylYQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_forgot_password/forgot_password:
+    post:
+      tags:
+        - forgot_password
+      summary: forgot password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                token: >-
+                  eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MTEsImV4cCI6MTY2MzIzMzI0NSwidHlwZSI6IkFjY291bnRCbG9jazo6RW1haWxBY2NvdW50IiwiYWNjb3VudF9pZCI6MTEsInRva2VuX3R5cGUiOiJmb3Jnb3RfcGFzc3dvcmQiLCJhY3RpdmF0ZWQiOmZhbHNlfQ.Qjy__n2rYdrp8oI3UZjyETNVmtQn6lvPh27f-VW0WXTBhSxyqZErwtLu_XcO3DRyKF7GI9yXljxdc1N5ow5lyg
+                new_password: Rails@321
+                confirm_password: Rails@321
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/personality_test_questions:
+    get:
+      tags:
+        - personality_test
+      summary: personaliry_test_question
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/choose_answers:
+    post:
+      tags:
+        - personality_test
+      summary: selected_answer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                sequence_number: 2
+                question_id: 16
+                answer_id: 46
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MSwiZXhwIjoxNjYxODcxODk2LCJ0b2tlbl90eXBlIjoibG9naW4ifQ.y7VSQPq6iA8K6-B50VScnBEqfqj9Or31xFGIOoDuuO2F6oiAnwWKEQg6sSSMNEqngPB26c2QaPj0o0VpmB78BQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Assess_Yourself
+      summary: get choose_answers
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDQxLCJleHAiOjE2OTAyODMzMzUsInRva2VuX3R5cGUiOiJsb2dpbiJ9.Rg83wNwGQBdF18qwh3xrjbNFWnlVp0A7zYcINKFdv9yoppekiYC-xotoJctAb-9ns9XMDO-zinKxGpC8xXnIJQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/select_answers:
+    post:
+      tags:
+        - focus_area&goals
+      summary: select_Answer Copy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                question_id: 9
+                answer_ids:
+                  - 58
+                  - 59
+                  - 60
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDE4LCJleHAiOjE2ODA3OTYxNjR9.BXA_9g1LHaN3UUMT8qMtNwCppYpeHe74sdRUUr_LRuAa3Hj2lkk3ti_kN1DvdKBEe82cLsTRQxdPlk4BGoLjWA
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/assess_yourself_test_questions:
+    get:
+      tags:
+        - Assess_Yourself
+      summary: asess_yourself_test
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MTYsImV4cCI6MTY2MTI0MjI0OSwidG9rZW5fdHlwZSI6ImxvZ2luIn0.EzzLdJzVZcYtEOnbYRrawWCDEVQBqJn8_l4QBRzpZn4MBM92atlZ8xtwqPWFAmSeN5bdhzKcnxuXJ41Wu1hpoQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/assess_yourself_choose_answers:
+    post:
+      tags:
+        - Assess_Yourself
+      summary: asses_yourself_choose_answer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                assess_yourself_question_id: 7
+                assess_yourself_answer_id: 25
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MywiZXhwIjoxNjYzMDc4ODMwLCJ0b2tlbl90eXBlIjoibG9naW4ifQ.XkJC9R_7itSfuGrtUTL3y9GzVWyd6naPPAQYd2FxpmNCtJnTs8zgcJivq6C9-6CvyGaEudYFNNUdubrFu3g7AA
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/assess_select_answers:
+    post:
+      tags:
+        - Assess_Yourself
+      summary: test_type_que_ans
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                question_id: 1
+                sequence_number: 1
+                answer_id: 1
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MiwiZXhwIjoxNjYzMjQ4MzI4LCJ0b2tlbl90eXBlIjoibG9naW4ifQ.lzLE_Rd7OqaDkPGM5oC5tXLDKYR3R89tPvnfxDXAFH53O8rOzjGiYIapNMqHLqMSDOvPHjLKZ3jHiV6Gp6y_tQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /assess_score:
+    get:
+      tags:
+        - Assess_Yourself
+      summary: assess_score
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDQxLCJleHAiOjE2OTAyODMzMzUsInRva2VuX3R5cGUiOiJsb2dpbiJ9.Rg83wNwGQBdF18qwh3xrjbNFWnlVp0A7zYcINKFdv9yoppekiYC-xotoJctAb-9ns9XMDO-zinKxGpC8xXnIJQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/focus_areas:
+    post:
+      tags:
+        - focus_area&goals
+      summary: focus_areas Copy
+      requestBody:
+        content: {}
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIxLCJleHAiOjE2ODE5MDQ0MzJ9.3bVSDKSrUv534CnyYuLYuKGkdBowDmJt3dSI8PjoVVm8uZW2ksTenJotxfHOHkrYmIDtK6jOxNtkh0ILkFhnDQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/goals:
+    post:
+      tags:
+        - focus_area&goals
+      summary: add_goals Copy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                focus_area_id: 59
+                goal: will work hard1212 for promotionnn11111
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NTE4LCJleHAiOjE2ODE4MDc0MzJ9.UiPPzjVEfNG4hv4OEZpMRJ-0Uvv3vnJEuYqBBzvqrHt_JtYivBKV5-H54hMDSPTfoOxKlp4bEsM9pB0Rgg_gcw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/action_items:
+    post:
+      tags:
+        - action items
+      summary: create action item
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                action_item: i need to focus on my work
+                date: '2023-07-22T00:00:00.000Z'
+                time_slot: 10:00 am
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDE3LCJleHAiOjE2OTExMzYyOTd9.c_RWMAXg5HPV0xJoulZ4Ck4J5AovOmuOcRxA4RCz9xbTqw70i3iO26kf9Bk2E59GciL4PYP1ntAdV4PAAG7sAQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/update_goal:
+    put:
+      tags:
+        - focus_area&goals
+      summary: update_goals Copy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                id: 304
+                is_complete: 'true'
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIxLCJleHAiOjE2ODE5MDQ0MzJ9.3bVSDKSrUv534CnyYuLYuKGkdBowDmJt3dSI8PjoVVm8uZW2ksTenJotxfHOHkrYmIDtK6jOxNtkh0ILkFhnDQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/update_action:
+    put:
+      tags:
+        - focus_area&goals
+      summary: update_actions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                action_item: now i need to work on my personality
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/action_items/2:
+    put:
+      tags:
+        - focus_area&goals
+      summary: update_actions Copy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                action_item: now i need to work on my personality
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MiwiZXhwIjoxNjYzMjM4NTg2LCJ0b2tlbl90eXBlIjoibG9naW4ifQ.6S2By21Xsxy65NNdc2E3l6y5BnP00FCY71QcMoZO2Dk1iYWUaqtf_X50CITKcCdV_5dxXlqwD8UF8JCL3Ec1fg
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/my_progress:
+    get:
+      tags:
+        - focus_area&goals
+      summary: myprogress Copy
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NTE4LCJleHAiOjE2ODE4MDc0MzJ9.UiPPzjVEfNG4hv4OEZpMRJ-0Uvv3vnJEuYqBBzvqrHt_JtYivBKV5-H54hMDSPTfoOxKlp4bEsM9pB0Rgg_gcw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /moods:
+    get:
+      tags:
+        - Emo Journey
+      summary: moods
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /select_motion:
+    post:
+      tags:
+        - Emo Journey
+      summary: select_motion
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                motion:
+                  type: integer
+                  example: '2'
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /emo_journey_status:
+    get:
+      tags:
+        - Emo Journey
+      summary: New Request
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIsImV4cCI6MTY4MjQ5NzI1NywidG9rZW5fdHlwZSI6ImxvZ2luIn0.eyCobTJcO7hpKf5hYjj2QEfmpB2kHmhd8UzC8vkmRKL4UYe8I1UOKDWITFeAmFGkOTJHo_VmFECm1vrjsPJkHQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots:
+    post:
+      tags:
+        - Appoint_Booking
+      summary: Book_Appointment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                start_time: '01:30'
+                end_time: '01:44'
+                service_provider_id: 2546
+                booking_date: 24-09-2024
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Appoint_Booking
+      summary: New Request
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+        - name: date
+          in: query
+          schema:
+            type: string
+          example: 12/06/2023
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_appointment_management/availabilities:
+    post:
+      tags:
+        - Appoint_Booking
+      summary: create_coach_availability
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                start_time: '01:30'
+                end_time: '23:59'
+                availability_date: 24-09-2024
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/view_coach_availability:
+    get:
+      tags:
+        - Appoint_Booking
+      summary: view_coach_availability
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+        - name: booking_date
+          in: query
+          schema:
+            type: string
+          example: 14/07/2024
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/cancel_booking:
+    post:
+      tags:
+        - Appoint_Booking
+      summary: cancellation
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                booked_slot_id:
+                  type: integer
+                  example: '476'
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MTIsImV4cCI6MTY5MTI5OTk5NX0.AVi3z64rVsP80biNnGnJmzsAvTQXY9_82CkiGXHjeci_PPpj6KAeWMEkKxL4GjrnXUxK8ispJD-R1fqfmHbh-w
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/current_coach:
+    get:
+      tags:
+        - Appoint_Booking
+      summary: current_coach
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/past_coach:
+    get:
+      tags:
+        - Appoint_Booking
+      summary: pastcoach
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/cancelled_booked_slots:
+    get:
+      tags:
+        - Appoint_Booking
+      summary: cancel list
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIwLCJleHAiOjE2ODExOTk0MjR9.FISB3dBkeErDb8i3YjNgR8hWCgIskG_DPr_MiYYIJsIrIhOf_AGclAcIogvWsb4QehhJGTF6i7PaPNqMfckX7g
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/all_slots:
+    get:
+      tags:
+        - Appoint_Booking
+      summary: all_Slots
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/coach_upcoming_appointments:
+    get:
+      tags:
+        - coach
+      summary: Coach Upcoming Appointment
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/coach_past_appointments:
+    get:
+      tags:
+        - coach
+      summary: Users All Appointment
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /000/bx_block_calendar/booked_slots/user_action_item:
+    post:
+      tags:
+        - coach
+      summary: User Action Item
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                service_user_id: '1'
+                action_item: Meditate Daily
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MCwiZXhwIjoxNjcyOTg2OTA3fQ.VDjkKV3LlMuoqkdEAVZ46pmIxaJ2tY0bQj1ei5ooNYw14XnN9tljW2leu3AXHRycLKrPiaOVjOBZhnqMf1wfRg
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_push_notifications/device_token:
+    post:
+      tags:
+        - Push Notifications
+      summary: user_device_token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                device_token: '123'
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDM4LCJleHAiOjE2NzYxMjE5Mzl9.jCpTfAV0sEAV_K6UI11KW6-t6p4nFt3C9Ondva-r9KoPiTFDs1vBpZapcfTZKn9Hm12-Kq-Q70zNxzP7RnMkiQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_push_notifications/send_notifications:
+    post:
+      tags:
+        - Push Notifications
+      summary: send notification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                title: Hello
+                desc: Done
+                role: employee
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDM4LCJleHAiOjE2NzYxMjE5Mzl9.jCpTfAV0sEAV_K6UI11KW6-t6p4nFt3C9Ondva-r9KoPiTFDs1vBpZapcfTZKn9Hm12-Kq-Q70zNxzP7RnMkiQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_wellbeing/well_beings:
+    get:
+      tags:
+        - WellBeing
+      summary: All_Questions Copy 2
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NTE4LCJleHAiOjE2ODE4MDc0MzJ9.UiPPzjVEfNG4hv4OEZpMRJ-0Uvv3vnJEuYqBBzvqrHt_JtYivBKV5-H54hMDSPTfoOxKlp4bEsM9pB0Rgg_gcw
+        - name: category_id
+          in: query
+          schema:
+            type: integer
+          example: '1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_wellbeing/all_categories:
+    get:
+      tags:
+        - WellBeing
+      summary: all_categories
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_wellbeing/user_answer:
+    post:
+      tags:
+        - WellBeing
+      summary: questions Copy 2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                question_id: 18
+                answer_id: 76
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NTE4LCJleHAiOjE2ODE4MDc0MzJ9.UiPPzjVEfNG4hv4OEZpMRJ-0Uvv3vnJEuYqBBzvqrHt_JtYivBKV5-H54hMDSPTfoOxKlp4bEsM9pB0Rgg_gcw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_wellbeing/question_categories:
+    get:
+      tags:
+        - WellBeing
+      summary: question_with_category
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_wellbeing/get_result:
+    get:
+      tags:
+        - WellBeing
+      summary: get_user_result Copy 2
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NTE4LCJleHAiOjE2ODE4MDc0MzJ9.UiPPzjVEfNG4hv4OEZpMRJ-0Uvv3vnJEuYqBBzvqrHt_JtYivBKV5-H54hMDSPTfoOxKlp4bEsM9pB0Rgg_gcw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_wellbeing/user_strength:
+    get:
+      tags:
+        - WellBeing
+      summary: user_strength
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_wellbeing/insights:
+    get:
+      tags:
+        - Grouping API
+      summary: Insights
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjY2LCJleHAiOjE2Njk4OTE4OTgsInRva2VuX3R5cGUiOiJsb2dpbiJ9.ghnN7HZakm8APbg2F0D0R_O031q_rMzU2Amx-p3RplyllV6QWGNIzqhIciU7vhtGbVWKEjpZ7W-_AQCr-5qKNg
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /000/bx_block_companies/companies:
+    post:
+      tags:
+        - Company
+      summary: create company
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                name: Test
+                email: test@gmail.com
+                address: test
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NjgsImV4cCI6MTY2Njg1MDc1NCwidG9rZW5fdHlwZSI6ImxvZ2luIn0.vVV0RGRYmh-RvotAv67M0MrUHeCEacJgthF40l-qDixW6L3yhZCJvAvfvZwL-jPeiHkut-ZNY7vZKeq7ZKbGBQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - Company
+      summary: all_company
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY4NTY0MzgsInRva2VuX3R5cGUiOiJsb2dpbiJ9.gf-1D4TzhfwbMg4diskE-VGfS3acqDy9WytDnrvBHuLH8csq5q3MR6bhs4uxvWvwUfxpkRz80J9TsS9mtZYV1g
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_companies/update_company:
+    put:
+      tags:
+        - Company
+      summary: update_company
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                id: '7'
+                name: info
+                email: info@gmail.com
+                address: test
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY4NTY0MzgsInRva2VuX3R5cGUiOiJsb2dpbiJ9.gf-1D4TzhfwbMg4diskE-VGfS3acqDy9WytDnrvBHuLH8csq5q3MR6bhs4uxvWvwUfxpkRz80J9TsS9mtZYV1g
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_companies/get_company:
+    get:
+      tags:
+        - Company
+      summary: get_company
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY4NTY0MzgsInRva2VuX3R5cGUiOiJsb2dpbiJ9.gf-1D4TzhfwbMg4diskE-VGfS3acqDy9WytDnrvBHuLH8csq5q3MR6bhs4uxvWvwUfxpkRz80J9TsS9mtZYV1g
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_companies/get_all_details:
+    get:
+      tags:
+        - Company
+      summary: get_all_details
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY4NTY0MzgsInRva2VuX3R5cGUiOiJsb2dpbiJ9.gf-1D4TzhfwbMg4diskE-VGfS3acqDy9WytDnrvBHuLH8csq5q3MR6bhs4uxvWvwUfxpkRz80J9TsS9mtZYV1g
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_companies/get_employees:
+    get:
+      tags:
+        - Company
+      summary: get_employee
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY4NjMxMDIsInRva2VuX3R5cGUiOiJsb2dpbiJ9.clHL5flkO1zyJ4XrNM_dQ90vs6r05BIVepXpE3CEhaWsofF29aN9wSR7OJWYzVJPsNagBzO6PZ5tEEurwlMp_Q
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_companies/get_coaches:
+    get:
+      tags:
+        - Company
+      summary: get_coach
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY4NjMxMDIsInRva2VuX3R5cGUiOiJsb2dpbiJ9.clHL5flkO1zyJ4XrNM_dQ90vs6r05BIVepXpE3CEhaWsofF29aN9wSR7OJWYzVJPsNagBzO6PZ5tEEurwlMp_Q
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_companies/coach_expertise:
+    get:
+      tags:
+        - Company
+      summary: get_coach_expertise
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY4NjMxMDIsInRva2VuX3R5cGUiOiJsb2dpbiJ9.clHL5flkO1zyJ4XrNM_dQ90vs6r05BIVepXpE3CEhaWsofF29aN9wSR7OJWYzVJPsNagBzO6PZ5tEEurwlMp_Q
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_companies/get_hrs:
+    get:
+      tags:
+        - Company
+      summary: get_hrs_list
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MSwiZXhwIjoxNjY5OTc5NDE2fQ.j7GGH1Su8H5MqOth_AzVzKTh3oeiA0AzS8gzAdBUfaWcHj1Ar8a6kpdGC8Oz2XMwGewHkAWTtiTDV1M2f0CvsQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_companies/delete_user:
+    delete:
+      tags:
+        - Company
+      summary: delete_users
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY4NjMxMDIsInRva2VuX3R5cGUiOiJsb2dpbiJ9.clHL5flkO1zyJ4XrNM_dQ90vs6r05BIVepXpE3CEhaWsofF29aN9wSR7OJWYzVJPsNagBzO6PZ5tEEurwlMp_Q
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /audio_list:
+    post:
+      tags:
+        - audio_video_management
+      summary: audio_list stage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                limit: '2'
+                page: '0'
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDg5LCJleHAiOjE2ODAzMzAwNzAsInRva2VuX3R5cGUiOiJsb2dpbiJ9.svHZV-mquXVzmt5MWiyboQvXzvn94ecF931M76ucm09N0bVuYSuL2A58NbaR64YKZvqg59F_4B6lXg-sBTQ61g
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_audiolibrary/audio_list:
+    get:
+      tags:
+        - audio_video_management
+      summary: audio_list prod
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /video_list:
+    get:
+      tags:
+        - audio_video_management
+      summary: videos_list dev
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIsImV4cCI6MTY3OTU1MDk1NywidG9rZW5fdHlwZSI6ImxvZ2luIn0.WZ5FgmHYYQoV1YuBXmongNmqyBc-cU2QFVtpuFjApe2xoRlX2ibScFkreob6r9T5UPynpNk9Tx9LxsfPDLiChw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /artical_list:
+    get:
+      tags:
+        - audio_video_management
+      summary: artical_list
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+          example: '5'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/current_goals:
+    get:
+      tags:
+        - Grouping API
+      summary: Goal Boards
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /000/bx_block_calendar/booked_slots/current_coach:
+    get:
+      tags:
+        - Employee-Coach
+      summary: current_coach
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MCwiZXhwIjoxNjcyOTg2OTA3fQ.VDjkKV3LlMuoqkdEAVZ46pmIxaJ2tY0bQj1ei5ooNYw14XnN9tljW2leu3AXHRycLKrPiaOVjOBZhnqMf1wfRg
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /000/bx_block_calendar/booked_slots/past_coach:
+    get:
+      tags:
+        - Employee-Coach
+      summary: past_coach
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MCwiZXhwIjoxNjcyOTg3MDEwfQ.JCHLkZTh0By7-CUU3V3nSZ4USvlobCdGBN4WXr-Xoh0u-UTajgkvDucxbIa5Zj_ruCYGXV0Io7J_RMY6Pjpbsw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/coach_with_upcoming_appointments:
+    get:
+      tags:
+        - Employee-Coach
+      summary: coach_with_upcoming_appointment
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_calendar/booked_slots/coach_with_past_appointments:
+    get:
+      tags:
+        - Employee-Coach
+      summary: coach_with_past_appointment
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NjgsImV4cCI6MTY2NjE2MTUzNCwidG9rZW5fdHlwZSI6ImxvZ2luIn0.ZZfGxgEW-3JQkQzNR_xjXgcpFWWgcQmEh-W2s_HxNojDorHue34bfi1yWqmPI8I6unU9OmmA0Zdt3xoSKX_OTQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_admin/get_coach:
+    get:
+      tags:
+        - Admin
+      summary: get_admin_coach
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY5NTAwNTksInRva2VuX3R5cGUiOiJsb2dpbiJ9.nz0LAtFIEuz-50lNXLKUOErY9Qi6qE3s6A0f4r3Yr5DNRqNGRokWZaJvhiKROnqdwNmuZoR67IwQDQUK-Kd5Ww
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_admin/create_coach:
+    post:
+      tags:
+        - Admin
+      summary: create_admin_coach
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                account[type]:
+                  type: string
+                  example: email_account
+                account[full_name]:
+                  type: string
+                  example: coach21
+                account[email]:
+                  type: string
+                  example: coach22@gmail.com
+                account[full_phone_number]:
+                  type: integer
+                  example: '917901817917'
+                account[password]:
+                  type: string
+                  example: Rails@1234
+                account[password_confirmation]:
+                  type: string
+                  example: Rails@1234
+                account[expertise]:
+                  type: string
+                  example: '[29, 30]'
+                account[image]:
+                  type: string
+                  format: binary
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY5NTAwNTksInRva2VuX3R5cGUiOiJsb2dpbiJ9.nz0LAtFIEuz-50lNXLKUOErY9Qi6qE3s6A0f4r3Yr5DNRqNGRokWZaJvhiKROnqdwNmuZoR67IwQDQUK-Kd5Ww
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_admin/update_coach:
+    put:
+      tags:
+        - Admin
+      summary: update_admin_coach
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                account[id]:
+                  type: integer
+                  example: '217'
+                account[email]:
+                  type: string
+                  example: coach19@gmail.com
+                account[full_phone_number]:
+                  type: integer
+                  example: '917901817917'
+                account[password]:
+                  type: string
+                  example: Rails@1234
+                account[password_confirmation]:
+                  type: string
+                  example: Rails@1234
+                account[image]:
+                  type: string
+                  format: binary
+                account[full_name]:
+                  type: string
+                  example: coach coach 19
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2NjY5NTAwNTksInRva2VuX3R5cGUiOiJsb2dpbiJ9.nz0LAtFIEuz-50lNXLKUOErY9Qi6qE3s6A0f4r3Yr5DNRqNGRokWZaJvhiKROnqdwNmuZoR67IwQDQUK-Kd5Ww
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_admin/get_hr:
+    get:
+      tags:
+        - Admin
+      summary: get_admin_hr
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2Njg4NDI4NTIsInRva2VuX3R5cGUiOiJsb2dpbiJ9.5-MliR4FdLa2KOXiNNWrL1M_MlzoOnARZ6rMlafcNYrPNu_w68fajEv1zr7aNrKF3qybKwP05NxW4AsJ4NmYbQ
+        - name: hr_id
+          in: query
+          schema:
+            type: integer
+          example: '247'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_admin/update_hr:
+    post:
+      tags:
+        - Admin
+      summary: get_update_hr
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                account:
+                  hr_id: 271
+                  full_name: sds
+                  email: hr12@gmail.com
+                  full_phone_number: '917901817917'
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2Njg4NDI4NTIsInRva2VuX3R5cGUiOiJsb2dpbiJ9.5-MliR4FdLa2KOXiNNWrL1M_MlzoOnARZ6rMlafcNYrPNu_w68fajEv1zr7aNrKF3qybKwP05NxW4AsJ4NmYbQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_admin/delete_hr:
+    delete:
+      tags:
+        - Admin
+      summary: get_delete_hr
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjE2LCJleHAiOjE2Njg4NDI4NTIsInRva2VuX3R5cGUiOiJsb2dpbiJ9.5-MliR4FdLa2KOXiNNWrL1M_MlzoOnARZ6rMlafcNYrPNu_w68fajEv1zr7aNrKF3qybKwP05NxW4AsJ4NmYbQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /conversation:
+    get:
+      tags:
+        - Chats
+      summary: Conversation
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIsImV4cCI6MTY4MjQ5NzI1NywidG9rZW5fdHlwZSI6ImxvZ2luIn0.eyCobTJcO7hpKf5hYjj2QEfmpB2kHmhd8UzC8vkmRKL4UYe8I1UOKDWITFeAmFGkOTJHo_VmFECm1vrjsPJkHQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /delete_conversation:
+    get:
+      tags:
+        - Chats
+      summary: delete_conversation
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NjgsImV4cCI6MTY2ODE2MjY1MywidG9rZW5fdHlwZSI6ImxvZ2luIn0.IXmqSaLcL7yUTq3n9ck8HOwQYt6IY6dRaGxdxiDHBzaDOaDbVVK8TGjPDrUYbcuWJcllYGdKXw9H3DoZN9OxPw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /v1/Conversations/CHe70c3de2038a42e0a78cd78bf9cc5550/Messages:
+    get:
+      tags:
+        - Chats
+      summary: New Request
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /000/account_block/ratings:
+    post:
+      tags:
+        - Rating
+      summary: coach_app_ratings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                rating:
+                  app_rating: 4
+                  coach_rating: 5
+                  coach_id: 2647
+                  feedback: this is Good new test one
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjY0NywiZXhwIjoxNzI2MjA2Mjc5fQ.kEclOaw7wZEvI0duAQiaRfR2k6Xh0IcKpZW4ZCg0eQh9hapQm9oIE84O4vIESejAERrutgtDxkahNOIA2AnNkw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /account_block/all_users_feedbacks:
+    get:
+      tags:
+        - Rating
+      summary: all_user_feedback
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /account_block/user_feedback:
+    get:
+      tags:
+        - Rating
+      summary: user_feedback
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NywiZXhwIjoxNzIwNzgzNTc4fQ.APJWeXWNd08BHWRGlq04q5rbWPlf1yTBOdnsqaxvnVcJJ1t33wbCzjDH7ttU6drPlFV0fwHvi1xVnyK4__MaOw
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /account_block/accounts/get_hr_details:
+    get:
+      tags:
+        - HR
+      summary: hr_detail
+      parameters:
+        - name: token
+          in: query
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MjQ3LCJleHAiOjE2Njg3NzEyNDYsInRva2VuX3R5cGUiOiJsb2dpbiJ9.WPqWchNo8MU2kbl2p5otINbTdRJ7Kuf2nSxm_KHdR56HagE9dOmSJDooIui9iK2xsAp71ussuMJLbU-E_E7k1A
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/goal_boards:
+    get:
+      tags:
+        - Grouping API
+      summary: Goal Boards Copy
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIyLCJleHAiOjE2ODQ0MDAzNjZ9.zHaOTsqFUZygVzNL7vtailZMXc1T-DBvPqyApRVnrLF0SqTbAGdOKF_YebiDTX0X6cJUWjDamAWvqkeeDZUgFA
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /suggestion:
+    get:
+      tags:
+        - Grouping API
+      summary: Suggested Copy
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_time_tracking_billing/time_tracks:
+    get:
+      tags:
+        - time_track
+      summary: time_track
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_time_tracking_billing/summary_tracks:
+    get:
+      tags:
+        - time_track
+      summary: summary_track
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIsImV4cCI6MTY4NDk5OTc2MiwidG9rZW5fdHlwZSI6ImxvZ2luIn0.yN5CrJT3TTNvjtSh2okY-Qri50Oe_UPEzt_JLowF9fyLrWK-2C7VWRp2DO6NtMpqS4oYqQhb8YWZuvZsrdJv8A
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_time_tracking_billing/summary_tracks/all_account:
+    get:
+      tags:
+        - time_track
+      summary: all_Accounts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_time_tracking_billing/summary_tracks/month_wise_record:
+    get:
+      tags:
+        - time_track
+      summary: summary month wise
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /000/bx_block_calendar/booked_slots/video_call:
+    get:
+      tags:
+        - videocall timetrack
+      summary: New Request
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6MSwiZXhwIjoxNjY5OTc5NDE2fQ.j7GGH1Su8H5MqOth_AzVzKTh3oeiA0AzS8gzAdBUfaWcHj1Ar8a6kpdGC8Oz2XMwGewHkAWTtiTDV1M2f0CvsQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /download_sample_csv:
+    get:
+      tags:
+        - bulk upload
+      summary: csv file
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_chatbackuprestore/chat_backup_restores/chat_request:
+    post:
+      tags:
+        - chat backup and restore
+      summary: requesting user to chat
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                participant_user_id:
+                  type: integer
+                  example: '429'
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDEyLCJleHAiOjE2ODY5MDIwMjd9.-6y35uH9qad8XqoIf2Ax9ge17eVYMdVVA1tLp9OFhD6kkTCbsUepLMmt6BmDoAL7Wux6xUQHfX74JrbYw-iVDQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_chatbackuprestore/chat_backup_restores/creating_chat_message:
+    post:
+      tags:
+        - chat backup and restore
+      summary: creating_chat_message
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                room_id:
+                  type: integer
+                  example: '67'
+                message:
+                  type: string
+                  example: ramesh
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDEyLCJleHAiOjE2ODY5MDIwMjd9.-6y35uH9qad8XqoIf2Ax9ge17eVYMdVVA1tLp9OFhD6kkTCbsUepLMmt6BmDoAL7Wux6xUQHfX74JrbYw-iVDQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_chatbackuprestore/chat_backup_restores/all_chat_message:
+    get:
+      tags:
+        - chat backup and restore
+      summary: your_chat_messages
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDEyLCJleHAiOjE2ODY5MDIwMjd9.-6y35uH9qad8XqoIf2Ax9ge17eVYMdVVA1tLp9OFhD6kkTCbsUepLMmt6BmDoAL7Wux6xUQHfX74JrbYw-iVDQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_chatbackuprestore/chat_backup_restores/active_chats_room:
+    get:
+      tags:
+        - chat backup and restore
+      summary: active rooms
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDEyLCJleHAiOjE2ODY5MDIwMjd9.-6y35uH9qad8XqoIf2Ax9ge17eVYMdVVA1tLp9OFhD6kkTCbsUepLMmt6BmDoAL7Wux6xUQHfX74JrbYw-iVDQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_chatbackuprestore/chat_backup_restores/participant_list:
+    post:
+      tags:
+        - chat backup and restore
+      summary: participant list
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                limit: '10'
+                page: '2'
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDEyLCJleHAiOjE2ODY5MDIwMjd9.-6y35uH9qad8XqoIf2Ax9ge17eVYMdVVA1tLp9OFhD6kkTCbsUepLMmt6BmDoAL7Wux6xUQHfX74JrbYw-iVDQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_chatbackuprestore/chat_backup_restores/chat_backup:
+    get:
+      tags:
+        - chat backup and restore
+      summary: chat backup
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: >-
+            eyJhbGciOiJIUzUxMiJ9.eyJpZCI6NDIsImV4cCI6MTY4OTIzMDQ4OCwidG9rZW5fdHlwZSI6ImxvZ2luIn0.DLJyowCqRY0wh7BMYL84arX6SW3xM96iP2UlDIfbkcP0lgjXDKdEVOUtwlCeLCmJlebqVf7HRzNuDMYWNhOhHQ
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /chat_rooms_data1.txt:
+    get:
+      tags:
+        - chat backup and restore
+      summary: New Request
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /bx_block_assessmenttest/current_actions:
+    get:
+      tags:
+        - action items
+      summary: current_actions
+      parameters:
+        - name: token
+          in: header
+          schema:
+            type: string
+          example: '{{token}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

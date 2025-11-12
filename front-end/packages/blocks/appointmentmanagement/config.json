@@ -1,0 +1,93 @@
+{
+  "id": "appointmentmanagement",
+  "verion": "0.0.1",
+  "status": "preAlpha",
+  "path": "./packages/blocks/appointmentmanagement",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": ["Appointments", "AddAppointment"],
+    "assembler-dependencies": ["\"react-native-datepicker\": \"^1.7.2\""],
+    "catalog-dependencies": [],
+    "assembler-devDependencies": [
+      "\"@types/react-native-datepicker\": \"^1.7.0\""
+    ],
+    "merge-engine-screens": {
+      "Appointments": {
+        "file": "Appointments.tsx",
+        "extends": "AppointmentmanagementController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "AppointmentmanagementController",
+            "path": "./AppointmentmanagementController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./AppointmentmanagementController"
+          }
+        ]
+      }
+    },
+    "AddAppointment": {
+      "file": "AddAppointment.tsx",
+      "extends": "AppointmentmanagementController",
+      "configURL": "",
+      "validationRulesURL": "",
+      "imports": [
+        {
+          "value": "AppointmentmanagementController",
+          "path": "./AppointmentmanagementController"
+        },
+        {
+          "value": "{Props}",
+          "path": "./AppointmentmanagementController"
+        }
+      ]
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": ["Appointments", "AddAppointment"],
+    "assembler-dependencies": ["\"react-native-datepicker\": \"^1.7.2\""],
+    "catalog-dependencies": [],
+    "assembler-devDependencies": [
+      "\"@types/react-native-datepicker\": \"^1.7.0\""
+    ],
+    "merge-engine-screens": {
+      "Appointments": {
+        "file": "Appointments.tsx",
+        "extends": "AppointmentmanagementController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "AppointmentmanagementController",
+            "path": "./AppointmentmanagementController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./AppointmentmanagementController"
+          }
+        ]
+      }
+    },
+    "AddAppointment": {
+      "file": "AddAppointment.tsx",
+      "extends": "AppointmentmanagementController",
+      "configURL": "",
+      "validationRulesURL": "",
+      "imports": [
+        {
+          "value": "AppointmentmanagementController",
+          "path": "./AppointmentmanagementController"
+        },
+        {
+          "value": "{Props}",
+          "path": "./AppointmentmanagementController"
+        }
+      ]
+    }
+  }
+}

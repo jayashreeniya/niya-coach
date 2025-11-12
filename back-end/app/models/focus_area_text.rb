@@ -1,0 +1,2 @@
+class FocusAreaText < ApplicationRecord
+end

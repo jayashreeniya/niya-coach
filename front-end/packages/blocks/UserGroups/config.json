@@ -1,0 +1,65 @@
+{
+  "id": "UserGroups",
+  "version": "0.0.2",
+  "status": "preAlpha",
+  "path": "./packages/blocks/UserGroups",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "UserGroups"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "UserGroups": {
+        "file": "UserGroups.tsx",
+        "extends": "UserGroupsController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "UserGroupsController",
+            "path": "./UserGroupsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./UserGroupsController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "UserGroups"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core",
+      "utilities"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "UserGroups": {
+        "file": "UserGroups.web.tsx",
+        "extends": "UserGroupsController",
+        "ui-elements": [],
+        "imports": [
+          {
+            "value": "UserGroupsController",
+            "path": "./UserGroupsController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./UserGroupsController"
+          }
+        ]
+      }
+    }
+  }
+}

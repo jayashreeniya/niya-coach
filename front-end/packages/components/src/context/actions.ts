@@ -1,0 +1,1 @@
+export const set_user_data = "SET_USER_DATA";

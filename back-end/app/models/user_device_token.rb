@@ -1,0 +1,2 @@
+class UserDeviceToken < ApplicationRecord
+end

@@ -1,0 +1,65 @@
+{
+  "id": "RandomNumberGenerator",
+  "version": "1.0.0",
+  "status": "",
+  "path": "./packages/blocks/RandomNumberGenerator",
+  "assembler-adapters": [],
+  "mobile": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "RandomNumberGenerator"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "RandomNumberGenerator": {
+        "file": "RandomNumberGenerator.tsx",
+        "extends": "RandomNumberGeneratorController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "RandomNumberGeneratorController",
+            "path": "./RandomNumberGeneratorController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./RandomNumberGeneratorController"
+          }
+        ]
+      }
+    }
+  },
+  "web": {
+    "merge-engine-navigation": {},
+    "assembler-exports": [
+      "RandomNumberGenerator"
+    ],
+    "assembler-dependencies": [],
+    "catalog-dependencies": [
+      "core"
+    ],
+    "assembler-devDependencies": [],
+    "merge-engine-screens": {
+      "RandomNumberGenerator": {
+        "file": "RandomNumberGenerator.web.tsx",
+        "extends": "RandomNumberGeneratorController",
+        "configURL": "",
+        "validationRulesURL": "",
+        "imports": [
+          {
+            "value": "RandomNumberGeneratorController",
+            "path": "./RandomNumberGeneratorController"
+          },
+          {
+            "value": "{Props}",
+            "path": "./RandomNumberGeneratorController"
+          }
+        ]
+      }
+    }
+  }
+}
