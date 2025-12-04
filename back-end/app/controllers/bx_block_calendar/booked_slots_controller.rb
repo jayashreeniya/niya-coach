@@ -6,6 +6,7 @@ require 'securerandom'
 module BxBlockCalendar
   class BookedSlotsController < ApplicationController
     include BuilderJsonWebToken::JsonWebTokenValidation
+    skip_before_action :verify_authenticity_token
     # before_action :track_login, only: [:video_call]
     before_action :validate_time_intervals,  only: [:create]
     before_action :validating_appointments,  only: [:create]

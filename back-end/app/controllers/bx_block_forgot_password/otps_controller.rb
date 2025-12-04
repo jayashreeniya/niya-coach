@@ -1,5 +1,6 @@
 module BxBlockForgotPassword
   class OtpsController < ApplicationController
+    skip_before_action :verify_authenticity_token
     def create
       if params['email'].present?
         @email_account = AccountBlock::Account.where("LOWER(email) = ?", params['email'].downcase).last

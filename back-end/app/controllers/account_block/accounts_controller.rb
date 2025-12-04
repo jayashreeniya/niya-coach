@@ -1,6 +1,7 @@
 module AccountBlock
   class AccountsController < ApplicationController
     include BuilderJsonWebToken::JsonWebTokenValidation
+    skip_before_action :verify_authenticity_token, only: [:create, :privacy_policy, :term_and_condition]
 
     before_action :validate_json_web_token, only: [:search, :update, :get_hr_details, :delete_account]
 

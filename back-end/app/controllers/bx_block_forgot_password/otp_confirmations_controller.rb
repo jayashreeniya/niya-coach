@@ -1,5 +1,6 @@
 module BxBlockForgotPassword
   class OtpConfirmationsController < ApplicationController
+    skip_before_action :verify_authenticity_token
     def create
       if params[:new_password].present? && params[:confirm_password].present? && params[:token].present?
         # Try to decode token with OTP information

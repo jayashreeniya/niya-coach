@@ -1,6 +1,7 @@
 module BxBlockLogin
   class LoginsController < ApplicationController
     include BuilderJsonWebToken::JsonWebTokenValidation
+    skip_before_action :verify_authenticity_token
     before_action :validate_json_web_token, only: [:destroy]
     def create
       case params[:data][:type] #### rescue invalid API format
