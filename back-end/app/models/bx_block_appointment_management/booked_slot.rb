@@ -6,6 +6,16 @@ module BxBlockAppointmentManagement
     belongs_to :service_provider, class_name: "AccountBlock::Account"
     belongs_to :service_user, class_name: "AccountBlock::Account"
     validate :check_end_time, :check_column_exist, :check_booked_date, :check_availability, :validate_time_format, :check_start_and_time, :check_time_validation, :check_appointment 
+
+    # Required for ActiveAdmin filtering/searching
+    def self.ransackable_attributes(auth_object = nil)
+      ["booking_date", "created_at", "end_time", "id", "service_provider_id", "service_user_id", "start_time", "updated_at"]
+    end
+
+    # Required for Ransack 4.0 - associations must be explicitly allowlisted
+    def self.ransackable_associations(auth_object = nil)
+      ["service_provider", "service_user"]
+    end 
     
     def check_appointment
       appointments = BxBlockAppointmentManagement::BookedSlot.where(service_user_id: self.service_user_id, booking_date: self.booking_date)

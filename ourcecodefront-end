@@ -1,0 +1,123 @@
+warning: in the working copy of 'front-end/packages/mobile/App.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/front-end/packages/mobile/App.tsx b/front-end/packages/mobile/App.tsx[m
+[1mindex e69addc..bf8cfe0 100644[m
+[1m--- a/front-end/packages/mobile/App.tsx[m
+[1m+++ b/front-end/packages/mobile/App.tsx[m
+[36m@@ -3,7 +3,7 @@[m [mimport SplashScreen from 'react-native-splash-screen';[m
+ import styles from './AppStyles'[m
+ import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';[m
+ import {  YellowBox, View, Image, Text } from 'react-native'[m
+[31m-import { createStackNavigator, createBottomTabNavigator } from "react-navigation";[m
+[32m+[m[32mimport { createStackNavigator, createBottomTabNavigator, createAppContainer } from "react-navigation";[m
+  import { register } from "@videosdk.live/react-native-sdk";[m
+ import * as RootNavigation from '../framework/src/RootNavigation';[m
+ import { AppProvider } from '../components/src/context/AppContext';[m
+[36m@@ -165,41 +165,42 @@[m [mconst renderEmoJourney=(focused:boolean)=>{[m
+ const BottomTabNavigator = createBottomTabNavigator([m
+   {[m
+     HomePage: { screen: HomePage, navigationOptions: { header: null, title: "HomePage" } },[m
+[31m-    ReassorOrContinue: { screen: ReassorOrContinue, navigationOptions: { header: null, } },[m
+[32m+[m[32m    ReassorOrContinue: { screen: ReassorOrContinue, navigationOptions: { header: null } },[m
+     MyCoachTab: { screen: LandingPage, navigationOptions: { title: "CoachTab" } },[m
+[31m-[m
+     EmoJourney: { screen: EmoJourney, navigationOptions: { header: null, title: "Journey" } }[m
+   },[m
+   {[m
+[31m-    navigationOptions: ({ navigation }: any) => ({[m
+[31m-      tabBarIcon: ({ tintColor, focused, iconIndex }: any) => {[m
+[31m-        const { routeName } = navigation.state;[m
+[31m-        if (routeName === 'HomePage') {[m
+[31m-          return   renderBHome(focused);[m
+[31m-          [m
+[31m-        } else if (routeName === 'ReassorOrContinue') {[m
+[31m-           TrackPlayer.pause()[m
+[31m-          return renderReassignorcont(focused);[m
+[31m-        }[m
+[31m-        else if (routeName === 'MyCoachTab') {[m
+[31m-          TrackPlayer.pause()[m
+[31m-          return renderMyCoach(focused);[m
+[31m-          [m
+[31m-        }[m
+[31m-         else if (routeName === 'EmoJourney') {[m
+[31m-          TrackPlayer.pause()[m
+[31m-          return renderEmoJourney(focused);[m
+[32m+[m[32m    navigationOptions: ({ navigation }) => {[m
+[32m+[m[32m      if (!navigation || !navigation.state) {[m
+[32m+[m[32m        return {};[m
+[32m+[m[32m      }[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        tabBarIcon: ({ focused }: any) => {[m
+[32m+[m[32m          const { routeName } = navigation.state;[m
+[32m+[m[32m          if (routeName === "HomePage") {[m
+[32m+[m[32m            return renderBHome(focused);[m
+[32m+[m[32m          }[m
+[32m+[m[32m          if (routeName === "ReassorOrContinue") {[m
+[32m+[m[32m            TrackPlayer.pause();[m
+[32m+[m[32m            return renderReassignorcont(focused);[m
+[32m+[m[32m          }[m
+[32m+[m[32m          if (routeName === "MyCoachTab") {[m
+[32m+[m[32m            TrackPlayer.pause();[m
+[32m+[m[32m            return renderMyCoach(focused);[m
+[32m+[m[32m          }[m
+[32m+[m[32m          if (routeName === "EmoJourney") {[m
+[32m+[m[32m            TrackPlayer.pause();[m
+[32m+[m[32m            return renderEmoJourney(focused);[m
+[32m+[m[32m          }[m
+[32m+[m[32m          return null;[m
+         }[m
+[31m-      },[m
+[31m-    }),[m
+[32m+[m[32m      };[m
+[32m+[m[32m    },[m
+     tabBarOptions: {[m
+       style: styles.bottomTabStyle,[m
+       showLabel: false,[m
+[31m-      keyboardHidesTabBar: true,[m
+[31m-[m
+[31m-    },[m
+[31m-[m
+[31m-[m
+[32m+[m[32m      keyboardHidesTabBar: true[m
+[32m+[m[32m    }[m
+   }[m
+ );[m
+ [m
+[36m@@ -368,6 +369,15 @@[m [mif (!HomeScreen.instance) {[m
+   };[m
+   const homeScreen = new HomeScreen(defaultProps);[m
+ }[m
+[32m+[m[32mconst NewUsrStackNavigator = createAppContainer(NewUsrStack);[m
+[32m+[m[32mconst SplashStackNavigator = createAppContainer(SplashStack);[m
+[32m+[m[32mconst ReassStackNavigator = createAppContainer(ReassStack);[m
+[32m+[m[32mconst EmpStackNavigator = createAppContainer(EmpStack);[m
+[32m+[m[32mconst GuestStackNavigator = createAppContainer(GuestStack);[m
+[32m+[m[32mconst HRStackNavigator = createAppContainer(HRStack);[m
+[32m+[m[32mconst CoachStackNavigator = createAppContainer(CoachStack);[m
+[32m+[m[32mconst AdminStackNavigator = createAppContainer(AdminStack);[m
+[32m+[m
+ console.disableYellowBox = true[m
+ YellowBox.ignoreWarnings(['Warning:'])[m
+  register()[m
+[36m@@ -406,14 +416,14 @@[m [mexport function App() {[m
+           onReady={() => { RootNavigation.isReadyRef.current = true; }}[m
+         >[m
+           <StackMonitor[m
+[31m-            empStack={<EmpStack />}[m
+[31m-            guestStack={<GuestStack />}[m
+[31m-            coachStack={<CoachStack />}[m
+[31m-            splashScreen={<SplashStack />}[m
+[31m-            hrStack={<HRStack />}[m
+[31m-            adminStack={<AdminStack />}[m
+[31m-            newUsrStack={<NewUsrStack />}[m
+[31m-            reassStack={<ReassStack />}[m
+[32m+[m[32m            empStack={<EmpStackNavigator />}[m
+[32m+[m[32m            guestStack={<GuestStackNavigator />}[m
+[32m+[m[32m            coachStack={<CoachStackNavigator />}[m
+[32m+[m[32m            splashScreen={<SplashStackNavigator />}[m
+[32m+[m[32m            hrStack={<HRStackNavigator />}[m
+[32m+[m[32m            adminStack={<AdminStackNavigator />}[m
+[32m+[m[32m            newUsrStack={<NewUsrStackNavigator />}[m
+[32m+[m[32m            reassStack={<ReassStackNavigator />}[m
+           />[m
+         </NavigationContainer>[m
+       </AppProvider>[m

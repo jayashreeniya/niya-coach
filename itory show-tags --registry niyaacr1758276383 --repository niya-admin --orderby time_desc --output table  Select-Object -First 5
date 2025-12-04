@@ -1,0 +1,88 @@
+warning: in the working copy of 'DEPLOYMENT_SUCCESS_2025_10_27.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/CURRENT_SESSION_SUMMARY.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/Dockerfile', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/Gemfile.deploy', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/admin/account.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/admin/admin_users.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/admin/audio_video_management.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/admin/coach.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/admin/coach_availability.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/admin/employee.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/admin/hr.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/admin/set_coach_availability.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/assets/javascripts/active_admin.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/account_block/account.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/account_block/application_record.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_appointment_management/availability.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_appointment_management/available_time.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_appointment_management/booked_slot.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_assessmenttest/anixety_cutoff.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_assessmenttest/assesment_test_question.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_assessmenttest/assesment_test_type.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_assessmenttest/motion.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_assessmenttest/motion_question.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_assessmenttest/well_being_focus_area.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_contact_us/contact.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_rating/coach_rating.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_time_tracking_billing/summary_track.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_upload/bulk_upload.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/bx_block_upload/multiple_upload_file.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/coach_specialization.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/company.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/privacy_policy.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/question_well_being.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/terms_and_condition.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/user_answer_result.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/well_being_category.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/well_being_sub_category.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/app/models/wellbeing_score_report.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/config/application.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/config/environments/production.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/config/initializers/active_admin.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/config/initializers/devise.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/config/read_only_admin.rb', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'back-end/db/seeds.rb', LF will be replaced by CRLF the next time Git touches it
+ DEPLOYMENT_SUCCESS_2025_10_27.md                   |  38 [32m+[m[31m-[m
+ back-end/CURRENT_SESSION_SUMMARY.md                | 145 [32m+++[m[31m----[m
+ back-end/Dockerfile                                |   2 [32m+[m[31m-[m
+ back-end/Gemfile.deploy                            |   1 [32m+[m
+ back-end/app/admin/account.rb                      |  32 [32m+[m[31m-[m
+ back-end/app/admin/admin_users.rb                  | 100 [32m+++[m[31m--[m
+ back-end/app/admin/audio_video_management.rb       |   3 [32m+[m[31m-[m
+ back-end/app/admin/coach.rb                        | 144 [32m+++++[m[31m--[m
+ back-end/app/admin/coach_availability.rb           |   5 [32m+[m[31m-[m
+ back-end/app/admin/employee.rb                     |   7 [32m+[m[31m-[m
+ back-end/app/admin/hr.rb                           | 101 [32m+++[m[31m--[m
+ back-end/app/admin/set_coach_availability.rb       | 428 [32m++++++++++++++++++[m[31m---[m
+ back-end/app/assets/javascripts/active_admin.js    |  31 [32m++[m
+ back-end/app/models/account_block/account.rb       |  28 [32m+[m[31m-[m
+ .../availability.rb                                |  10 [32m+[m
+ .../available_time.rb                              |  87 [32m+++[m[31m--[m
+ .../bx_block_appointment_management/booked_slot.rb |  10 [32m+[m
+ .../bx_block_assessmenttest/anixety_cutoff.rb      |   5 [32m+[m
+ .../assesment_test_question.rb                     |   5 [32m+[m
+ .../bx_block_assessmenttest/assesment_test_type.rb |   4 [32m+[m
+ .../app/models/bx_block_assessmenttest/motion.rb   |   5 [32m+[m
+ .../bx_block_assessmenttest/motion_question.rb     |   5 [32m+[m
+ .../well_being_focus_area.rb                       |   5 [32m+[m
+ back-end/app/models/bx_block_contact_us/contact.rb |   5 [32m+[m
+ .../app/models/bx_block_rating/coach_rating.rb     |   6 [32m+[m
+ .../summary_track.rb                               |   5 [32m+[m
+ back-end/app/models/bx_block_upload/bulk_upload.rb |   5 [32m+[m
+ .../models/bx_block_upload/multiple_upload_file.rb |   5 [32m+[m
+ back-end/app/models/coach_specialization.rb        |   5 [32m+[m
+ back-end/app/models/company.rb                     |  10 [32m+[m
+ back-end/app/models/privacy_policy.rb              |   4 [32m+[m
+ back-end/app/models/question_well_being.rb         |   5 [32m+[m
+ back-end/app/models/terms_and_condition.rb         |   4 [32m+[m
+ back-end/app/models/user_answer_result.rb          |   4 [32m+[m
+ back-end/app/models/well_being_category.rb         |  10 [32m+[m
+ back-end/app/models/well_being_sub_category.rb     |   4 [32m+[m
+ back-end/app/models/wellbeing_score_report.rb      |   5 [32m+[m
+ back-end/config/application.rb                     |   9 [32m+[m[31m-[m
+ back-end/config/environments/production.rb         |  13 [32m+[m[31m-[m
+ back-end/config/initializers/active_admin.rb       |  34 [32m+[m[31m-[m
+ back-end/config/initializers/devise.rb             |   5 [32m+[m[31m-[m
+ back-end/config/read_only_admin.rb                 |  77 [32m++[m[31m--[m
+ back-end/db/seeds.rb                               |  22 [32m++[m
+ 43 files changed, 1078 insertions(+), 360 deletions(-)

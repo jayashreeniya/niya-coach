@@ -12,7 +12,12 @@ ActiveAdmin.register AccountBlock::Account, as: "Employee" do
   
   controller do
     def scoped_collection
-      @accounts = AccountBlock::Account.where(role_id: BxBlockRolesPermissions::Role.find_by_name(BxBlockRolesPermissions::Role.names[:employee]).id)
+      employee_role = BxBlockRolesPermissions::Role.find_by_name('EMPLOYEE')
+      if employee_role
+        @accounts = AccountBlock::Account.where(role_id: employee_role.id)
+      else
+        @accounts = AccountBlock::Account.none
+      end
     end
   end
 

@@ -3,6 +3,11 @@ module BxBlockAssessmenttest
 		self.table_name = :well_being_focus_areas
 		# belongs_to :sub_categories, class_name: "BxBlockCategories::SubCategory" , dependent: :destroy
 		# validates :well_being_sub_categoryid, uniqueness: true, presence: true
+
+    # Required for ActiveAdmin filtering/searching
+    def self.ransackable_attributes(auth_object = nil)
+      ["answers", "created_at", "id", "name", "updated_at", "well_being_sub_categoryid"]
+    end
 	end
 end
 

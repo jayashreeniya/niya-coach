@@ -1,0 +1,31 @@
+{
+    "family": "niya-web",
+    "taskRoleArn": "arn:aws:iam::034362044731:role/ecs-services-role",
+    "containerDefinitions": [
+      {
+        "name": "niya-web",
+        "image": "034362044731.dkr.ecr.ap-southeast-1.amazonaws.com/niya-web:GIT_COMMIT",
+        "cpu": 800,
+        "memory": 900,
+        "memoryReservation": 500,
+        "volumesFrom": [],
+        "portMappings": [
+          {
+            "hostPort": 0,
+            "containerPort": 3000,
+            "protocol": "tcp"
+          }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "GROUP_NAME",
+            "awslogs-region": "ap-southeast-1",
+            "awslogs-stream-prefix": "niya-web"
+          }
+          },
+        "environment": [],
+        "mountPoints": []
+      }
+    ]
+  }

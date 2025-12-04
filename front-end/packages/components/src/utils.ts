@@ -83,7 +83,7 @@ const fonts: Fonts = {
   BLD: "Roboto-Bold"
 }
 
-const BASE_URL: string = "https://niya-178517-ruby.b178517.dev.eastus.az.svc.builder.cafe";
+const BASE_URL: string = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io";
 
 export {
   Colors,

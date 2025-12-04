@@ -1,7 +1,7 @@
 "use strict";
 
 
-const baseURL = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai";
+const baseURL = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io";
 
 Object.defineProperty(exports, "__esModule", {
   value: true

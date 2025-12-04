@@ -2,6 +2,37 @@
 //= require activeadmin/quill_editor/quill
 //= require activeadmin/quill_editor_input
 
+// Fix for invalid selector :has(*,:jqfake) error in ActiveAdmin
+// Override querySelector to handle invalid selectors gracefully
+(function() {
+  const originalQuerySelector = document.querySelector;
+  const originalQuerySelectorAll = document.querySelectorAll;
+  
+  document.querySelector = function(selector) {
+    try {
+      return originalQuerySelector.call(document, selector);
+    } catch (e) {
+      if (selector && selector.includes(':jqfake')) {
+        console.warn('Invalid selector caught and ignored:', selector);
+        return null;
+      }
+      throw e;
+    }
+  };
+  
+  document.querySelectorAll = function(selector) {
+    try {
+      return originalQuerySelectorAll.call(document, selector);
+    } catch (e) {
+      if (selector && selector.includes(':jqfake')) {
+        console.warn('Invalid selector caught and ignored:', selector);
+        return [];
+      }
+      throw e;
+    }
+  };
+})();
+
 let current_url = window.location.href
 
 $(document).ready(function(){

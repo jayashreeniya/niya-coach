@@ -3,7 +3,7 @@ ActiveAdmin.register AccountBlock::Account, as: "HR" do
   permit_params :full_name, :email, :full_phone_number, :password, :password_confirmation, :access_code   
   FULL_NAME = "Full Name"
   ACCESS_CODE = "Access Code"
-  actions :all, except: [:new]
+  actions :all
   filter :full_name, as: :string, label: FULL_NAME
   filter :email, as: :string, label: "Email"
   filter :full_phone_number
@@ -23,39 +23,60 @@ ActiveAdmin.register AccountBlock::Account, as: "HR" do
   controller do
     before_action :check_all_validations , only: [:create ,:update]
     def check_all_validations
-      account = AccountBlock::EmailAccount.where('LOWER(email) = ?', params[:account]['email'].downcase).first
+      account_params = params[:account] || params['account'] || params[:account_block_account] || params['account_block_account'] || {}
+      email = account_params[:email] || account_params['email']
+      return unless email
+      
+      account = AccountBlock::Account.where('LOWER(email) = ?', email.downcase).first
       if account&.id != params[:id].to_i && account.present? 
         return render json: {errors: [{account: 'Email already taken'}]}, status: :unprocessable_entity
       end
-      full_name = params[:account][:full_name]
-      return render json: {errors: [{full_name: "Full name is invalid. It should contain only letters, no special characters, and be between 1 and 30 characters in length."}]}, status: :unprocessable_entity if check_name_validation(full_name) == false
-      return render json: {errors: [{full_phone_number: "Invalid or Unrecognized Phone Number"}]}, status: :unprocessable_entity if check_phone_number_validation(params[:account]['full_phone_number']) == false
-      if params[:account][:password].present? 
+      full_name = account_params[:full_name] || account_params['full_name']
+      return render json: {errors: [{full_name: "Full name is invalid. It should contain only letters, no special characters, and be between 1 and 30 characters in length."}]}, status: :unprocessable_entity if full_name && check_name_validation(full_name) == false
+      
+      full_phone_number = account_params[:full_phone_number] || account_params['full_phone_number']
+      return render json: {errors: [{full_phone_number: "Invalid or Unrecognized Phone Number"}]}, status: :unprocessable_entity if full_phone_number && check_phone_number_validation(full_phone_number) == false
+      
+      password = account_params[:password] || account_params['password']
+      if password.present? 
         rule = "Password is invalid.Password should be a minimum of 8 characters long,contain both uppercase and lowercase characters,at least one digit,and one special character."
-        return render json: {errors: [{Password: "#{rule}"}]}, status: :unprocessable_entity if check_password_validation(params[:account]['password']) == false
+        return render json: {errors: [{Password: "#{rule}"}]}, status: :unprocessable_entity if check_password_validation(password) == false
       end
-      company = Company.find_by_hr_code(params[:account][:access_code])
-      return render json: {errors: [{account: 'Access code was not valid'}]}, status: :unprocessable_entity if !company.present?
+      access_code = account_params[:access_code] || account_params['access_code']
+      company = Company.find_by_hr_code(access_code) if access_code
+      return render json: {errors: [{account: 'Access code was not valid'}]}, status: :unprocessable_entity if access_code && !company.present?
     end
 
     def scoped_collection
-      @accounts = AccountBlock::Account.where(role_id: BxBlockRolesPermissions::Role.find_by_name(BxBlockRolesPermissions::Role.names[:hr]).id)
+      hr_role = BxBlockRolesPermissions::Role.find_by_name('HR')
+      if hr_role
+        @accounts = AccountBlock::Account.where(role_id: hr_role.id)
+      else
+        @accounts = AccountBlock::Account.none
+      end
     end
 
     def create
-      if params[:account][:type] == 'email_account'
+      account_params = params[:account] || params['account'] || params[:account_block_account] || params['account_block_account'] || {}
+      
+      @account = AccountBlock::Account.new(
+        full_name: account_params[:full_name] || account_params['full_name'],
+        email: account_params[:email] || account_params['email'],
+        full_phone_number: account_params[:full_phone_number] || account_params['full_phone_number'],
+        password: account_params[:password] || account_params['password'],
+        password_confirmation: account_params[:password_confirmation] || account_params['password_confirmation'],
+        access_code: account_params[:access_code] || account_params['access_code']
+      )
 
-        @account = AccountBlock::EmailAccount.new(full_name: params[:account][:full_name], email: params[:account][:email], full_phone_number: params[:account][:full_phone_number], password: params[:account][:password], password_confirmation: params[:account][:password_confirmation], access_code: params[:account][:access_code])
+      return render json: {errors: [{Password: "Password and Confirm Password Not Matched"}]}, status: :unprocessable_entity if @account.password != @account.password_confirmation
 
-        return render json: {errors: [{Password: "Password and Confirm Password Not Matched"}]}, status: :unprocessable_entity if @account.password != @account.password_confirmation
-
-          @account.role_id = BxBlockRolesPermissions::Role.find_by_name(:hr).id
-          if @account.save
-            @account.update(activated: true)
-            redirect_to admin_hrs_path
-          else
-            render json: {errors: [{full_phone_number: "already exists"}]}, status: :unprocessable_entity
-          end
+      hr_role = BxBlockRolesPermissions::Role.find_by_name('HR')
+      @account.role_id = hr_role.id if hr_role
+      if @account.save
+        @account.update(activated: true)
+        redirect_to admin_hrs_path
+      else
+        render json: {errors: [{full_phone_number: "already exists"}]}, status: :unprocessable_entity
       end
     end
     
@@ -84,15 +105,38 @@ ActiveAdmin.register AccountBlock::Account, as: "HR" do
     end
 
     def update
-      @coach = AccountBlock::Account.find(params[:id]) 
-      full_name = params[:account][:full_name]
-      unless full_name =~ /^[a-zA-Z ]{1,30}$/ && !full_name.match(/\d/) && !full_name.match(/[^\w\s]/)
-        return render json: { errors: [{ full_name: "Full name is invalid. It should contain only letters, no special characters, and be between 1 and 30 characters in length." }] }, status: :unprocessable_entity
+      @hr = AccountBlock::Account.find(params[:id])
+      
+      # Extract account params from multiple possible keys
+      account_params = params[:account] || params['account'] || params[:account_block_account] || params['account_block_account'] || {}
+      
+      full_name = account_params[:full_name] || account_params['full_name']
+      if full_name.present?
+        unless full_name =~ /^[a-zA-Z ]{1,30}$/ && !full_name.match(/\d/) && !full_name.match(/[^\w\s]/)
+          return render json: { errors: [{ full_name: "Full name is invalid. It should contain only letters, no special characters, and be between 1 and 30 characters in length." }] }, status: :unprocessable_entity
+        end
       end
-      if @coach.update(permitted_params[:account])  
-        redirect_to admin_hrs_path  
+      
+      # Build update attributes
+      update_attributes = {
+        full_name: account_params[:full_name] || account_params['full_name'] || @hr.full_name,
+        email: account_params[:email] || account_params['email'] || @hr.email,
+        full_phone_number: account_params[:full_phone_number] || account_params['full_phone_number'] || @hr.full_phone_number,
+        access_code: account_params[:access_code] || account_params['access_code'] || @hr.access_code
+      }
+      
+      # Only update password if provided
+      password = account_params[:password] || account_params['password']
+      password_confirmation = account_params[:password_confirmation] || account_params['password_confirmation']
+      if password.present?
+        update_attributes[:password] = password
+        update_attributes[:password_confirmation] = password_confirmation
+      end
+      
+      if @hr.update(update_attributes)
+        redirect_to admin_hrs_path
       else
-        render :edit  
+        render :edit
       end
     end
   end
@@ -125,7 +169,6 @@ ActiveAdmin.register AccountBlock::Account, as: "HR" do
   form title: proc { @form_title || "Add New HR" } do |f|
     f.inputs do
       if f.object.new_record?
-        f.input :type, :input_html => { :value => "email_account"}, as: :hidden
         f.input :full_name, label: FULL_NAME
         f.input :email
         f.input :full_phone_number, label: "Full Phone Number"

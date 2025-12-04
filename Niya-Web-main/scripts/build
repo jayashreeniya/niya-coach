@@ -1,0 +1,45 @@
+#!/bin/bash
+
+startBuild() {
+    ECR_REPO="034362044731.dkr.ecr.ap-southeast-1.amazonaws.com/niya-web"
+    DOCKER_BUILD_TAG=$(echo "$GIT_BRANCH-${BUILD_NUMBER}" | tr -d '\r')
+
+    docker build -t "$ECR_REPO:$DOCKER_BUILD_TAG" --pull=true .
+    if [ $? -eq 0 ]; then
+        echo "Docker build succeeded"
+    else
+        echo "Docker build failed"
+        exit 1
+    fi
+
+    docker images -q "$ECR_REPO"
+
+    # Correct AWS region
+    aws ecr get-login-password --region ap-southeast-1 --profile Appreiz | docker login --username AWS --password-stdin 034362044731.dkr.ecr.ap-southeast-1.amazonaws.com
+
+    IMAGE_ID=$(docker images -q "$ECR_REPO" | awk 'NR==1{print $1}')
+    echo "$IMAGE_ID"
+
+    docker tag "$IMAGE_ID" "$ECR_REPO:latest"
+    docker inspect "$IMAGE_ID"
+
+    docker push "$ECR_REPO:$DOCKER_BUILD_TAG" && docker push "$ECR_REPO:latest"
+    if [ $? -eq 0 ]; then
+        echo "Docker push succeeded"
+        docker logout
+    else
+        echo "Docker push failed"
+        docker logout
+        exit 1
+    fi
+}
+
+if [ "$GIT_BRANCH" = "main" ]; then
+    # aws s3 cp s3://kaaylabs-operations-new/config/duway-ai/.env . --profile new-kaaylabs
+    startBuild
+elif [ "$GIT_BRANCH" = "uat" ]; then
+    aws s3 cp s3://kaaylabs-operations-new/config/duway-ai/uat/.env . --profile new-kaaylabs
+    startBuild
+else
+    echo "Skipping build process. This branch is not permitted for build: ${GIT_BRANCH}"
+fi

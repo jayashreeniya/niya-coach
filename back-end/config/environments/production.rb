@@ -31,8 +31,17 @@ Rails.application.configure do
   # Store uploaded files on Azure Blob Storage (see config/storage.yml for options).
   config.active_storage.service = :microsoft
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  # Force HTTPS and secure cookies in production
+  config.force_ssl = true
+
+  # Ensure session cookies are secure and have sane same_site policy
+  Rails.application.config.session_store :cookie_store,
+    key: '_niya_admin_session',
+    secure: true,
+    same_site: :lax
+
+  # Align default cookie same_site protection with session setting
+  config.action_dispatch.cookies_same_site_protection = :lax
 
   # Use the lowest log level to ensure availability of diagnostic information
   # when problems arise.

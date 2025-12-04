@@ -4,7 +4,10 @@ ActiveAdmin.register BxBlockAppointmentManagement::Availability, as: "Availabili
   actions :all, except: [:new, :edit] 
   menu label: "Availability"
   permit_params :service_provider_id, :start_time, :end_time, :availability_date, :timeslots, :available_slots_count, availability_slots_attributes: [:id, :from, :to, :sno, :booked_slot, :_destroy]
-  filter :service_provider, as: :select, collection: proc { AccountBlock::Account.all.where(role_id: BxBlockRolesPermissions::Role.find_by_name("coach").id) }
+  filter :service_provider, as: :select, collection: proc { 
+    coach_role = BxBlockRolesPermissions::Role.find_by_name("COACH")
+    coach_role ? AccountBlock::Account.all.where(role_id: coach_role.id) : []
+  }
   filter :availability_date
   index :download_links => true do
     selectable_column

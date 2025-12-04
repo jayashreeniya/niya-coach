@@ -6,5 +6,10 @@ module BxBlockUpload
 		has_many :assesment_test_type_answer, class_name: 'BxBlockAssessmenttest::AssesmentTestTypeAnswer', foreign_key: 'assesment_test_type_answer_id'
 
 		enum choose_file: [:audios, :videos, :docs]
+
+		# Required for ActiveAdmin filtering/searching
+		def self.ransackable_attributes(auth_object = nil)
+			["choose_file", "created_at", "id", "updated_at"]
+		end
 	end
 end

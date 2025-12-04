@@ -144,32 +144,17 @@ AZURE_STORAGE_CONTAINER: niya-storage
 
 ## 🗃️ Database Setup
 
-**Database Name:** `niya_admin_db` (already configured)
+**Database Name:** `niya_admin_db`
 
-The database needs to be created and migrations run from your local environment or using Azure Database operations:
+**Status:** ✅ Database exists with all tables already created
 
-1. **Connect to MySQL:**
-   ```bash
-   mysql -h niyawebapp-ee6360db41464ed492e422ac2497b060-dbserver.mysql.database.azure.com -u fzdzwbvndw -pV#niya6!
-   ```
+**Database Details:**
+- **Hostname:** `niyawebapp-ee6360db41464ed492e422ac2497b060-dbserver.mysql.database.azure.com`
+- **Username:** `fzdzwbvndw`
+- **Password:** `V#niya6!`
+- **Connection:** SSL required
 
-2. **Create Database (if not exists):**
-   ```sql
-   CREATE DATABASE IF NOT EXISTS niya_admin_db;
-   ```
-
-3. **Run Migrations:**
-   ```bash
-   cd back-end
-   bundle exec rails db:migrate RAILS_ENV=production
-   ```
-
-4. **Seed Database:**
-   ```bash
-   bundle exec rails db:seed RAILS_ENV=production
-   ```
-
-**Alternative:** Use Azure Container Instances or Cloud Shell to run migrations.
+All database tables are in place in the `niya_admin_db` database.
 
 ---
 
@@ -180,9 +165,10 @@ The database needs to be created and migrations run from your local environment 
 - ✅ **Puma Server:** Running on tcp://0.0.0.0:3000
 - ✅ **Gem Dependencies:** All resolved
 - ✅ **Storage Configuration:** Azure Blob Storage configured
-- ✅ **Database Connection:** Credentials configured (database needs to be created)
-- ⚠️ **Database Schema:** Migrations need to be run
-- ⚠️ **Database Seeds:** Admin users need to be seeded
+- ✅ **Database Connection:** Credentials configured and working
+- ✅ **Database Schema:** All tables exist in `niya_admin_db`
+- ✅ **Login Page:** Working successfully
+- ⚠️ **Admin Pages:** Some routes may need database seeding
 
 ---
 

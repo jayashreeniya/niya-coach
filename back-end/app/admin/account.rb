@@ -24,29 +24,46 @@ ActiveAdmin.register AccountBlock::Account, as: "accounts" do
       end
 
       def check_all_validations
-        account = AccountBlock::EmailAccount.where('LOWER(email) = ?', params[:account]['email'].downcase).first
+        account_params = params[:account] || params['account'] || params[:account_block_account] || params['account_block_account'] || {}
+        email = account_params[:email] || account_params['email']
+        return unless email
+        
+        account = AccountBlock::Account.where('LOWER(email) = ?', email.downcase).first
         if account&.id != params[:id].to_i && account.present? 
           return render json: {errors: [{account: 'Email already taken'}]}, status: :unprocessable_entity
         end
       end
 
       def update
+        # Extract account params from multiple possible keys
+        account_params = params[:account] || params['account'] || params[:account_block_account] || params['account_block_account'] || {}
+        
         super do |success, failure|
-          if params[:account][:activated]
-            resource.update(deactivation: params[:account][:activated] == "1" ? false : true)
+          activated_value = account_params[:activated] || account_params['activated']
+          if activated_value.present?
+            resource.update(deactivation: activated_value == "1" ? false : true)
           end
         end
       end
 
       def check_accounts
-        destroy_accounts(AccountBlock::Account.where(role_id: BxBlockRolesPermissions::Role.find_by_name(:employee).id), :employee_code)
-        destroy_accounts(AccountBlock::Account.where(role_id: BxBlockRolesPermissions::Role.find_by_name(:hr).id), :hr_code)
+        employee_role = BxBlockRolesPermissions::Role.find_by_name('EMPLOYEE')
+        hr_role = BxBlockRolesPermissions::Role.find_by_name('HR')
+        destroy_accounts(AccountBlock::Account.where(role_id: employee_role.id), :employee_code) if employee_role
+        destroy_accounts(AccountBlock::Account.where(role_id: hr_role.id), :hr_code) if hr_role
+      rescue => e
+        Rails.logger.error "Error in check_accounts: #{e.message}"
+        # Continue execution even if check_accounts fails
       end
       
       def destroy_accounts(accounts, access_code_column)
-        accounts.each do |obj|
+        accounts.find_each do |obj|
+          next unless obj.access_code.present?
           company = Company.find_by(access_code_column => obj.access_code)
           obj.destroy if company.nil?
+        rescue => e
+          Rails.logger.error "Error destroying account #{obj.id}: #{e.message}"
+          next
         end
       end
     end
@@ -77,7 +94,8 @@ ActiveAdmin.register AccountBlock::Account, as: "accounts" do
         row :updated_at
       end
 
-      if resource.role_id == BxBlockRolesPermissions::Role.find_by_name(:employee).id
+      employee_role = BxBlockRolesPermissions::Role.find_by_name('EMPLOYEE')
+      if resource.role_id == employee_role.id
         panel "Selected Focus Area" do
           table_for BxBlockAssessmenttest::SelectAnswer.where(account_id: resource.id).last do
             column "Focus Area" do |focus_area|

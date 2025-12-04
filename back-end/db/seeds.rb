@@ -52,3 +52,25 @@ BxBlockAssessmenttest::WellBeingFocusArea.find_or_create_by(answers: "Interperso
 BxBlockAssessmenttest::WellBeingFocusArea.find_or_create_by(answers: "Assertiveness, Integrity", well_being_sub_categoryid: "19") 
 BxBlockAssessmenttest::WellBeingFocusArea.find_or_create_by(answers: "Goal Setting", well_being_sub_categoryid: "20") 
 BxBlockAssessmenttest::WellBeingFocusArea.find_or_create_by(answers: "Financial Planning", well_being_sub_categoryid: "21")
+
+# Seed default lookup tables via builder services (idempotent)
+begin
+  puts "Seeding default languages..."
+  BxBlockLanguageOptions::BuildLanguages.call
+rescue => e
+  puts "Languages seed error: #{e.message}"
+end
+
+begin
+  puts "Seeding default content types..."
+  BxBlockContentManagement::BuildContentType.call
+rescue => e
+  puts "Content types seed error: #{e.message}"
+end
+
+begin
+  puts "Seeding default categories/subcategories..."
+  BxBlockCategories::BuildCategories.call
+rescue => e
+  puts "Categories seed error: #{e.message}"
+end

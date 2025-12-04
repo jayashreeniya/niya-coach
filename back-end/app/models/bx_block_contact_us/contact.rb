@@ -8,6 +8,11 @@ module BxBlockContactUs
     # validate :valid_email, if: Proc.new { |c| c.email.present? }
     # validate :valid_phone_number, if: Proc.new { |c| c.phone_number.present? }
 
+    # Required for ActiveAdmin filtering/searching
+    def self.ransackable_attributes(auth_object = nil)
+      ["account_id", "created_at", "description", "email", "id", "name", "phone_number", "updated_at"]
+    end
+
     def self.filter(query_params)
       ContactFilter.new(self, query_params).call
     end

@@ -13,7 +13,8 @@ ActiveAdmin.register BxBlockUpload::MultipleUploadFile, as: "Multiple Upload Fil
   end
 
   after_create do |obj|
-    accounts = AccountBlock::Account.where(role_id: BxBlockRolesPermissions::Role.find_by_name(:employee).id).joins(:select_answers)
+    employee_role = BxBlockRolesPermissions::Role.find_by_name('EMPLOYEE')
+    accounts = AccountBlock::Account.where(role_id: employee_role.id).joins(:select_answers) if employee_role
     accounts.each do |account|
       obj.file_types.each do |ft|
         focus_area = ft.focus_areas.map{|x| x.to_i}

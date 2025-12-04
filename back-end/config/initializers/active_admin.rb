@@ -310,7 +310,39 @@ ActiveAdmin.setup do |config|
   # You can add your own content to the site head like analytics. Make sure
   # you only pass content you trust.
   #
-  # config.head = ''.html_safe
+  # Fix for invalid selector :has(*,:jqfake) error in ActiveAdmin - inject early in head
+  config.head = <<-HTML.html_safe
+    <script>
+      (function() {
+        const originalQuerySelector = document.querySelector;
+        const originalQuerySelectorAll = document.querySelectorAll;
+        
+        document.querySelector = function(selector) {
+          try {
+            return originalQuerySelector.call(document, selector);
+          } catch (e) {
+            if (selector && typeof selector === 'string' && selector.includes(':jqfake')) {
+              console.warn('Invalid selector caught and ignored:', selector);
+              return null;
+            }
+            throw e;
+          }
+        };
+        
+        document.querySelectorAll = function(selector) {
+          try {
+            return originalQuerySelectorAll.call(document, selector);
+          } catch (e) {
+            if (selector && typeof selector === 'string' && selector.includes(':jqfake')) {
+              console.warn('Invalid selector caught and ignored:', selector);
+              return [];
+            }
+            throw e;
+          }
+        };
+      })();
+    </script>
+  HTML
 
   # == Footer
   #

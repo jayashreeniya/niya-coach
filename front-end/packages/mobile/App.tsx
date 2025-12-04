@@ -1,13 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import SplashScreen from 'react-native-splash-screen';
 import styles from './AppStyles'
 import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
-import {  YellowBox, View, Image, Text } from 'react-native'
-import { createStackNavigator, createBottomTabNavigator } from "react-navigation";
+import {  LogBox, View, Image, Text } from 'react-native'
+import * as ReactNavigation from "react-navigation";
  import { register } from "@videosdk.live/react-native-sdk";
 import * as RootNavigation from '../framework/src/RootNavigation';
-import { AppProvider } from '../components/src/context/AppContext';
-import StackMonitor from '../components/src/StackMonitor';
+import { AppProvider, useAppState } from '../components/src/context/AppContext';
 import UserList from "../blocks/ChatBackuprestore/src/UserList";
 import HomePage from "../blocks/dashboard/src/HomePage";
 import HomeScreen from "../components/src/HomeScreen";
@@ -87,7 +86,6 @@ import AddNewCoach from '../blocks/AdminConsole3/src/AddNewCoach';
 import AddNewCom from '../blocks/AdminConsole3/src/AddNewCom';
 import GameScreen from '../components/src/games/Game';
 
-import { NavigationContainer } from '@react-navigation/native';
 import { checkHome, unchekHome, niyacheck, niyauncheck, mycoachcheck, mycoachuncheck, journychcheck, journychuncheck } from '../blocks/dashboard/src/assets';
 import CoachTab from '../blocks/landingpage/src/CoachTab';
 
@@ -106,7 +104,26 @@ import UserFeedbackDet from '../blocks/AdminConsole3/src/UserFeedbackDet';
 import GamesCompleted from '../blocks/QuestionBank/src/GamesCompleted';
 import UserProfile from '../blocks/user-profile-basic/src/UserProfile';
 import TrackPlayer from "react-native-track-player";
- 
+
+const reactNavigationKeys = Object.keys(ReactNavigation || {});
+console.log('[debug] react-navigation keys:', reactNavigationKeys);
+const {
+  createStackNavigator,
+  createBottomTabNavigator,
+  createSwitchNavigator,
+  createNavigationContainer,
+} = ReactNavigation as any;
+
+const createAppContainerExport = (ReactNavigation as any).createAppContainer;
+console.log(
+  '[debug] createAppContainer type:',
+  typeof createAppContainerExport,
+  'createNavigationContainer type:',
+  typeof createNavigationContainer
+);
+
+const createAppContainer =
+  createAppContainerExport ?? createNavigationContainer;
 
 const NewUsrStack = createStackNavigator({
   Chatbot6: { screen: Chatbot6, navigationOptions: { header: null, title: "Chatbot6" } },
@@ -165,41 +182,39 @@ const renderEmoJourney=(focused:boolean)=>{
 const BottomTabNavigator = createBottomTabNavigator(
   {
     HomePage: { screen: HomePage, navigationOptions: { header: null, title: "HomePage" } },
-    ReassorOrContinue: { screen: ReassorOrContinue, navigationOptions: { header: null, } },
+    ReassorOrContinue: { screen: ReassorOrContinue, navigationOptions: { header: null } },
     MyCoachTab: { screen: LandingPage, navigationOptions: { title: "CoachTab" } },
-
     EmoJourney: { screen: EmoJourney, navigationOptions: { header: null, title: "Journey" } }
   },
   {
-    navigationOptions: ({ navigation }: any) => ({
-      tabBarIcon: ({ tintColor, focused, iconIndex }: any) => {
+    initialRouteName: 'HomePage',
+    defaultNavigationOptions: ({ navigation }: any) => ({
+      tabBarIcon: ({ focused }: any) => {
         const { routeName } = navigation.state;
-        if (routeName === 'HomePage') {
-          return   renderBHome(focused);
-          
-        } else if (routeName === 'ReassorOrContinue') {
-           TrackPlayer.pause()
+
+        if (routeName === "HomePage") {
+          return renderBHome(focused);
+        }
+        if (routeName === "ReassorOrContinue") {
+          TrackPlayer.pause();
           return renderReassignorcont(focused);
         }
-        else if (routeName === 'MyCoachTab') {
-          TrackPlayer.pause()
+        if (routeName === "MyCoachTab") {
+          TrackPlayer.pause();
           return renderMyCoach(focused);
-          
         }
-         else if (routeName === 'EmoJourney') {
-          TrackPlayer.pause()
+        if (routeName === "EmoJourney") {
+          TrackPlayer.pause();
           return renderEmoJourney(focused);
         }
-      },
+        return null;
+      }
     }),
     tabBarOptions: {
       style: styles.bottomTabStyle,
       showLabel: false,
-      keyboardHidesTabBar: true,
-
-    },
-
-
+      keyboardHidesTabBar: true
+    }
   }
 );
 
@@ -368,9 +383,93 @@ if (!HomeScreen.instance) {
   };
   const homeScreen = new HomeScreen(defaultProps);
 }
-console.disableYellowBox = true
-YellowBox.ignoreWarnings(['Warning:'])
- register()
+
+// Replace deprecated YellowBox with LogBox
+LogBox.ignoreAllLogs(false);
+LogBox.ignoreLogs(['Warning:']);
+
+// Register videosdk with error handling
+try {
+  register();
+} catch (error) {
+  console.warn('Failed to register videosdk:', error);
+}
+
+const RootNavigator = createSwitchNavigator(
+  {
+    Splash: SplashStack,
+    Emp: EmpStack,
+    Guest: GuestStack,
+    Coach: CoachStack,
+    HR: HRStack,
+    Admin: AdminStack,
+    NewUser: NewUsrStack,
+    Reass: ReassStack,
+  },
+  {
+    initialRouteName: 'Splash',
+  }
+);
+
+const getRootRoute = (auth: boolean, role: string, isNew: boolean, isshowReass: boolean) => {
+  if (auth) {
+    if (role === "" || role === "employee") {
+      if (isNew) {
+        return "NewUser";
+      }
+      if (isshowReass) {
+        return "Reass";
+      }
+      return "Emp";
+    }
+    if (role === "hr") {
+      return "HR";
+    }
+    if (role === "admin") {
+      return "Admin";
+    }
+    return "Coach";
+  }
+  return "Guest";
+};
+
+const AppContainer = createAppContainer(RootNavigator);
+
+const NavigationOrchestrator = () => {
+  const { auth, role, isNew, isshowReass } = useAppState();
+  const lastRouteRef = useRef<string | null>(null);
+  const [navigatorReady, setNavigatorReady] = useState(false);
+  const targetRoute = useMemo(() => getRootRoute(auth, role, isNew, isshowReass), [auth, role, isNew, isshowReass]);
+
+  useEffect(() => {
+    if (!navigatorReady) {
+      return;
+    }
+    if (lastRouteRef.current === targetRoute) {
+      return;
+    }
+    lastRouteRef.current = targetRoute;
+    RootNavigation.navigate(targetRoute, undefined);
+  }, [navigatorReady, targetRoute]);
+
+  return (
+    <AppContainer
+      ref={(nav: any) => {
+        if (nav && nav._navigation) {
+          RootNavigation.navigationRef.current = nav._navigation;
+          RootNavigation.isReadyRef.current = true;
+          setNavigatorReady(true);
+        }
+      }}
+      onNavigationStateChange={() => {
+        // Ensure navigator is marked as ready when navigation state changes
+        if (!navigatorReady) {
+          setNavigatorReady(true);
+        }
+      }}
+    />
+  );
+};
 
 export function App() {
   useEffect(() => {
@@ -396,27 +495,12 @@ export function App() {
     } catch (err) {
       alert('error')
     }
-
-}
+  }
 
   return (
     <AppProvider>
-        <NavigationContainer
-          ref={RootNavigation.navigationRef}
-          onReady={() => { RootNavigation.isReadyRef.current = true; }}
-        >
-          <StackMonitor
-            empStack={<EmpStack />}
-            guestStack={<GuestStack />}
-            coachStack={<CoachStack />}
-            splashScreen={<SplashStack />}
-            hrStack={<HRStack />}
-            adminStack={<AdminStack />}
-            newUsrStack={<NewUsrStack />}
-            reassStack={<ReassStack />}
-          />
-        </NavigationContainer>
-      </AppProvider>
+      <NavigationOrchestrator />
+    </AppProvider>
   );
 };
 

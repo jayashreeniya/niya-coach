@@ -256,23 +256,23 @@ dependencies {
 
     implementation project(':react-native-svg')
 
-    implementation project(':react-native-share')
+    // implementation project(':react-native-share') // Handled by autolinking
 
     implementation project(':react-native-video')
    
-    implementation project(':react-native-compass-heading')
+    // implementation project(':react-native-compass-heading') // Handled by autolinking
 
-    implementation project(':react-native-reanimated')
+    // implementation project(':react-native-reanimated') // Handled by autolinking
     
     implementation project(':react-native-document-picker')
 
-    implementation project(':react-native-file-viewer')
+    // implementation project(':react-native-file-viewer') // Handled by autolinking
     
     implementation project(':react-native-fs')
     
-    implementation project(':react-native-localize')
+    // implementation project(':react-native-localize') // Handled by autolinking
 
-    implementation project(':react-native-radar')
+    // implementation project(':react-native-radar') // Handled by autolinking
 
     implementation "androidx.core:core-ktx:1.6.0"
     implementation 'org.jetbrains:annotations:16.0.2'

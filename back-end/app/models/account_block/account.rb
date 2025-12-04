@@ -1,6 +1,9 @@
 module AccountBlock
   class Account < AccountBlock::ApplicationRecord
     self.table_name = :accounts
+    
+    # Disable STI to prevent inheritance issues
+    self.inheritance_column = nil
 
     include Wisper::Publisher
     has_many :provider_booked_slots, class_name: 'BxBlockAppointmentManagement::BookedSlot', foreign_key: "service_provider_id"
@@ -11,6 +14,15 @@ module AccountBlock
     has_many :coach_leaves, class_name: "BxBlockAppointmentManagement::CoachLeave"
     has_many :coach_par_avails, class_name: "BxBlockAppointmentManagement::CoachParAvail"
     accepts_nested_attributes_for :coach_par_avails, allow_destroy: true
+    
+    # Log when coach_par_avails_attributes are being processed
+    before_save :log_coach_par_avails_attributes, if: -> { coach_par_avails_attributes.present? }
+    
+    def log_coach_par_avails_attributes
+      Rails.logger.info "=== MODEL: coach_par_avails_attributes DETECTED ==="
+      Rails.logger.info "Account ID: #{self.id}"
+      Rails.logger.info "coach_par_avails_attributes: #{coach_par_avails_attributes.inspect}"
+    end
     has_many :user_languages, class_name: "UserLanguage"
 
     has_secure_password
@@ -43,6 +55,16 @@ module AccountBlock
     validates :email, uniqueness: true, on: :create
     validates :full_phone_number, uniqueness: true#, "full_phone_number has already been taken."
 
+    # Required for ActiveAdmin filtering/searching
+    def self.ransackable_attributes(auth_object = nil)
+      ["access_code", "activated", "city", "created_at", "created_month_year", "deactivation", "education", "email", "expertise", "full_name", "full_phone_number", "gender", "id", "status", "type", "updated_at"]
+    end
+
+    # Required for Ransack 4.0 - associations must be explicitly allowlisted
+    def self.ransackable_associations(auth_object = nil)
+      ["action_items", "assess_select_answers", "chat_messages", "chat_rooms", "choose_answers", "choose_motion_answer", "coach_leaves", "coach_par_avails", "focus_areas", "goals", "image_attachment", "image_blob", "motion", "provider_booked_slots", "role", "select_answers", "select_motions", "summary_tracks", "time_tracks", "top_focus_areas", "user_booked_slots", "user_languages", "user_question_answers", "wellbeing_score_reports"]
+    end
+
     scope :active, -> { where(activated: true) }
     scope :existing_accounts, -> { where(status: ['regular', 'suspended']) }
     # before_update :set_full_name
@@ -59,8 +81,10 @@ module AccountBlock
     end
    
     def check_user_name
-      unless self.full_name.match?(/\A[A-Za-z\s]+\z/)
-        errors.add(:full_name, "can only contain 20 letters and no special character")
+      # Guard against nil and enforce simple alpha/space rule with max length
+      return if self.full_name.blank?
+      unless self.full_name.match?(/\A[A-Za-z\s]{1,30}\z/)
+        errors.add(:full_name, "must be 1-30 letters and spaces only")
       end
     end
 

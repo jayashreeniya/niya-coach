@@ -5,6 +5,11 @@ class CoachSpecialization < ApplicationRecord
 
   validates :focus_areas, presence: true
 
+  # Required for ActiveAdmin filtering/searching
+  def self.ransackable_attributes(auth_object = nil)
+    ["created_at", "expertise", "focus_areas", "id", "updated_at"]
+  end
+
   private
 
   def clean_up_focus_areas

@@ -9,6 +9,16 @@ module BxBlockAppointmentManagement
 
     belongs_to :service_provider,
                class_name: 'AccountBlock::Account', foreign_key: :service_provider_id
+
+    # Required for ActiveAdmin filtering/searching
+    def self.ransackable_attributes(auth_object = nil)
+      ["availability_date", "created_at", "end_time", "id", "service_provider_id", "start_time", "updated_at"]
+    end
+
+    # Required for Ransack 4.0 - associations must be explicitly allowlisted
+    def self.ransackable_associations(auth_object = nil)
+      ["availability_slots", "service_provider"]
+    end
     scope :sp_details, ->(sp_id, availability_date) {
       find_by(service_provider_id: sp_id, availability_date: availability_date)
     }
