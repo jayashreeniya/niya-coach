@@ -16,12 +16,13 @@ module AccountBlock
     accepts_nested_attributes_for :coach_par_avails, allow_destroy: true
     
     # Log when coach_par_avails_attributes are being processed
-    before_save :log_coach_par_avails_attributes, if: -> { coach_par_avails_attributes.present? }
+    # Use defined? check to avoid NameError when attribute is not being set
+    before_save :log_coach_par_avails_attributes, if: -> { defined?(@coach_par_avails_attributes) && @coach_par_avails_attributes.present? }
     
     def log_coach_par_avails_attributes
       Rails.logger.info "=== MODEL: coach_par_avails_attributes DETECTED ==="
       Rails.logger.info "Account ID: #{self.id}"
-      Rails.logger.info "coach_par_avails_attributes: #{coach_par_avails_attributes.inspect}"
+      Rails.logger.info "coach_par_avails_attributes: #{@coach_par_avails_attributes.inspect}"
     end
     has_many :user_languages, class_name: "UserLanguage"
 
