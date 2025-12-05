@@ -25,27 +25,86 @@ const Wellbeing = () => {
     let token = localStorage.getItem('accessToken');
     const navigate = useNavigate();
 
-    const selectwellbeingQuestion1 = async (event) => {
+    const selectwellbeingQuestion1 = async (answerId) => {
+      console.log("Question 1 answer selected:", answerId);
+      
+      if (!Attributesquestion1 || !Attributesquestion1.id) {
+        alert("Question data is not loaded. Please refresh the page.");
+        return;
+      }
 
-      setRadio(true);
-      console.log(radio);
+      var apiBaseUrl = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_assessmenttest/select_answers";
+      
+      const payload = {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json',
+          "token": token,
+        },
+        body: JSON.stringify({
+          "sequence_number": 1,
+          "question_id": Attributesquestion1.id,
+          "answer_id": answerId
+        })
+      };
 
+      try {
+        const response = await fetch(apiBaseUrl, payload);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error submitting Q1 answer:", errorData);
+          alert("Failed to save answer. Please try again.");
+          return;
+        }
+        
+        const data = await response.json();
+        console.log("Q1 answer saved successfully:", data);
+        
+        // Move to Question 2
+        setRadio(true);
+        
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to save answer. Please try again.");
+      }
     }
    
     const SUBMITANSWERS = async (event) => {
-      console.log(AttributesChooseAnswers+" "+assesment_test_answer+" "+assesment_test_question);
+      event.preventDefault(); // Prevent default form submission
+      
+      console.log("SUBMIT clicked - Question 3 answers:", {
+        checked, 
+        upcoming_question
+      });
     
+      // Validation for Question 3 (multiple select, up to 3)
       if(checked.length === 0){
-        alert("please select answers.")
+        alert("Please select at least one answer.");
         return;
       }
       
       if(checked.length > 3){
-          alert("select only three.")
-          return;
-        }
+        alert("Please select only up to 3 answers.");
+        return;
+      }
 
-        var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_assessmenttest/select_answers"
+      // Question 3 uses the /select_answers endpoint
+      var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_assessmenttest/select_answers"
+      
+      // For Question 3, we should have upcoming_question set
+      if (!upcoming_question || !upcoming_question.id) {
+        alert("Question 3 data is not available. Please refresh and try again.");
+        console.error("Missing Question 3 data:", {upcoming_question});
+        return;
+      }
+      
+      console.log("Submitting Question 3 answers:", {
+        question_id: upcoming_question.id,
+        answer_ids: checked
+      });
+      
       const payload3 = {
            method: "POST",
               headers: {
@@ -68,31 +127,30 @@ const Wellbeing = () => {
                  
               if (!response.ok) {
               const errorData = await response.json(); // Read error response
+              console.error("API Error:", errorData);
+              alert("Failed to submit Question 3 answers: " + JSON.stringify(errorData));
               throw new Error(JSON.stringify(errorData)); // Handle errors
-              }else if(response.ok){
-              if (response.status === 200 || response.status === 201) {
-     
-     
-                  }
-          }
-          return response.json();
+              }
+              
+              return response.json();
           })
           .then((data) =>{ 
+              console.log("Question 3 answers submitted successfully:", data);
               
-             
+              // Question 3 is the last question, go to book appointment
+              console.log("Finished assessment, going to book appointment");
               navigate("/bookappointment");
 
-
           })
-          .catch((error) =>{ console.error("Error:", error.message)
-             // alert(JSON.stringify(error.message))
-              
- 
-
+          .catch((error) =>{ 
+              console.error("Error submitting Question 3 answers:", error.message);
+              alert("Failed to submit answers. Please try again.");
           }
       );
 
 
+    } else {
+        alert("Please login first.");
     }
   }
 
@@ -113,7 +171,7 @@ const Wellbeing = () => {
     
     const selectwellbeingQuestion2 = async (event1,event2) => {
 
-      var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_assessmenttest/choose_answers"
+      var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_assessmenttest/choose_answers"
       const payload3 = {
            method: "POST",
               headers: {
@@ -174,7 +232,7 @@ const Wellbeing = () => {
     }
        if(token.length > 0) {
         if(apiloaded1 === false){
-        var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/profile_details"
+        var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/profile_details"
         const payload3 = {
              method: "GET",
                 headers: {
@@ -223,7 +281,7 @@ const Wellbeing = () => {
 
 
 
-    var apiBaseUrl4 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_assessmenttest/personality_test_questions"
+    var apiBaseUrl4 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_assessmenttest/personality_test_questions"
     const payload4 = {
          method: "GET",
             headers: {
@@ -252,22 +310,27 @@ const Wellbeing = () => {
         return response.json();
         })
         .then((data) =>{ 
-            
+            console.log("Personality questions received:", data);
             
           setApiloaded1(true);
-            if(data.data[1].attributes.sequence_number === 1){
-                setAttributesquestion1(data.data[1].attributes);
-                setAnswers1(data.data[1].attributes.answers)
-            }
-            if(data.data[0].attributes.sequence_number === 2){
-                setAttributesquestion2(data.data[0].attributes);
-                setAnswers2(data.data[0].attributes.answers)
-                
-            }
-            //var fullname = data.data.attributes.full_name;
-           
-            //localStorage.setItem("fullname",fullname);
-            //setLoginUserName(fullname);
+          
+          // Handle questions dynamically based on what's returned
+          if(data.data && data.data.length > 0) {
+              data.data.forEach(question => {
+                  if(question.attributes) {
+                      if(question.attributes.sequence_number === 1){
+                          setAttributesquestion1(question.attributes);
+                          setAnswers1(question.attributes.answers || [])
+                      }
+                      if(question.attributes.sequence_number === 2){
+                          setAttributesquestion2(question.attributes);
+                          setAnswers2(question.attributes.answers || [])
+                      }
+                  }
+              });
+          } else {
+              console.warn("No personality questions returned from API");
+          }
             
           
         })
@@ -288,7 +351,7 @@ function App() {
     return (
       
         <div>
-                  {/* Iterate over imported array in userData */}
+          {/* Question 1: Radio buttons (single select) */}
        
           {answers1 && answers1.map && answers1.map((user, index) => (
            
@@ -357,7 +420,8 @@ function App() {
   
         {/* Iterate over imported array in userData */}
         
-          {upcoming_answers && upcoming_answers.map && upcoming_answers.map((user, index) => (
+          {/* Use current answers based on which question is being displayed */}
+          {(upcoming_answers || answers1 || answers2 || []).map && (upcoming_answers || answers1 || answers2 || []).map((user, index) => (
            
               <div className="col-md-12" style={{"display":"inline-flex","width":"100%"}}>
             
@@ -429,7 +493,7 @@ function App() {
             
             <div className="col-md-4"><label></label></div><div className="col-md-6" style={{ "textAlign": "left" }}>
            
-              <span style={{"fontSize":20}}>{loginusername}, {upcoming_question.question_title}</span><br></br>
+              <span style={{"fontSize":20}}>{loginusername}, {upcoming_question && upcoming_question.title ? upcoming_question.title : upcoming_question && upcoming_question.question_title ? upcoming_question.question_title : ''}</span><br></br>
               </div>
               </div>
                 <App3 />
