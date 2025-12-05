@@ -97,13 +97,101 @@ q2 = BxBlockAssessmenttest::AssesmentTestQuestion.find_or_create_by!(sequence_nu
   q.title = "My Professional Life"
 end
 
+# Store Question 2 answer IDs for linking to Question 3
+q2_answers = {}
 ["Work-Life Balance", "Career Development", "Conflict Resolution", "Leadership Skills", "Job Satisfaction"].each do |answer_text|
-  BxBlockAssessmenttest::AssesmentTestAnswer.find_or_create_by!(
+  answer = BxBlockAssessmenttest::AssesmentTestAnswer.find_or_create_by!(
     assesment_test_question_id: q2.id,
     answers: answer_text
   ) do |a|
     a.title = answer_text
   end
+  q2_answers[answer_text] = answer.id
 end
 
 puts "✓ Assessment questions seeded: #{BxBlockAssessmenttest::AssesmentTestQuestion.count} questions, #{BxBlockAssessmenttest::AssesmentTestAnswer.count} answers"
+
+# Question 3 variants - linked to Question 2 answers
+puts "Seeding Question 3 variants (assesment_test_types)..."
+
+# Question 3 for "Work-Life Balance" path
+if q2_answers["Work-Life Balance"]
+  q3_wlb = BxBlockAssessmenttest::AssesmentTestType.find_or_create_by!(
+    assesment_test_answer_id: q2_answers["Work-Life Balance"]
+  ) do |q|
+    q.question_title = "What would you like to talk about today?"
+  end
+  
+  ["Time Management", "Setting Boundaries", "Prioritization", "Energy Management", "Self-Care"].each do |answer|
+    BxBlockAssessmenttest::AssesmentTestTypeAnswer.find_or_create_by!(
+      assesment_test_type_id: q3_wlb.id,
+      answers: answer
+    )
+  end
+end
+
+# Question 3 for "Career Development" path
+if q2_answers["Career Development"]
+  q3_career = BxBlockAssessmenttest::AssesmentTestType.find_or_create_by!(
+    assesment_test_answer_id: q2_answers["Career Development"]
+  ) do |q|
+    q.question_title = "What would you like to talk about today?"
+  end
+  
+  ["Career Goals", "Skill Development", "Career Transition", "Professional Growth", "Networking"].each do |answer|
+    BxBlockAssessmenttest::AssesmentTestTypeAnswer.find_or_create_by!(
+      assesment_test_type_id: q3_career.id,
+      answers: answer
+    )
+  end
+end
+
+# Question 3 for "Conflict Resolution" path
+if q2_answers["Conflict Resolution"]
+  q3_conflict = BxBlockAssessmenttest::AssesmentTestType.find_or_create_by!(
+    assesment_test_answer_id: q2_answers["Conflict Resolution"]
+  ) do |q|
+    q.question_title = "What would you like to talk about today?"
+  end
+  
+  ["Team Dynamics", "Communication Skills", "Difficult Conversations", "Negotiation", "Emotional Intelligence"].each do |answer|
+    BxBlockAssessmenttest::AssesmentTestTypeAnswer.find_or_create_by!(
+      assesment_test_type_id: q3_conflict.id,
+      answers: answer
+    )
+  end
+end
+
+# Question 3 for "Leadership Skills" path
+if q2_answers["Leadership Skills"]
+  q3_leadership = BxBlockAssessmenttest::AssesmentTestType.find_or_create_by!(
+    assesment_test_answer_id: q2_answers["Leadership Skills"]
+  ) do |q|
+    q.question_title = "What would you like to talk about today?"
+  end
+  
+  ["Leadership Style", "Team Management", "Decision Making", "Motivating Others", "Strategic Thinking"].each do |answer|
+    BxBlockAssessmenttest::AssesmentTestTypeAnswer.find_or_create_by!(
+      assesment_test_type_id: q3_leadership.id,
+      answers: answer
+    )
+  end
+end
+
+# Question 3 for "Job Satisfaction" path
+if q2_answers["Job Satisfaction"]
+  q3_satisfaction = BxBlockAssessmenttest::AssesmentTestType.find_or_create_by!(
+    assesment_test_answer_id: q2_answers["Job Satisfaction"]
+  ) do |q|
+    q.question_title = "What would you like to talk about today?"
+  end
+  
+  ["Finding Purpose", "Work Environment", "Recognition", "Job Security", "Growth Opportunities"].each do |answer|
+    BxBlockAssessmenttest::AssesmentTestTypeAnswer.find_or_create_by!(
+      assesment_test_type_id: q3_satisfaction.id,
+      answers: answer
+    )
+  end
+end
+
+puts "✓ Question 3 variants seeded: #{BxBlockAssessmenttest::AssesmentTestType.count} question variants, #{BxBlockAssessmenttest::AssesmentTestTypeAnswer.count} answers"
