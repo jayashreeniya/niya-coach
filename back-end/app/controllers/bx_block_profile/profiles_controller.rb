@@ -1,6 +1,7 @@
 module BxBlockProfile
   class ProfilesController < ApplicationController
       include BuilderJsonWebToken::JsonWebTokenValidation
+      skip_before_action :verify_authenticity_token
       before_action :validate_json_web_token
       before_action :account_detail, :only => [:update_profile, :update_bio, :profile_details, :profile_update]
 

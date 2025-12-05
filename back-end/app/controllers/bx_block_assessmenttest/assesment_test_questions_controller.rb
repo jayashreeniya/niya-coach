@@ -1,5 +1,6 @@
 module BxBlockAssessmenttest
 	class AssesmentTestQuestionsController < ApplicationController
+		skip_before_action :verify_authenticity_token
 		before_action :validate_json_web_token
 		include BuilderJsonWebToken::JsonWebTokenValidation 
 

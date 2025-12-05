@@ -1,6 +1,7 @@
 module BxBlockAssessmenttest
 	class SelectAnswersController < ApplicationController
 		include BuilderJsonWebToken::JsonWebTokenValidation
+		skip_before_action :verify_authenticity_token
 		before_action :validate_json_web_token
 		def create
 			question = BxBlockAssessmenttest::AssesmentTestType.find_by(id:  params[:question_id])
