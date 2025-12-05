@@ -74,3 +74,36 @@ begin
 rescue => e
   puts "Categories seed error: #{e.message}"
 end
+
+# Seed Assessment Test Questions and Answers
+puts "Seeding assessment test questions..."
+
+# Question 1: Personal Life
+q1 = BxBlockAssessmenttest::AssesmentTestQuestion.find_or_create_by!(sequence_number: 1) do |q|
+  q.title = "In Personal Life what do you want to talk about?"
+end
+
+["Stress Management", "Relationship Issues", "Self-Confidence", "Life Balance", "Personal Growth"].each do |answer_text|
+  BxBlockAssessmenttest::AssesmentTestAnswer.find_or_create_by!(
+    assesment_test_question_id: q1.id,
+    answers: answer_text
+  ) do |a|
+    a.title = answer_text
+  end
+end
+
+# Question 2: Professional Life
+q2 = BxBlockAssessmenttest::AssesmentTestQuestion.find_or_create_by!(sequence_number: 2) do |q|
+  q.title = "My Professional Life"
+end
+
+["Work-Life Balance", "Career Development", "Conflict Resolution", "Leadership Skills", "Job Satisfaction"].each do |answer_text|
+  BxBlockAssessmenttest::AssesmentTestAnswer.find_or_create_by!(
+    assesment_test_question_id: q2.id,
+    answers: answer_text
+  ) do |a|
+    a.title = answer_text
+  end
+end
+
+puts "✓ Assessment questions seeded: #{BxBlockAssessmenttest::AssesmentTestQuestion.count} questions, #{BxBlockAssessmenttest::AssesmentTestAnswer.count} answers"
