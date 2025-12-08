@@ -4,20 +4,12 @@ ActiveAdmin.register CoachSpecialization do
   filter :expertise
 
   controller do
-    def create
-      # Clean up focus_areas before creating the record
-      if params[:coach_specialization][:focus_areas].is_a?(Array)
-        params[:coach_specialization][:focus_areas] = params[:coach_specialization][:focus_areas].reject(&:blank?)
-      end
-      super
-    end
+    before_action :clean_focus_areas_params, only: [:create, :update]
 
-    def update
-      # Clean up focus_areas before updating the record
-      if params[:coach_specialization][:focus_areas].is_a?(Array)
-        params[:coach_specialization][:focus_areas] = params[:coach_specialization][:focus_areas].reject(&:blank?)
+    def clean_focus_areas_params
+      if params[:coach_specialization] && params[:coach_specialization][:focus_areas].is_a?(Array)
+        params[:coach_specialization][:focus_areas].reject!(&:blank?)
       end
-      super
     end
   end
   index :download_links => false do 
