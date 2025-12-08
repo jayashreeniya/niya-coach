@@ -1,4 +1,7 @@
 class CoachSpecialization < ApplicationRecord
+	# Serialize focus_areas as array for MySQL compatibility
+	serialize :focus_areas, Array
+	
 	validates :expertise, uniqueness: true
 	
 	before_save :clean_up_focus_areas
