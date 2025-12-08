@@ -16,6 +16,7 @@ class CoachSpecialization < ApplicationRecord
   private
 
   def clean_up_focus_areas
-    self.focus_areas = focus_areas.compact
+    # Remove nil and empty string values from focus_areas array
+    self.focus_areas = focus_areas.compact.reject(&:blank?) if focus_areas.is_a?(Array)
   end
 end
