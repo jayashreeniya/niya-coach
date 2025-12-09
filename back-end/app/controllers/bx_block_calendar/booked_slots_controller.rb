@@ -428,8 +428,7 @@ module BxBlockCalendar
       account.expertise = [] if account.expertise.nil?
       account.expertise.delete("") if account.expertise.include?("")
       return false if account.expertise.nil?
-      # Fix: Only call compact on focus_areas if it's an array
-      CoachSpecialization.all.map {|exp| exp.update(focus_areas: exp.focus_areas.is_a?(Array) ? exp.focus_areas.compact : [])}
+      # Database now properly stores focus_areas as TEXT with YAML arrays, no need to update on every request
       expertise = ["specialization"].product(JSON.parse(account.expertise.to_s)).map { |a| [a].to_h}
       expertise.delete_at(0) if expertise&.first&.values&.first == ""
       expertise&.each do |exp|
