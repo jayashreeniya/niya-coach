@@ -103,12 +103,26 @@ module BxBlockCalendar
             break
           end
         end
-        # TODO: Re-enable when Redis is available
-        # AppointmentBookedNotificationWorker.perform_async(current_user.id, params[:booking_date], params[:start_time]) ##for user
-        # AppointmentBookedNotificationWorker.perform_async(book_appoint&.service_provider_id, params[:booking_date], params[:start_time]) ## for coach notification
-        # appointment_time =  Time.zone.parse(book_appoint.start_time) - 10.minutes - (5*60*60 + 30*60)
-        # ## this worker will send notification before 10 mints of appnt, to user and coach .
-        # AppointmentNotificationWorker.perform_at(appointment_time , book_appoint.id) unless Rails.env.test?
+        # Send email notifications via SendGrid (no Redis needed)
+        begin
+          coach = AccountBlock::Account.find(book_appoint.service_provider_id)
+          booking_details = {
+            booking_date: book_appoint.booking_date,
+            start_time: book_appoint.start_time,
+            end_time: book_appoint.end_time,
+            meeting_code: meeting_data[:meetingId]
+          }
+          
+          # Send confirmation email to user
+          AppointmentMailer.booking_confirmation_email(current_user, coach, booking_details).deliver_now
+          
+          # Send notification email to coach
+          AppointmentMailer.coach_notification_email(coach, current_user, booking_details).deliver_now
+        rescue => e
+          logger.error("Failed to send email: #{e.message}")
+          # Continue even if email fails - booking is still created
+        end
+        
         VideoCallDetail.create(booked_slot_id: book_appoint.id, coach: AccountBlock::Account.find(book_appoint.service_provider_id).full_name , employee: current_user.full_name)
         render json: BxBlockCalendar::BookedSlotSerializer.new(book_appoint, params: {meeting_data: meeting_data}), status: :created
       else

@@ -1,0 +1,24 @@
+NIYA - Appointment Confirmed!
+===============================
+
+Dear <%= @user_name %>,
+
+Your appointment has been successfully booked!
+
+Appointment Details:
+--------------------
+Coach: <%= @coach_name %>
+Date: <%= @booking_date %>
+Time: <%= @start_time %> - <%= @end_time %>
+<% if @meeting_code.present? %>
+Meeting Code: <%= @meeting_code %>
+<% end %>
+
+We're looking forward to your session!
+
+If you need to reschedule or cancel (at least 24 hours in advance), please log in to your account.
+
+---
+© 2025 Niya. All rights reserved.
+This is an automated email. Please do not reply.
+

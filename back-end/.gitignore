@@ -35,3 +35,4 @@ env.txt
 **/credentials*.json
 **/*service*account*.json
 **/*twilio*.json
+sendgrid.env
