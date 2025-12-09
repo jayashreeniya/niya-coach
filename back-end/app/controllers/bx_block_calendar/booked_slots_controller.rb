@@ -369,15 +369,23 @@ module BxBlockCalendar
     end
 
     def render_coach_availability(all_coaches, pagy, focus_areas)
+      # Create metadata hash from pagy object
+      meta = {
+        current_page: pagy.page,
+        total_pages: pagy.pages,
+        total_count: pagy.count,
+        per_page: pagy.items
+      }
+      
       if all_coaches.empty?
-        render json: { data: [], meta: pagy_metadata(pagy) }, status: :ok
+        render json: { data: [], meta: meta }, status: :ok
       else
         render json: BxBlockAppointmentManagement::CheckCoachAvailabilitySerializer.new(
           all_coaches, params: {
             start_time_param: params[:start_time],
             url: request.base_url,
             focus_areas: focus_areas
-          }, meta: pagy_metadata(pagy)
+          }, meta: meta
         ).serializable_hash, status: :ok
       end
     end
@@ -427,7 +435,8 @@ module BxBlockCalendar
       expertise&.each do |exp|
         expertise_focus_areas = CoachSpecialization.where('lower(expertise) LIKE ?', "%"+exp.values.first.to_s.downcase+"%")&.last&.focus_areas
         if expertise_focus_areas.present?
-          expertise_focus_areas = expertise_focus_areas.map {|exp_fc| exp_fc.to_s}
+          # Fix: Ensure expertise_focus_areas is an array before calling map
+          expertise_focus_areas = expertise_focus_areas.is_a?(Array) ? expertise_focus_areas.map {|exp_fc| exp_fc.to_s} : []
           if !(expertise_focus_areas & params).empty?
             return true
           end
