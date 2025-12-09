@@ -78,7 +78,7 @@ const Login = (props) => {
     console.log(isUserLoggedIn+" "+authenticated);
    
     
-    var apiBaseUrl = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_login/logins"
+    var apiBaseUrl = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_login/logins"
     const payload = {
         method: "POST",
         headers: {
@@ -200,7 +200,7 @@ const Login = (props) => {
 
 
 
-      var apiBaseUrl2 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/account_block/accounts"
+      var apiBaseUrl2 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/account_block/accounts"
     const payload2 = {
         method: "POST",
         headers: {
@@ -287,7 +287,7 @@ const Login = (props) => {
        return false;
       }
 
-      var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_forgot_password/otps"
+      var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_forgot_password/otps"
       const payload3 = {
           method: "POST",
           headers: {
@@ -357,7 +357,7 @@ const Login = (props) => {
     let otptoken = localStorage.getItem('otptoken');
 
 
-    var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_forgot_password/otp_confirmations"
+    var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_forgot_password/otp_confirmations"
     const payload3 = {
         method: "POST",
         headers: {
@@ -419,7 +419,7 @@ const Login = (props) => {
   let otptoken = localStorage.getItem('otptoken');
 
 
-  var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_forgot_password/forgot_password"
+  var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_forgot_password/forgot_password"
   const payload3 = {
       method: "POST",
       headers: {

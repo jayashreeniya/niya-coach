@@ -1,11 +1,12 @@
 import React, { useState,useEffect  } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/niyalogo.png";
 import DatePicker from 'react-date-picker';
 import "./calebder.css";
 import Select from 'react-select';
 import dateFormat from 'dateformat';
 // Bootstrap components
-import { Button, Card, Col} from "react-bootstrap";
+import { Button, Card, Col, Alert, Modal} from "react-bootstrap";
 import "../../components/login/bootstrap.css";
 import Media from "../../components/login/Media";
 import Avatar from "../../components/login/Avatar";
@@ -20,6 +21,8 @@ import emailjs from 'emailjs-com';
 
 const Bookappointment = () => {
     let token = localStorage.getItem('accessToken');
+    const location = useLocation();
+    const navigate = useNavigate();
     const [Focusareas, setFocusareas] = useState([]);
     const [apiloaded, setApiloaded] = useState(false);
     const [value, onChange] = useState(new Date());
@@ -31,23 +34,27 @@ const Bookappointment = () => {
     const [hovers, setHovers] = useState(0);
     const [mints, setMints] = useState("00");
     const [visibility, setVisibility] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
    // const BOUNDARY = "----WebKitFormBoundary7MA4YWxkTrZu0gW";
-   const setSelectvalue4 = async (e) => {
+  const setSelectvalue4 = async (e) => {
 
-    setMints(e.value);
-    setSelectvalue2(mints);
+   const selectedMinute = e.value;
+   setMints(selectedMinute);
+   setSelectvalue2(selectedMinute);
 
-   }
+  }
 
-    const setSelectvalue3 = async (e) => {
+   const setSelectvalue3 = async (e) => {
 
-      setHovers(e.value);
-      setSelectvalue1(hovers);
-      var date = dateFormat(value, "dd/mm/yyyy");
-      console.log(selectvalue1.value+"  "+selectvalue2.value+" "+date);
-      setSetdate(date);
-      
-      var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_calendar/booked_slots/view_coach_availability?booking_date="+date+""
+     const selectedHour = e.value;
+     setHovers(selectedHour);
+     setSelectvalue1(selectedHour);
+     var date = dateFormat(value, "dd/mm/yyyy");
+     console.log("Selected time: " + selectedHour + ":" + selectvalue2 + " on " + date);
+     setSetdate(date);
+     
+     // Send booking_date and start_time as separate parameters
+     var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/view_coach_availability?booking_date="+date+"&start_time="+selectedHour+":00"
       const payload3 = {
            method: "GET",
               headers: {
@@ -94,13 +101,13 @@ const Bookappointment = () => {
 
 
    
-    const handleChange = async (value, e) => {
+   const handleChange = async (value, e) => {
 
-      onChange(value);
-      var date = dateFormat(value, "dd/mm/yyyy");
-      console.log(selectvalue1.value+"  "+selectvalue2.value+" "+date);
-      setSetdate(date);
-      var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_calendar/booked_slots/view_coach_availability?booking_date="+date+""
+     onChange(value);
+     var date = dateFormat(value, "dd/mm/yyyy");
+     console.log("Date selected: " + date + " (Time will be: " + selectvalue1 + ":" + selectvalue2 + ")");
+     setSetdate(date);
+     var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/view_coach_availability?booking_date="+date+""
       const payload3 = {
            method: "GET",
               headers: {
@@ -185,54 +192,58 @@ const Bookappointment = () => {
 
     
 
-    const onScreenLoad = async () => {
-        console.log("screen loaded")
+   const onScreenLoad = async () => {
+       console.log("screen loaded")
+      
+       var locationd = window.location.search;
+       const urlParams = new URLSearchParams(locationd);
        
-        var locationd = window.location.search;
-        const urlParams = new URLSearchParams(locationd);
-        
-        let coachbook = localStorage.getItem("coachbooked");
-        
-        
-        if(coachbook === "true"){
-        
-          if(urlParams.has('payment_id') === true){
-          
-          setVisibility(true);
-          localStorage.setItem("booksloatid", 0);
-          localStorage.setItem("coachbooked", false);
+       let coachbook = localStorage.getItem("coachbooked");
+       let justReturnedFromPayment = localStorage.getItem("payment_redirect");
+       
+       
+       if(coachbook === "true"){
+       
+         // Check if has payment_id OR just returned from payment redirect
+         if(urlParams.has('payment_id') === true || justReturnedFromPayment === "true"){
          
-          let loginuseremailid = localStorage.getItem("loginuseremailid");
-          let coname = localStorage.getItem("coachname");
-         
-          const templateParams = {
-            coachname: coname,
-            email: loginuseremailid
-          };
+         console.log("Payment successful, showing confirmation popup");
+         setVisibility(true);
+         localStorage.setItem("booksloatid", 0);
+         localStorage.setItem("coachbooked", false);
+         localStorage.removeItem("payment_redirect"); // Clear the flag
+        
+         let loginuseremailid = localStorage.getItem("loginuseremailid");
+         let coname = localStorage.getItem("coachname");
+        
+         const templateParams = {
+           coachname: coname,
+           email: loginuseremailid
+         };
 
-          emailjs.send('service_5ei721d','template_gq7x8el', templateParams, '4Rs-tDlTCFDqc35tm')
+         emailjs.send('service_5ei721d','template_gq7x8el', templateParams, '4Rs-tDlTCFDqc35tm')
 	       .then((response) => {
 	        console.log('SUCCESS!', response.status, response.text);
 	        }, (err) => {
 	        console.log('FAILED...', err);
 	        });
-          
-            
-            
+         
+           
+           
 
 
-          }else{
+         }else{
 
-          setVisibility(false);
-          let coachbook = localStorage.getItem("coachbooked");
-          console.log("else coachbook "+coachbook);
-          if(coachbook === "true"){
- 
-          let booksloatids = localStorage.getItem("booksloatid");
-          let conames = localStorage.getItem("coachname");
- 
-          console.log("booksloatids :"+booksloatids+" "+conames);
-          if(booksloatids > 0){ 
+         setVisibility(false);
+         let coachbook = localStorage.getItem("coachbooked");
+         console.log("else coachbook "+coachbook);
+         if(coachbook === "true"){
+
+         let booksloatids = localStorage.getItem("booksloatid");
+         let conames = localStorage.getItem("coachname");
+
+         console.log("booksloatids :"+booksloatids+" "+conames);
+         if(booksloatids > 0){
 
             const formData = new FormData();
             formData.append("booked_slot_id", booksloatids);
@@ -240,7 +251,7 @@ const Bookappointment = () => {
 
             try {
               const response = axios.post(
-                  "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_calendar/booked_slots/cancel_booking",
+                  "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/cancel_booking",
                   formData,
                   {
                       headers: {
@@ -259,7 +270,7 @@ const Bookappointment = () => {
 
 
 
-            var apiBaseUrl33 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_calendar/booked_slots/cancel_booking"
+            var apiBaseUrl33 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/cancel_booking"
             const payload33 = {
                  method: "POST",
                     headers: {
@@ -328,7 +339,7 @@ const Bookappointment = () => {
         if(apiloaded === false){
         
             console.log("entered in")
-        var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_assessmenttest/focus_areas"
+        var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_assessmenttest/focus_areas"
         const payload3 = {
              method: "POST",
                 headers: {
@@ -444,7 +455,7 @@ const Bookappointment = () => {
 
        // alert(coachid+" "+coachname+" "+hovers+"  "+mints+" "+selecteddate+" "+starttime+" "+endtime);
 
-        var apiBaseUrl3 = "https://niya-178517-ruby.b178517.prod.eastus.az.svc.builder.ai/bx_block_calendar/booked_slots"
+        var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots"
         const payload3 = {
              method: "POST",
                 headers: {
@@ -483,40 +494,47 @@ const Bookappointment = () => {
           console.log(JSON.stringify(data));
           var bookedsloat_id = data.data.id;
          
-          localStorage.setItem("coachname", ''+coachname+' on '+ selecteddate +' '+starttime+' to '+endtime+'.');
-          localStorage.setItem("coachbooked", true);
-          localStorage.setItem("booksloatid", bookedsloat_id);
-          localStorage.setItem("onlycoachname", coachname);
-          localStorage.setItem("selecteddate", selecteddate);
-          localStorage.setItem("starttime", starttime);
-          localStorage.setItem("endtime", endtime);
+         localStorage.setItem("coachname", ''+coachname+' on '+ selecteddate +' '+starttime+' to '+endtime+'.');
+         localStorage.setItem("coachbooked", true);
+         localStorage.setItem("booksloatid", bookedsloat_id);
+         localStorage.setItem("onlycoachname", coachname);
+         localStorage.setItem("selecteddate", selecteddate);
+         localStorage.setItem("starttime", starttime);
+         localStorage.setItem("endtime", endtime);
+         localStorage.setItem("payment_redirect", "true"); // Flag that we're going to payment
 
-         window.location.href="https://razorpay.com/payment-button/pl_PlfPpsIDwS9SkD/view/?utm_source=payment_button&utm_medium=button&utm_campaign=payment_button";
+        window.location.href="https://razorpay.com/payment-button/pl_PlfPpsIDwS9SkD/view/?utm_source=payment_button&utm_medium=button&utm_campaign=payment_button";
           
 
           
       })
-      .catch((error) =>{ console.error("Error:", error.message)
+      .catch((error) =>{ 
+           console.error("Booking Error:", error.message);
+           
+           localStorage.setItem("coachbooked", false);
+					localStorage.setItem("booksloatid", 0);
+       
+       try {
+         const jsonObject = JSON.parse(error.message);
+         console.log("Error details:", jsonObject);
+         const keyName = "errors";
+         var mes1 = JSON.stringify(jsonObject[keyName]);
          
-            localStorage.setItem("coachbooked", false);
-						localStorage.setItem("booksloatid", 0);
-        const jsonObject = JSON.parse(error.message);
-            const keyName = "errors";
-            var mes1 = JSON.stringify(jsonObject[keyName]);
-            
-            if (mes1.includes("[")) {
-              if (mes1.includes("booking_date")) {
-              alert(jsonObject.errors[0].booking_date);
-              }else if (mes1.includes("booking_date")) {
-                alert(jsonObject.errors[0].booking_date);
-              }else{
-                alert("Something went wrong please validate otp.")
-              }
-            } else {
-              
-              alert(jsonObject.errors);
-              
-              }
+         if (mes1 && mes1.includes("[")) {
+           if (mes1.includes("booking_date")) {
+             alert(jsonObject.errors[0].booking_date);
+           } else {
+             alert("Something went wrong. Please try again.")
+           }
+         } else if (jsonObject.errors) {
+           alert(jsonObject.errors);
+         } else {
+           alert("Failed to book appointment. Please check the date/time and try again.");
+         }
+       } catch (parseError) {
+         console.error("Error parsing booking error:", parseError);
+         alert("Failed to book appointment: " + error.message);
+       }
           
 
 

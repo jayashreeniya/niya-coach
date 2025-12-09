@@ -102,7 +102,9 @@ const Wellbeing = () => {
       
       console.log("Submitting Question 3 answers:", {
         question_id: upcoming_question.id,
-        answer_ids: checked
+        answer_ids: checked,
+        checked_type: typeof checked[0],
+        upcoming_question_full: upcoming_question
       });
       
       const payload3 = {
@@ -319,11 +321,13 @@ const Wellbeing = () => {
               data.data.forEach(question => {
                   if(question.attributes) {
                       if(question.attributes.sequence_number === 1){
-                          setAttributesquestion1(question.attributes);
+                          // Include id from the question object
+                          setAttributesquestion1({...question.attributes, id: question.id});
                           setAnswers1(question.attributes.answers || [])
                       }
                       if(question.attributes.sequence_number === 2){
-                          setAttributesquestion2(question.attributes);
+                          // Include id from the question object
+                          setAttributesquestion2({...question.attributes, id: question.id});
                           setAnswers2(question.attributes.answers || [])
                       }
                   }

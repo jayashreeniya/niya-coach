@@ -103,7 +103,7 @@ module BxBlockCalendar
             break
           end
         end
-        # Send email notifications via SendGrid (no Redis needed)
+        # Send email notifications via Microsoft 365 SMTP (no Redis needed)
         begin
           coach = AccountBlock::Account.find(book_appoint.service_provider_id)
           booking_details = {

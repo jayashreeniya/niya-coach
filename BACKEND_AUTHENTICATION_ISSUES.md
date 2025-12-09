@@ -240,3 +240,5 @@ The backend **infrastructure is working** (deployed, accessible, database connec
 **To unblock:** Need Azure portal access to view application logs OR database access to verify/fix account data.
 
 
+
+
