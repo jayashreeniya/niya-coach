@@ -6,6 +6,7 @@ require 'securerandom'
 module BxBlockCalendar
   class BookedSlotsController < ApplicationController
     include BuilderJsonWebToken::JsonWebTokenValidation
+    include Pagy::Backend
     skip_before_action :verify_authenticity_token
     # before_action :track_login, only: [:video_call]
     before_action :validate_time_intervals,  only: [:create]
@@ -419,7 +420,8 @@ module BxBlockCalendar
       account.expertise = [] if account.expertise.nil?
       account.expertise.delete("") if account.expertise.include?("")
       return false if account.expertise.nil?
-      CoachSpecialization.all.map {|exp| exp.update(focus_areas: exp.focus_areas&.compact)}
+      # Fix: Only call compact on focus_areas if it's an array
+      CoachSpecialization.all.map {|exp| exp.update(focus_areas: exp.focus_areas.is_a?(Array) ? exp.focus_areas.compact : [])}
       expertise = ["specialization"].product(JSON.parse(account.expertise.to_s)).map { |a| [a].to_h}
       expertise.delete_at(0) if expertise&.first&.values&.first == ""
       expertise&.each do |exp|

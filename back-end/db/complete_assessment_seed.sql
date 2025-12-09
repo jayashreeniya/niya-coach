@@ -140,3 +140,5 @@ SELECT
   (SELECT COUNT(*) FROM assesment_test_types) as questions_3,
   (SELECT COUNT(*) FROM assesment_test_type_answers) as answers_3;
 
+
+
