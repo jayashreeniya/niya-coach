@@ -18,7 +18,7 @@ const PaymentSuccess = () => {
 
     // Get booking details from localStorage
     const bookingDetails = {
-      token: localStorage.getItem("token"),
+      token: localStorage.getItem("accessToken"), // Fixed: was "token", should be "accessToken"
       service_provider_id: localStorage.getItem("coachid"),
       booking_date: localStorage.getItem("selecteddate"),
       start_time: localStorage.getItem("starttime"),
