@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./components/login/Login";
 import Wellbeing from "./components/login/Wellbeing";
 import Bookappointment from "./components/login/Bookappointment";
+import PaymentSuccess from "./components/login/PaymentSuccess";
 
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/wellbeingquestions" element={<Wellbeing />} />
         <Route path="/bookappointment" element={<Bookappointment />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
       </Routes>
     </div>
   

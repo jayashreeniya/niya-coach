@@ -477,95 +477,24 @@ const Bookappointment = () => {
           var endtime = d2.toLocaleTimeString([], { hour: '2-digit', minute: "2-digit", hour12: false });
           var starttime = hovers+":"+mints;
 
-       // alert(coachid+" "+coachname+" "+hovers+"  "+mints+" "+selecteddate+" "+starttime+" "+endtime);
+       console.log("🚀 Storing booking details and redirecting to payment...");
+       console.log("Coach:", coachid, coachname, "Date:", selecteddate, "Time:", starttime, "-", endtime);
 
-        var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots"
-        const payload3 = {
-             method: "POST",
-                headers: {
-                'Content-Type': 'application/json;',
-                'accept': 'application/json',
-                "token": ""+token+"",
-                },
-                body: JSON.stringify({
-                  "start_time": ""+starttime+"",
-                  "end_time": ""+endtime+"",
-                  "service_provider_id": coachid,
-                  "booking_date": ""+selecteddate+"",
-                })
-                   
-                };
+        // Store ALL booking details in localStorage for payment success page
+        // DON'T create booking in database yet - only after payment succeeds!
+        localStorage.setItem("coachid", coachid);
+        localStorage.setItem("coachname", coachname);
+        localStorage.setItem("selecteddate", selecteddate);
+        localStorage.setItem("starttime", starttime);
+        localStorage.setItem("endtime", endtime);
+        localStorage.setItem("payment_redirect", "true");
+        
+        console.log("✅ Booking details stored in localStorage");
+        console.log("➡️ Redirecting to Razorpay...");
 
-        if(token){
-  
-          fetch(apiBaseUrl3, payload3)
-          .then(async (response) => {
-             
-          if (!response.ok) {
-          const errorData = await response.json(); // Read error response
-          throw new Error(JSON.stringify(errorData)); // Handle errors
-          }else if(response.ok){
-          if (response.status === 200 || response.status === 201) {
- 
- 
-              }
-      }
-      return response.json();
-      })
-      .then((data) =>{ 
-          
-          
-          console.log(JSON.stringify(data));
-          var bookedsloat_id = data.data.id;
-         
-         localStorage.setItem("coachname", ''+coachname+' on '+ selecteddate +' '+starttime+' to '+endtime+'.');
-         localStorage.setItem("coachbooked", true);
-         localStorage.setItem("booksloatid", bookedsloat_id);
-         localStorage.setItem("onlycoachname", coachname);
-         localStorage.setItem("selecteddate", selecteddate);
-         localStorage.setItem("starttime", starttime);
-         localStorage.setItem("endtime", endtime);
-         localStorage.setItem("payment_redirect", "true"); // Flag that we're going to payment
-
+        // Redirect to Razorpay
+        // After successful payment, Razorpay should redirect to: https://book-appointment.niya.app/payment-success
         window.location.href="https://razorpay.com/payment-button/pl_PlfPpsIDwS9SkD/view/?utm_source=payment_button&utm_medium=button&utm_campaign=payment_button";
-          
-
-          
-      })
-      .catch((error) =>{ 
-           console.error("Booking Error:", error.message);
-           
-           localStorage.setItem("coachbooked", false);
-					localStorage.setItem("booksloatid", 0);
-       
-       try {
-         const jsonObject = JSON.parse(error.message);
-         console.log("Error details:", jsonObject);
-         const keyName = "errors";
-         var mes1 = JSON.stringify(jsonObject[keyName]);
-         
-         if (mes1 && mes1.includes("[")) {
-           if (mes1.includes("booking_date")) {
-             alert(jsonObject.errors[0].booking_date);
-           } else {
-             alert("Something went wrong. Please try again.")
-           }
-         } else if (jsonObject.errors) {
-           alert(jsonObject.errors);
-         } else {
-           alert("Failed to book appointment. Please check the date/time and try again.");
-         }
-       } catch (parseError) {
-         console.error("Error parsing booking error:", parseError);
-         alert("Failed to book appointment: " + error.message);
-       }
-          
-
-
-          }
-        );
-      }
-     
       }
 
       function BookCoachSuccess() {
