@@ -201,16 +201,27 @@ const Bookappointment = () => {
        let justReturnedFromPayment = localStorage.getItem("payment_redirect");
        
        
-       if(coachbook === "true"){
-       
-         // Check if has payment_id OR just returned from payment redirect
-         if(urlParams.has('payment_id') === true || justReturnedFromPayment === "true"){
-         
-         console.log("Payment successful, showing confirmation popup and sending emails");
-         
-         // Get payment_id from URL
-         let paymentId = urlParams.get('payment_id') || 'completed';
-         let bookingId = localStorage.getItem("booksloatid");
+      if(coachbook === "true"){
+      
+        // Check if Razorpay returned with payment success
+        // Razorpay adds razorpay_payment_id to URL after successful payment
+        let hasPaymentId = urlParams.has('payment_id') || urlParams.has('razorpay_payment_id');
+        
+        console.log("Checking payment status:", {
+          hasPaymentId: hasPaymentId,
+          payment_id: urlParams.get('payment_id'),
+          razorpay_payment_id: urlParams.get('razorpay_payment_id'),
+          justReturnedFromPayment: justReturnedFromPayment
+        });
+        
+        // ONLY show success if payment_id exists in URL (proof of payment)
+        if(hasPaymentId){
+        
+        console.log("✅ Payment successful (payment_id found in URL), showing confirmation popup and sending emails");
+        
+        // Get payment_id from URL
+        let paymentId = urlParams.get('razorpay_payment_id') || urlParams.get('payment_id') || 'completed';
+        let bookingId = localStorage.getItem("booksloatid");
          
          // Call backend to confirm payment and send emails
          if(bookingId && bookingId > 0) {
@@ -246,18 +257,26 @@ const Bookappointment = () => {
            
 
 
-         }else{
+        }else{
+        
+        // No payment_id in URL
+        console.log("❌ No payment_id in URL");
+        setVisibility(false);
+        
+        let coachbook = localStorage.getItem("coachbooked");
+        console.log("Checking if we need to cancel booking. coachbook:", coachbook);
+        console.log("justReturnedFromPayment:", justReturnedFromPayment);
+        
+        // If user just returned from payment page but NO payment_id, they didn't pay
+        if(coachbook === "true" && justReturnedFromPayment === "true"){
+          console.log("🚫 User returned from Razorpay without paying - cancelling booking");
+          
+          let booksloatids = localStorage.getItem("booksloatid");
+          let conames = localStorage.getItem("coachname");
 
-         setVisibility(false);
-         let coachbook = localStorage.getItem("coachbooked");
-         console.log("else coachbook "+coachbook);
-         if(coachbook === "true"){
-
-         let booksloatids = localStorage.getItem("booksloatid");
-         let conames = localStorage.getItem("coachname");
-
-         console.log("booksloatids :"+booksloatids+" "+conames);
-         if(booksloatids > 0){
+          console.log("Cancelling booking ID:", booksloatids, "for coach:", conames);
+          
+          if(booksloatids > 0){
 
             const formData = new FormData();
             formData.append("booked_slot_id", booksloatids);
@@ -314,23 +333,32 @@ const Bookappointment = () => {
           return response.json();
           })
           .then((data) =>{ 
-              console.log("Booking cancelled successfully:", JSON.stringify(data));
+              console.log("✅ Booking cancelled successfully:", JSON.stringify(data));
               // No email sent on cancellation
+              // Clear all flags
+              localStorage.removeItem("payment_redirect");
+              localStorage.setItem("booksloatid", 0);
+              localStorage.setItem("coachbooked", false);
           })
-          .catch((error) =>{ console.error("Error:", error.message)
-            console.log(JSON.stringify(error.message));
-           // localStorage.setItem("booksloatid", 0);
-            //localStorage.setItem("coachbooked", false);
-              
-              }
-            );
-          }
+          .catch((error) =>{ 
+              console.error("❌ Error cancelling booking:", error.message);
+              console.log(JSON.stringify(error.message));
+              // Clear flags even if cancel fails
+              localStorage.removeItem("payment_redirect");
+              localStorage.setItem("booksloatid", 0);
+              localStorage.setItem("coachbooked", false);
+            }
+          );
+          
+          }  // closes if(token)
+          
+          // Clear the payment_redirect flag since we handled the cancellation
+          localStorage.removeItem("payment_redirect");
+          }  // closes if(booksloatids > 0)
+        }  // closes if(coachbook && justReturnedFromPayment)
 
-          }
-        }
-
-        }
-      }
+        }  // closes else (no payment_id)
+      }  // closes if(coachbook === "true")
 
         if(apiloaded === false){
         
