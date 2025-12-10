@@ -17,7 +17,6 @@ import { FaLanguage } from "react-icons/fa6";
 import "../../components/login/card.scss";
 import CustomPopup2 from "../../components/CustomPopup2";
 import axios from "axios";
-import emailjs from 'emailjs-com';
 
 const Bookappointment = () => {
     let token = localStorage.getItem('accessToken');
@@ -207,26 +206,41 @@ const Bookappointment = () => {
          // Check if has payment_id OR just returned from payment redirect
          if(urlParams.has('payment_id') === true || justReturnedFromPayment === "true"){
          
-         console.log("Payment successful, showing confirmation popup");
+         console.log("Payment successful, showing confirmation popup and sending emails");
+         
+         // Get payment_id from URL
+         let paymentId = urlParams.get('payment_id') || 'completed';
+         let bookingId = localStorage.getItem("booksloatid");
+         
+         // Call backend to confirm payment and send emails
+         if(bookingId && bookingId > 0) {
+           var confirmPaymentUrl = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/confirm_payment";
+           
+           fetch(confirmPaymentUrl, {
+             method: "POST",
+             headers: {
+               'Content-Type': 'application/json',
+               'token': token
+             },
+             body: JSON.stringify({
+               booked_slot_id: bookingId,
+               payment_id: paymentId
+             })
+           })
+           .then(response => response.json())
+           .then(data => {
+             console.log("Payment confirmed and emails sent:", data);
+           })
+           .catch(error => {
+             console.error("Error confirming payment:", error);
+           });
+         }
+         
+         // Show success popup
          setVisibility(true);
          localStorage.setItem("booksloatid", 0);
          localStorage.setItem("coachbooked", false);
          localStorage.removeItem("payment_redirect"); // Clear the flag
-        
-         let loginuseremailid = localStorage.getItem("loginuseremailid");
-         let coname = localStorage.getItem("coachname");
-        
-         const templateParams = {
-           coachname: coname,
-           email: loginuseremailid
-         };
-
-         emailjs.send('service_5ei721d','template_gq7x8el', templateParams, '4Rs-tDlTCFDqc35tm')
-	       .then((response) => {
-	        console.log('SUCCESS!', response.status, response.text);
-	        }, (err) => {
-	        console.log('FAILED...', err);
-	        });
          
            
            
@@ -300,26 +314,8 @@ const Bookappointment = () => {
           return response.json();
           })
           .then((data) =>{ 
-              
-              
-              console.log(JSON.stringify(data));
-
-              let loginuseremailid = localStorage.getItem("loginuseremailid");
-          let coname = localStorage.getItem("coachname");
-         
-          const templateParams = {
-            coachname: coname,
-            email: loginuseremailid
-          };
-
-          emailjs.send('service_5ei721d','template_yj9ix31', templateParams, '4Rs-tDlTCFDqc35tm')
-	       .then((response) => {
-	        console.log('SUCCESS!', response.status, response.text);
-	        }, (err) => {
-	        console.log('FAILED...', err);
-	        });
-            
-              
+              console.log("Booking cancelled successfully:", JSON.stringify(data));
+              // No email sent on cancellation
           })
           .catch((error) =>{ console.error("Error:", error.message)
             console.log(JSON.stringify(error.message));

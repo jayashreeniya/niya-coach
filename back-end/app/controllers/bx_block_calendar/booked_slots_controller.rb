@@ -103,25 +103,8 @@ module BxBlockCalendar
             break
           end
         end
-        # Send email notifications via Microsoft 365 SMTP (no Redis needed)
-        begin
-          coach = AccountBlock::Account.find(book_appoint.service_provider_id)
-          booking_details = {
-            booking_date: book_appoint.booking_date,
-            start_time: book_appoint.start_time,
-            end_time: book_appoint.end_time,
-            meeting_code: meeting_data[:meetingId]
-          }
-          
-          # Send confirmation email to user
-          AppointmentMailer.booking_confirmation_email(current_user, coach, booking_details).deliver_now
-          
-          # Send notification email to coach
-          AppointmentMailer.coach_notification_email(coach, current_user, booking_details).deliver_now
-        rescue => e
-          logger.error("Failed to send email: #{e.message}")
-          # Continue even if email fails - booking is still created
-        end
+        # DON'T send emails here - booking is created but payment not confirmed yet
+        # Emails will be sent from confirm_payment endpoint after Razorpay confirms payment
         
         VideoCallDetail.create(booked_slot_id: book_appoint.id, coach: AccountBlock::Account.find(book_appoint.service_provider_id).full_name , employee: current_user.full_name)
         render json: BxBlockCalendar::BookedSlotSerializer.new(book_appoint, params: {meeting_data: meeting_data}), status: :created
@@ -133,6 +116,42 @@ module BxBlockCalendar
         render json: {
           errors: [error_hash]
         }, status: :unprocessable_entity
+      end
+    end
+
+    def confirm_payment
+      # Called from frontend AFTER payment is successful
+      booked_slot_id = params[:booked_slot_id]
+      payment_id = params[:payment_id]
+      
+      booked_slot = BxBlockAppointmentManagement::BookedSlot.find_by(id: booked_slot_id)
+      return render json: { error: "Booking not found" }, status: :not_found unless booked_slot.present?
+      
+      # Update booking with payment info
+      booked_slot.update(payment_status: 'paid', payment_id: payment_id) if booked_slot.respond_to?(:payment_status)
+      
+      # Now send emails AFTER payment confirmation
+      begin
+        coach = AccountBlock::Account.find(booked_slot.service_provider_id)
+        user = AccountBlock::Account.find(booked_slot.service_user_id)
+        
+        booking_details = {
+          booking_date: booked_slot.booking_date,
+          start_time: booked_slot.start_time,
+          end_time: booked_slot.end_time,
+          meeting_code: booked_slot.meeting_code
+        }
+        
+        # Send confirmation email to user
+        AppointmentMailer.booking_confirmation_email(user, coach, booking_details).deliver_now
+        
+        # Send notification email to coach
+        AppointmentMailer.coach_notification_email(coach, user, booking_details).deliver_now
+        
+        render json: { message: "Payment confirmed, emails sent" }, status: :ok
+      rescue => e
+        logger.error("Failed to send email after payment: #{e.message}")
+        render json: { error: "Payment confirmed but email failed: #{e.message}" }, status: :unprocessable_entity
       end
     end
 
