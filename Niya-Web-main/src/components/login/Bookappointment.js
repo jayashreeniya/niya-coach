@@ -559,8 +559,8 @@ const Bookappointment = () => {
             <span id="resmsg">{localStorage.getItem("coachname")}</span><br></br>
             
             <span>Please note : To reschedule your session, you need to cancel the booked session and book the new session. Booked session can only be cancelled 24 hours prior to the scheduled time.</span><br></br>
-            <span>For the session with the expert please download our niya wellbeing app from android playstore and ios app store and connect to the expert at that time.</span><br></br>
-            <span id="">Thank You!</span><br></br>
+            <span>For the session with the expert please join the zoom link <a href="https://us06web.zoom.us/j/9774013865" target="_blank" rel="noopener noreferrer" style={{"color":"#0066cc","textDecoration":"underline"}}>https://us06web.zoom.us/j/9774013865</a> at your booked time.</span><br></br>
+            <span id="">Thank you.</span><br></br>
             <div class="centBtn">
             
             </div>
