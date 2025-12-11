@@ -14,3 +14,5 @@ SELECT * FROM bx_block_appointment_management_availabilities LIMIT 5;
 SELECT * FROM roles;
 
 
+
+

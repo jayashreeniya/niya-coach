@@ -312,3 +312,5 @@ LIMIT 5;
 
 **Status:** Backend stable but emails disabled. Frontend working locally. Need env vars to proceed with email deployment.
 
+
+

@@ -159,3 +159,5 @@ This is expected behavior - a booking system can't show appointments without ser
 **Recommended Action:** Work with your psychologists to onboard them and set up their availability schedules through the admin panel.
 
 
+
+

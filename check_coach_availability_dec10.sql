@@ -29,3 +29,5 @@ SELECT 'Coach Specializations' as check_type,
 FROM coach_specializations
 ORDER BY id;
 
+
+

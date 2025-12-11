@@ -541,3 +541,5 @@ available_coaches = matching_coaches.joins(:availabilities).where(
 
 **Remaining Task:** Fix admin panel for coach specializations (non-critical, can be done later)
 
+
+

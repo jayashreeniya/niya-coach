@@ -9,3 +9,5 @@ az containerapp logs show `
 # az containerapp revision list --name niya-admin-app-india --resource-group niya-rg --output table
 
 
+
+

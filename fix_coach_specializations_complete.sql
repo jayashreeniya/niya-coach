@@ -32,3 +32,5 @@ DESCRIBE coach_specializations;
 -- Step 4: Verify the updates worked
 SELECT id, expertise, focus_areas FROM coach_specializations ORDER BY id;
 
+
+

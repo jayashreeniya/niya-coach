@@ -9,7 +9,7 @@ module BxBlockAppointmentManagement
 
     # Required for ActiveAdmin filtering/searching
     def self.ransackable_attributes(auth_object = nil)
-      ["booking_date", "created_at", "end_time", "id", "service_provider_id", "service_user_id", "start_time", "updated_at"]
+      ["booking_date", "created_at", "end_time", "id", "service_provider_id", "service_user_id", "start_time", "updated_at", "status", "organisation"]
     end
 
     # Required for Ransack 4.0 - associations must be explicitly allowlisted

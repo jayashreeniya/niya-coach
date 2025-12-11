@@ -31,3 +31,5 @@ LEFT JOIN accounts u ON bs.service_user_id = u.id
 ORDER BY bs.id DESC
 LIMIT 3;
 
+
+

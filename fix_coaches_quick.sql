@@ -52,3 +52,5 @@ JOIN accounts acc ON a.service_provider_id = acc.id
 WHERE acc.email = 'noreen@gmail.com'
   AND a.availability_date = '12/12/2025';
 
+
+

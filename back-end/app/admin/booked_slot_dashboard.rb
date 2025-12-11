@@ -51,6 +51,8 @@ ActiveAdmin.register  BxBlockAppointmentManagement::BookedSlot, as: "Session Wis
       status_name =
         if current_time <= start_time
           "upcoming"
+        elsif video_call.nil?
+          "No video call record"
         elsif !video_call.coach_presence && !video_call.employee_presence 
           "Both missed the call"
         elsif !video_call.coach_presence && video_call.employee_presence 

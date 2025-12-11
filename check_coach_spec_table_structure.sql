@@ -14,3 +14,5 @@ WHERE TABLE_NAME = 'coach_specializations'
 AND COLUMN_NAME = 'focus_areas';
 
 
+
+

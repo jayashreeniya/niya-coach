@@ -29,3 +29,5 @@ UPDATE coach_specializations SET focus_areas = '---
 SELECT id, expertise, focus_areas FROM coach_specializations;
 
 
+
+

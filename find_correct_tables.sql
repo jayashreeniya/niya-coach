@@ -17,3 +17,5 @@ SELECT id, email, full_name, activated FROM accounts WHERE activated = 1;
 SHOW TABLES;
 
 
+
+

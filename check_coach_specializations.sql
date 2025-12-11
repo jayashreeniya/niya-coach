@@ -5,3 +5,5 @@ DESCRIBE coach_specializations;
 SELECT * FROM coach_specializations LIMIT 5;
 
 
+
+

@@ -7,3 +7,5 @@ ORDER BY id;
 -- Check all records
 SELECT * FROM assesment_test_type_answers ORDER BY id;
 
+
+

@@ -4,3 +4,5 @@ DESCRIBE coach_specializations;
 -- Check the warnings from the last update
 SHOW WARNINGS;
 
+
+
