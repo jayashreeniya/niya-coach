@@ -1,0 +1,18 @@
+diff --git a/node_modules/react-navigation-stack/lib/module/utils/useTheme.js b/node_modules/react-navigation-stack/lib/module/utils/useTheme.js
+index 1234567..abcdefg 100644
+--- a/node_modules/react-navigation-stack/lib/module/utils/useTheme.js
++++ b/node_modules/react-navigation-stack/lib/module/utils/useTheme.js
+@@ -1,7 +1,13 @@
+ import * as React from 'react';
+-import { useTheme as useThemeBase, ThemeColors } from 'react-navigation';
++// Patched for react-navigation v2 compatibility - useTheme hook doesn't exist in v2
++const ThemeColors = { 
++  light: { header: '#fff', label: '#000', headerBorder: '#ccc' }, 
++  dark: { header: '#000', label: '#fff', headerBorder: '#333' } 
++};
+ export default function useTheme() {
+-  const theme = useThemeBase();
++  const theme = 'light'; // Default to light theme for react-navigation v2
+   return React.useMemo(() => {
+     const colors = ThemeColors[theme];
+     const dark = theme === 'dark';

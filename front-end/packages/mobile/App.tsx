@@ -4,7 +4,7 @@ import styles from './AppStyles'
 import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
 import {  LogBox, View, Image, Text } from 'react-native'
 import * as ReactNavigation from "react-navigation";
- import { register } from "@videosdk.live/react-native-sdk";
+// import { register } from "@videosdk.live/react-native-sdk"; // Removed - using Zoom links instead
 import * as RootNavigation from '../framework/src/RootNavigation';
 import { AppProvider, useAppState } from '../components/src/context/AppContext';
 import UserList from "../blocks/ChatBackuprestore/src/UserList";
@@ -388,12 +388,7 @@ if (!HomeScreen.instance) {
 LogBox.ignoreAllLogs(false);
 LogBox.ignoreLogs(['Warning:']);
 
-// Register videosdk with error handling
-try {
-  register();
-} catch (error) {
-  console.warn('Failed to register videosdk:', error);
-}
+// VideoSDK registration removed - using Zoom links for video calls instead
 
 const RootNavigator = createSwitchNavigator(
   {
@@ -452,22 +447,18 @@ const NavigationOrchestrator = () => {
     RootNavigation.navigate(targetRoute, undefined);
   }, [navigatorReady, targetRoute]);
 
+  const handleRef = (nav: any) => {
+    if (nav && nav._navigation) {
+      RootNavigation.navigationRef.current = nav._navigation;
+      RootNavigation.isReadyRef.current = true;
+      if (!navigatorReady) {
+        setNavigatorReady(true);
+      }
+    }
+  };
+
   return (
-    <AppContainer
-      ref={(nav: any) => {
-        if (nav && nav._navigation) {
-          RootNavigation.navigationRef.current = nav._navigation;
-          RootNavigation.isReadyRef.current = true;
-          setNavigatorReady(true);
-        }
-      }}
-      onNavigationStateChange={() => {
-        // Ensure navigator is marked as ready when navigation state changes
-        if (!navigatorReady) {
-          setNavigatorReady(true);
-        }
-      }}
-    />
+    <AppContainer ref={handleRef} />
   );
 };
 
