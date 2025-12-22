@@ -170,18 +170,21 @@ module BxBlockWellbeing
 
     private
 
-    # JWT validation methods removed - BuilderJsonWebToken not available
-    # def current_user
-    #   validate_json_web_token if request.headers[:token] || params[:token]
-    #   return unless @token
-    #   @current_user = AccountBlock::Account.find(@token.id)
-    # end
-
-    # def validate_current_user
-    #   unless current_user
-    #     render json: { message: 'Current User is not authorized' }, status: :unauthorized
-    #   end
-    # end
+    def current_user
+      return @current_user if @current_user
+      
+      token = request.headers[:token] || request.headers['token'] || params[:token]
+      return nil unless token
+      
+      begin
+        decoded = JWT.decode(token, Rails.application.secrets.secret_key_base || Rails.application.credentials.secret_key_base, true, { algorithm: 'HS512' })
+        user_id = decoded[0]['id']
+        @current_user = AccountBlock::Account.find_by(id: user_id)
+      rescue JWT::DecodeError, JWT::ExpiredSignature => e
+        Rails.logger.error("JWT decode error: #{e.message}")
+        nil
+      end
+    end
 
     def access_token_method
       scope = "https://www.googleapis.com/auth/firebase.messaging"
