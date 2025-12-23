@@ -87,10 +87,17 @@ module BxBlockWellbeing
     end
 
     def insights_data
+      unless current_user
+        render json: { error: "Unauthorized" }, status: :unauthorized
+        return
+      end
+      
       if params[:category_id].present?
         category_na = WellBeingCategory.find_by_id(params[:category_id])&.category_name
         user_time = UserQuestionAnswer.get_time_and_data(current_user.id, params[:category_id])
         render json: { data: { category_name: category_na, last_test_taken_on: user_time } }, status: :ok
+      else
+        render json: { error: "Category ID not provided" }, status: :bad_request
       end
     end
 
@@ -177,7 +184,9 @@ module BxBlockWellbeing
       return nil unless token
       
       begin
-        decoded = JWT.decode(token, Rails.application.secrets.secret_key_base || Rails.application.credentials.secret_key_base, true, { algorithm: 'HS512' })
+        # Use ENV['SECRET_KEY'] which is what BuilderJsonWebToken uses for encoding
+        secret_key = ENV['SECRET_KEY'] || Rails.application.secrets.secret_key_base || Rails.application.credentials.secret_key_base
+        decoded = JWT.decode(token, secret_key, true, { algorithm: 'HS512' })
         user_id = decoded[0]['id']
         @current_user = AccountBlock::Account.find_by(id: user_id)
       rescue JWT::DecodeError, JWT::ExpiredSignature => e

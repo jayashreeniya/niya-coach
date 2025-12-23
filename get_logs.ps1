@@ -11,3 +11,10 @@ az containerapp logs show `
 
 
 
+
+
+
+
+
+
+

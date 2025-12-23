@@ -1208,7 +1208,7 @@
     pirates "^4.0.6"
     source-map-support "^0.5.16"
 
-"@babel/runtime@^7.0.0", "@babel/runtime@^7.1.2", "@babel/runtime@^7.10.1", "@babel/runtime@^7.10.4", "@babel/runtime@^7.11.1", "@babel/runtime@^7.11.2", "@babel/runtime@^7.12.5", "@babel/runtime@^7.14.5", "@babel/runtime@^7.16.3", "@babel/runtime@^7.16.7", "@babel/runtime@^7.17.0", "@babel/runtime@^7.18.0", "@babel/runtime@^7.18.3", "@babel/runtime@^7.18.6", "@babel/runtime@^7.20.0", "@babel/runtime@^7.20.7", "@babel/runtime@^7.21.0", "@babel/runtime@^7.23.2", "@babel/runtime@^7.23.9", "@babel/runtime@^7.28.4", "@babel/runtime@^7.3.1", "@babel/runtime@^7.4.4", "@babel/runtime@^7.5.5", "@babel/runtime@^7.6.0", "@babel/runtime@^7.7.2", "@babel/runtime@^7.8.3", "@babel/runtime@^7.8.4", "@babel/runtime@^7.8.7", "@babel/runtime@^7.9.6":
+"@babel/runtime@^7.0.0", "@babel/runtime@^7.1.2", "@babel/runtime@^7.10.1", "@babel/runtime@^7.10.4", "@babel/runtime@^7.11.1", "@babel/runtime@^7.11.2", "@babel/runtime@^7.12.5", "@babel/runtime@^7.16.3", "@babel/runtime@^7.16.7", "@babel/runtime@^7.18.0", "@babel/runtime@^7.18.3", "@babel/runtime@^7.18.6", "@babel/runtime@^7.20.0", "@babel/runtime@^7.20.7", "@babel/runtime@^7.21.0", "@babel/runtime@^7.23.2", "@babel/runtime@^7.23.9", "@babel/runtime@^7.28.4", "@babel/runtime@^7.3.1", "@babel/runtime@^7.4.4", "@babel/runtime@^7.5.5", "@babel/runtime@^7.6.0", "@babel/runtime@^7.7.2", "@babel/runtime@^7.8.3", "@babel/runtime@^7.8.4", "@babel/runtime@^7.8.7", "@babel/runtime@^7.9.6":
   version "7.28.4"
   resolved "https://registry.npmjs.org/@babel/runtime/-/runtime-7.28.4.tgz"
   integrity sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==
@@ -3162,6 +3162,11 @@
   resolved "https://registry.npmjs.org/@react-native/normalize-color/-/normalize-color-1.0.0.tgz"
   integrity sha512-xUNRvNmCl3UGCPbbHvfyFMnpvLPoOjDCcp5bT9m2k+TF/ZBklEQwhPZlkrxRx2NhgFh1X3a5uL7mJ7ZR+8G7Qg==
 
+"@react-native/normalize-color@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@react-native/normalize-color/-/normalize-color-2.0.0.tgz#da955909432474a9a0fe1cbffc66576a0447f567"
+  integrity sha512-Wip/xsc5lw8vsBlmY2MO/gFLp3MvuZ2baBZjDeTjjndMgM0h5sxz7AZR62RDPGgstp8Np7JzjvVqVT7tpFZqsw==
+
 "@react-native/polyfills@1.0.0":
   version "1.0.0"
   resolved "https://registry.npmjs.org/@react-native/polyfills/-/polyfills-1.0.0.tgz"
@@ -3552,94 +3557,6 @@
   version "0.2.0"
   resolved "https://registry.npmjs.org/@trysound/sax/-/sax-0.2.0.tgz"
   integrity sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==
-
-"@twilio/conversations@2.2.0":
-  version "2.2.0"
-  resolved "https://registry.npmjs.org/@twilio/conversations/-/conversations-2.2.0.tgz"
-  integrity sha512-qT00zQ8AfBrY9PgHxLXgLmMNriZIGaT6ZLmAdQkNk32TVN76kDpHgW2EDTMohmLtwpLWwBYDGKBjoVSx6GaY7w==
-  dependencies:
-    "@babel/runtime" "^7.17.0"
-    "@twilio/declarative-type-validator" "^0.2.1"
-    "@twilio/deprecation-decorator" "^0.2.0"
-    "@twilio/mcs-client" "^0.6.1"
-    "@twilio/notifications" "^2.0.1"
-    "@twilio/operation-retrier" "^4.0.9"
-    "@twilio/replay-event-emitter" "^0.3.1"
-    core-js "^3.17.3"
-    iso8601-duration "=1.2.0"
-    isomorphic-form-data "^2.0.0"
-    lodash.isequal "^4.5.0"
-    loglevel "^1.8.0"
-    platform "^1.3.6"
-    twilio-sync "~3.1.0"
-    twilsock "~0.12.2"
-    uuid "^3.4.0"
-
-"@twilio/declarative-type-validator@^0.1.11":
-  version "0.1.11"
-  resolved "https://registry.npmjs.org/@twilio/declarative-type-validator/-/declarative-type-validator-0.1.11.tgz"
-  integrity sha512-yRAMLPD8j3k67UFvPeZvfTlKYuceiNq+iZ8a/ADzAbZMeaV0FMvsJmG97MH8yN/VdXY9hcscchsnc99bJ1sClw==
-  dependencies:
-    "@babel/runtime" "^7.14.5"
-    core-js "^3.17.3"
-
-"@twilio/declarative-type-validator@^0.2.1", "@twilio/declarative-type-validator@^0.2.10":
-  version "0.2.10"
-  resolved "https://registry.npmjs.org/@twilio/declarative-type-validator/-/declarative-type-validator-0.2.10.tgz"
-  integrity sha512-q3ep+qsctZ0u+xr1U6/kjs4RlIJ/u8+wHyUQkrNCoVtjgnCV938P0RP7OUkW/fYt/vLhfy0Nnzo1G0bBbn9o/w==
-  dependencies:
-    "@babel/runtime" "^7.17.0"
-    core-js "^3.17.3"
-
-"@twilio/deprecation-decorator@^0.2.0":
-  version "0.2.8"
-  resolved "https://registry.npmjs.org/@twilio/deprecation-decorator/-/deprecation-decorator-0.2.8.tgz"
-  integrity sha512-kDWN6sxOisTMQXQL0JgvzqGjNZIUj+hdZ1eZtm/5z6EMb14xuoi6qSXb//0x6Yn02zSrr6c7K8YKDrUawDRabQ==
-  dependencies:
-    "@babel/runtime" "^7.17.0"
-    core-js "^3.17.3"
-    loglevel "1.8.0"
-
-"@twilio/mcs-client@^0.6.1":
-  version "0.6.10"
-  resolved "https://registry.npmjs.org/@twilio/mcs-client/-/mcs-client-0.6.10.tgz"
-  integrity sha512-MrZtvxyChUXUpcHG+BR/hY3u573/HsBtMMrTQE4HRvy3v9ZYY0RhHrECqW2TRw0iA3R9quk0CNrz357fjg8I+w==
-  dependencies:
-    "@babel/runtime" "^7.17.0"
-    "@twilio/declarative-type-validator" "^0.2.10"
-    "@twilio/operation-retrier" "^4.0.18"
-    core-js "^3.17.3"
-    loglevel "^1.8.0"
-    xmlhttprequest "^1.8.0"
-
-"@twilio/notifications@^2.0.1":
-  version "2.0.9"
-  resolved "https://registry.npmjs.org/@twilio/notifications/-/notifications-2.0.9.tgz"
-  integrity sha512-sHuiIwSPx9xMo6y2l1p+lISs7kWt299B7AOsFqhoetgQr/Pz2PePwKLDruch9OWtW8ZNnT/vOpoz7qbN15vvmA==
-  dependencies:
-    "@babel/runtime" "^7.17.0"
-    "@twilio/declarative-type-validator" "^0.2.10"
-    "@twilio/operation-retrier" "^4.0.18"
-    core-js "^3.17.3"
-    loglevel "^1.8.0"
-    twilsock "~0.12.2"
-    uuid "^3.4.0"
-
-"@twilio/operation-retrier@^4.0.18", "@twilio/operation-retrier@^4.0.7", "@twilio/operation-retrier@^4.0.9":
-  version "4.0.18"
-  resolved "https://registry.npmjs.org/@twilio/operation-retrier/-/operation-retrier-4.0.18.tgz"
-  integrity sha512-vG3i41XEa4lyC3+8FRFbjYBPZQftkI1WrJTtTDBf85N2UzZ8brqrUp9EbSdQmny1/zIvoZ18AswQrvBDLtNEvA==
-  dependencies:
-    "@babel/runtime" "^7.17.0"
-    core-js "^3.17.3"
-
-"@twilio/replay-event-emitter@^0.3.1":
-  version "0.3.10"
-  resolved "https://registry.npmjs.org/@twilio/replay-event-emitter/-/replay-event-emitter-0.3.10.tgz"
-  integrity sha512-GaT5ihN3eJvIgCV81ggvLgtNwMtD2pBR4hMrFE/dlqN73FsNw01bawLSMIofOdRj8ydEPgvSTJHVCIjBWKHQvg==
-  dependencies:
-    "@babel/runtime" "^7.17.0"
-    core-js "^3.17.3"
 
 "@types/babel__core@^7.0.0", "@types/babel__core@^7.1.0", "@types/babel__core@^7.1.7":
   version "7.20.5"
@@ -4465,11 +4382,6 @@
   resolved "https://registry.npmjs.org/@videosdk.live/js-sdk/-/js-sdk-0.0.101.tgz"
   integrity sha512-LMmCCiZQYJUCIchCgU4LozmRL5ETjNxBixgXERm1SxGUPuYuRW1g11+VLPT10E7m8Ryz9Byrwst389xPfVz/jQ==
 
-"@videosdk.live/js-sdk@0.0.63":
-  version "0.0.63"
-  resolved "https://registry.npmjs.org/@videosdk.live/js-sdk/-/js-sdk-0.0.63.tgz"
-  integrity sha512-BTNPIgqQQzueVA8nrz5RJd6nOZo2SxNm3MWuLUKi5Etz3CnRVvfRDzz0MsaxyLLLn29NTLrV8J7l8sYb+kfzmg==
-
 "@videosdk.live/js-sdk@0.0.67":
   version "0.0.67"
   resolved "https://registry.npmjs.org/@videosdk.live/js-sdk/-/js-sdk-0.0.67.tgz"
@@ -4484,16 +4396,6 @@
   version "0.0.9"
   resolved "https://registry.npmjs.org/@videosdk.live/react-native-incallmanager/-/react-native-incallmanager-0.0.9.tgz"
   integrity sha512-waisqluM+otiCsAEsEOjT5nmkyydJ9EeH2m5w3+YhOyXzXni78ih7yJBHQDxBekbCYTnW3vkSMpGKvmZhyvGjw==
-
-"@videosdk.live/react-native-sdk@0.0.45":
-  version "0.0.45"
-  resolved "https://registry.npmjs.org/@videosdk.live/react-native-sdk/-/react-native-sdk-0.0.45.tgz"
-  integrity sha512-TRLmsSzXtYRaKOiw84IqOKhTQWVe5mqtEBHYXAMT51v4leytjZHFC8bn81JgXvJyPAjDsMGZXihyQ0T8COir/w==
-  dependencies:
-    "@videosdk.live/react-native-foreground-service" "^0.0.2"
-    "@videosdk.live/react-native-incallmanager" "^0.0.9"
-    "@videosdk.live/react-native-webrtc" "^0.0.6"
-    "@videosdk.live/react-sdk" "0.1.68"
 
 "@videosdk.live/react-native-sdk@0.0.49":
   version "0.0.49"
@@ -4514,14 +4416,6 @@
     base64-js "1.5.1"
     event-target-shim "6.0.2"
     tar "6.1.11"
-
-"@videosdk.live/react-sdk@0.1.68":
-  version "0.1.68"
-  resolved "https://registry.npmjs.org/@videosdk.live/react-sdk/-/react-sdk-0.1.68.tgz"
-  integrity sha512-hHReEzd9Hwp+1kEKefo5mjhBsB/jV2wbPJJ02XrcNyPSmNQA+veL6jsyX8Mwz5m647SK92sbgxLafLwQ3mNeKA==
-  dependencies:
-    "@videosdk.live/js-sdk" "0.0.63"
-    events "^3.3.0"
 
 "@videosdk.live/react-sdk@0.1.73":
   version "0.1.73"
@@ -7414,7 +7308,7 @@ core-js@^3.1.4, core-js@^3.6.5:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.47.0.tgz#436ef07650e191afeb84c24481b298bd60eb4a17"
   integrity sha512-c3Q2VVkGAUyupsjRnaNX6u8Dq2vAdzm9iuPj5FW0fRxzlxgq9Q39MDq10IvmQSpLgHQNyQzQmOo6bgGHmH3NNg==
 
-core-js@^3.17.3, core-js@^3.6.4:
+core-js@^3.6.4:
   version "3.42.0"
   resolved "https://registry.npmjs.org/core-js/-/core-js-3.42.0.tgz"
   integrity sha512-Sz4PP4ZA+Rq4II21qkNqOEDTDrCvcANId3xpIgB34NDkWc3UduWj2dqEtN9yZIq8Dk3HyPI33x9sqqU5C8sr0g==
@@ -10375,17 +10269,6 @@ fork-ts-checker-webpack-plugin@4.1.6:
     tapable "^1.0.0"
     worker-rpc "^0.1.0"
 
-form-data@^2.3.2:
-  version "2.5.3"
-  resolved "https://registry.npmjs.org/form-data/-/form-data-2.5.3.tgz"
-  integrity sha512-XHIrMD0NpDrNM/Ckf7XJiBbLl57KEhT3+i3yY+eWm+cqYZJQTZrKo8Y8AWKnuV5GT4scfuUGt9LzNoIx3dU1nQ==
-  dependencies:
-    asynckit "^0.4.0"
-    combined-stream "^1.0.8"
-    es-set-tostringtag "^2.1.0"
-    mime-types "^2.1.35"
-    safe-buffer "^5.2.1"
-
 form-data@^3.0.0:
   version "3.0.4"
   resolved "https://registry.npmjs.org/form-data/-/form-data-3.0.4.tgz"
@@ -12067,11 +11950,6 @@ isexe@^2.0.0:
   resolved "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz"
   integrity sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==
 
-iso8601-duration@=1.2.0:
-  version "1.2.0"
-  resolved "https://registry.npmjs.org/iso8601-duration/-/iso8601-duration-1.2.0.tgz"
-  integrity sha512-ErTBd++b17E8nmWII1K1uZtBgD1E8RjyvwmxlCjPHNqHMD7gmcMHOw0E8Ro/6+QT4PhHRSnnMo7bxa1vFPkwhg==
-
 isobject@^2.0.0:
   version "2.1.0"
   resolved "https://registry.npmjs.org/isobject/-/isobject-2.1.0.tgz"
@@ -12091,13 +11969,6 @@ isomorphic-fetch@^2.1.1:
   dependencies:
     node-fetch "^1.0.1"
     whatwg-fetch ">=0.10.0"
-
-isomorphic-form-data@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.npmjs.org/isomorphic-form-data/-/isomorphic-form-data-2.0.0.tgz"
-  integrity sha512-TYgVnXWeESVmQSg4GLVbalmQ+B4NPi/H4eWxqALKj63KsUrcu301YDjBqaOw3h+cbak7Na4Xyps3BiptHtxTfg==
-  dependencies:
-    form-data "^2.3.2"
 
 isstream@~0.1.2:
   version "0.1.2"
@@ -12212,11 +12083,6 @@ iterator.prototype@^1.1.4:
     get-proto "^1.0.0"
     has-symbols "^1.1.0"
     set-function-name "^2.0.2"
-
-javascript-state-machine@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.npmjs.org/javascript-state-machine/-/javascript-state-machine-3.1.0.tgz"
-  integrity sha512-BwhYxQ1OPenBPXC735RgfB+ZUG8H3kjsx8hrYTgWnoy6TPipEy4fiicyhT2lxRKAXq9pG7CfFT8a2HLr6Hmwxg==
 
 jest-changed-files@^24.9.0:
   version "24.9.0"
@@ -13891,12 +13757,7 @@ loglevel-colored-level-prefix@^1.0.0:
     chalk "^1.1.3"
     loglevel "^1.4.1"
 
-loglevel@1.8.0:
-  version "1.8.0"
-  resolved "https://registry.npmjs.org/loglevel/-/loglevel-1.8.0.tgz"
-  integrity sha512-G6A/nJLRgWOuuwdNuA6koovfEV1YpqqAG4pRUlFaz3jj2QNZ8M4vBqnVA+HBTmU/AMNUtlOsMmSpF6NyOjztbA==
-
-loglevel@^1.4.1, loglevel@^1.6.3, loglevel@^1.6.8, loglevel@^1.8.0:
+loglevel@^1.4.1, loglevel@^1.6.8:
   version "1.9.2"
   resolved "https://registry.npmjs.org/loglevel/-/loglevel-1.9.2.tgz"
   integrity sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==
@@ -15841,11 +15702,6 @@ pkg-up@3.1.0:
   integrity sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==
   dependencies:
     find-up "^3.0.0"
-
-platform@^1.3.6:
-  version "1.3.6"
-  resolved "https://registry.npmjs.org/platform/-/platform-1.3.6.tgz"
-  integrity sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==
 
 please-upgrade-node@^3.2.0:
   version "3.2.0"
@@ -21150,37 +21006,6 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.npmjs.org/tweetnacl/-/tweetnacl-0.14.5.tgz"
   integrity sha512-KXXFFdAbFXY4geFIwoyNK+f5Z1b7swfXABfL7HXCmoIWMKU3dmS26672A4EeQtDzLKy7SXmfBu51JolvEKwtGA==
 
-twilio-sync@~3.1.0:
-  version "3.1.0"
-  resolved "https://registry.npmjs.org/twilio-sync/-/twilio-sync-3.1.0.tgz"
-  integrity sha512-KNkbbnoBITpsmxV2UnmNDEot/Q5t7p5I1zP05oqj0OYT1kMcZq4nhiSNkcxkunfxINFSUzz8d/mUA82yWS7iLQ==
-  dependencies:
-    "@babel/runtime" "^7.14.5"
-    "@twilio/declarative-type-validator" "^0.1.11"
-    "@twilio/operation-retrier" "^4.0.7"
-    core-js "^3.17.3"
-    iso8601-duration "=1.2.0"
-    loglevel "^1.6.3"
-    platform "^1.3.6"
-    twilsock "^0.12.2"
-    uuid "^3.4.0"
-
-twilsock@^0.12.2, twilsock@~0.12.2:
-  version "0.12.2"
-  resolved "https://registry.npmjs.org/twilsock/-/twilsock-0.12.2.tgz"
-  integrity sha512-7G59f2TCEnxcY2ZBCzaZOPmMDoxDrK9lMTiA7UvuiKca37Dljbdlu2EHI3+d7gU1JHkH5GNCmyxqJzSbZodwXA==
-  dependencies:
-    "@babel/runtime" "^7.14.5"
-    "@twilio/declarative-type-validator" "^0.1.11"
-    "@twilio/operation-retrier" "^4.0.7"
-    core-js "^3.17.3"
-    iso8601-duration "=1.2.0"
-    javascript-state-machine "^3.1.0"
-    loglevel "^1.6.3"
-    platform "^1.3.6"
-    uuid "^3.4.0"
-    ws "^5.2.3"
-
 type-check@^0.4.0, type-check@~0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/type-check/-/type-check-0.4.0.tgz#07b8203bfa7056c0657050e3ccd2c37730bab8f1"
@@ -21607,7 +21432,7 @@ utils-merge@1.0.1:
   resolved "https://registry.npmjs.org/utils-merge/-/utils-merge-1.0.1.tgz"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
 
-uuid@3.4.0, uuid@^3.3.2, uuid@^3.4.0:
+uuid@3.4.0, uuid@^3.3.2:
   version "3.4.0"
   resolved "https://registry.npmjs.org/uuid/-/uuid-3.4.0.tgz"
   integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
@@ -22299,7 +22124,7 @@ ws@^1.1.0, ws@^1.1.5:
     options ">=0.0.5"
     ultron "1.0.x"
 
-ws@^5.2.0, ws@^5.2.3:
+ws@^5.2.0:
   version "5.2.4"
   resolved "https://registry.npmjs.org/ws/-/ws-5.2.4.tgz"
   integrity sha512-fFCejsuC8f9kOSu9FYaOw8CdO68O3h5v0lg4p74o8JqWpwTf9tniOD+nOB78aWoVSS6WptVUmDrp/KPsMVBWFQ==
@@ -22399,7 +22224,7 @@ xmlhttprequest-ssl@~2.0.0:
   resolved "https://registry.npmjs.org/xmlhttprequest-ssl/-/xmlhttprequest-ssl-2.0.0.tgz"
   integrity sha512-QKxVRxiRACQcVuQEYFsI1hhkrMlrXHPegbbd1yn9UHOmRxY+si12nQYzri3vbzt8VdTTRviqcKxcyllFas5z2A==
 
-xmlhttprequest@1.8.0, xmlhttprequest@^1.8.0:
+xmlhttprequest@1.8.0:
   version "1.8.0"
   resolved "https://registry.npmjs.org/xmlhttprequest/-/xmlhttprequest-1.8.0.tgz"
   integrity sha512-58Im/U0mlVBLM38NdZjHyhuMtCqa61469k2YP/AaPbvCoV9aQGUpbJBj1QRm2ytRiVQBD/fsw7L2bJGDVQswBA==

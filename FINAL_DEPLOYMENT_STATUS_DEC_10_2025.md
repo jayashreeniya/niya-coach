@@ -310,3 +310,10 @@ az containerapp up --name niya-admin-app-india --resource-group niya-rg --source
 
 
 
+
+
+
+
+
+
+

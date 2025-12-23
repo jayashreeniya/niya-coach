@@ -128,3 +128,4 @@ Changes need to be committed:
 - App.tsx modifications
 - New patch file for react-navigation-stack
 
+

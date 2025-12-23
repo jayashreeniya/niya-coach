@@ -31,3 +31,10 @@ SELECT id, expertise, focus_areas FROM coach_specializations;
 
 
 
+
+
+
+
+
+
+
