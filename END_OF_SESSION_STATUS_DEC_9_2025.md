@@ -232,3 +232,4 @@ SELECT * FROM bx_block_appointment_management_booked_slots ORDER BY id DESC LIMI
 
 
 
+

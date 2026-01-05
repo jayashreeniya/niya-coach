@@ -52,23 +52,56 @@ module AccountBlock
 		attributes :focus_areas do |object|
 			user_focus_areas=[]
 			@focus_areas = BxBlockAssessmenttest::SelectAnswer.where(account_id: object.id).last
-			topfocus = TopfocusArea.where(account_id: object&.id)
+			topfocus = TopfocusArea.where(account_id: object&.id).first
 			topfocus = TopfocusArea.create(account_id: object&.id) if topfocus.blank?
+			focus_area_ids = []
+			stored_focus_areas = nil
 			if @focus_areas.present?
 				user_focus_areas = BxBlockAssessmenttest::AssesmentTestTypeAnswer.where(id: @focus_areas&.multiple_answers).to_a
 				focus_area_ids = BxBlockAssessmenttest::AssesmentTestTypeAnswer.where(id: @focus_areas&.multiple_answers).ids
 				topfocus.update(select_focus_area_id: focus_area_ids)
 				stored_focus_areas = BxBlockAssessmenttest::StoringFocusArea.create(account_id: object.id, focus_areas_id: focus_area_ids)
 			end
-			wll_obj_focus_area = BxBlockAssessmenttest::WellBeingFocusArea.where('multiple_account && ARRAY[?]::integer[]',[object.id]).to_a
-			wll_obj_focus_areas_ids = BxBlockAssessmenttest::WellBeingFocusArea.where('multiple_account && ARRAY[?]::integer[]',[object.id]).ids
-			topfocus.update(wellbeingfocus_id: wll_obj_focus_areas_ids)
+			
+		# MySQL-compatible query: Find WellBeingFocusArea where multiple_account contains the user id
+		# multiple_account is serialized as JSON array
+		wll_obj_focus_area = []
+		wll_obj_focus_areas_ids = []
+		begin
+			Rails.logger.info("InsightSerializer: Looking for focus areas for user #{object.id}")
+			BxBlockAssessmenttest::WellBeingFocusArea.find_each do |fa|
+				# Use the serialized attribute directly (model has serialize :multiple_account, JSON)
+				accounts = fa.multiple_account
+				
+				# Handle various data states (including legacy double-serialized data)
+				if accounts.is_a?(String)
+					# Try to parse as JSON (handles double-serialized data)
+					accounts = JSON.parse(accounts) rescue []
+				end
+				accounts = [] if accounts.nil? || !accounts.is_a?(Array)
+				
+				Rails.logger.info("InsightSerializer: Checking '#{fa.answers}' (id: #{fa.id}), accounts: #{accounts.inspect}")
+				
+				# Check for both integer and string versions of the user ID
+				if accounts.include?(object.id) || accounts.include?(object.id.to_s)
+					Rails.logger.info("InsightSerializer: MATCH! Found focus area '#{fa.answers}' for user #{object.id}")
+					wll_obj_focus_area << fa
+					wll_obj_focus_areas_ids << fa.id
+				end
+			end
+			Rails.logger.info("InsightSerializer: Found #{wll_obj_focus_area.count} wellbeing focus areas for user #{object.id}")
+		rescue => e
+			Rails.logger.error("Error fetching WellBeingFocusArea: #{e.message}")
+			Rails.logger.error(e.backtrace.first(5).join("\n"))
+		end
+			
+			topfocus.update(wellbeingfocus_id: wll_obj_focus_areas_ids) if wll_obj_focus_areas_ids.present?
 			if focus_area_ids.present? && wll_obj_focus_areas_ids.present?
 				focus_area_ids << wll_obj_focus_areas_ids
 			end
 			if stored_focus_areas.present?
 				stored_focus_areas.update(focus_areas_id: focus_area_ids.flatten.uniq)
-			else
+			elsif focus_area_ids.present?
 				BxBlockAssessmenttest::StoringFocusArea.create(account_id: object.id ,focus_areas_id: focus_area_ids&.flatten&.uniq)
 			end
 			if wll_obj_focus_area.present?

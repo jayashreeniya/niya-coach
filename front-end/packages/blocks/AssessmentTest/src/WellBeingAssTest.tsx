@@ -111,13 +111,26 @@ export default class WellBeingAssTest extends WellBeingAssTestController {
             <View>
               {this.state.loading ? (<View style={styles.loaderContainer }>
                 <ActivityIndicator style={styles.loading} size="large" /></View>
+              ) : this.state.questionResponse?.length === 0 ? (
+                <View style={styles.noQuestionsContainer}>
+                  <Typography font="REG" size={16} color={"#666"} style={styles.noQuestionsText}>
+                    No questions available for this category at the moment.
+                  </Typography>
+                  <TouchableOpacity 
+                    testID="btnGoBack" 
+                    style={styles.nxtBtnCont}
+                    onPress={() => this.props.navigation.goBack()}
+                  >
+                    <Text style={styles.nxtBtnText}>{"Go Back"}</Text>
+                  </TouchableOpacity>
+                </View>
               ) : <>
                 <View style={[styles.container, styles.contentContainer]}>
                 <View style={styles.sliderPCont}>
                     <View style={styles.sliderCont}>
                     <Slider
                         testID="sldr"
-                        maximumValue={this.state.questionResponse?.length}
+                        maximumValue={this.state.questionResponse?.length || 1}
                         minimumValue={0}
                         maximumTrackTintColor="#000000"
                         trackStyle={styles.trackStyle}
@@ -129,7 +142,7 @@ export default class WellBeingAssTest extends WellBeingAssTestController {
                         
                     </View>
                     <View style={styles.sliderText}>
-                    <Typography font="REG" size={14} color={"black"} >{this.state.qtnIndex+1+'/'+this.state.questionResponse?.length.toString()}</Typography> 
+                    <Typography font="REG" size={14} color={"black"} >{this.state.qtnIndex+1+'/'+(this.state.questionResponse?.length || 0).toString()}</Typography> 
                     </View>
                 </View>
                 <View style={styles.qtnContainer}>
@@ -296,6 +309,17 @@ const styles = StyleSheet.create({
     textAlign: 'center', 
     textAlignVertical: 'center', 
     // margin: 25
+  },
+  noQuestionsContainer:{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Scale(20),
+    paddingVertical: Scale(40)
+  },
+  noQuestionsText:{
+    textAlign: 'center',
+    marginBottom: Scale(30)
   }
 });
 // Customizable Area End

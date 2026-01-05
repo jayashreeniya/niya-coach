@@ -18,18 +18,30 @@ module BxBlockAddress
       
       def filter_files(object, params, choose_file)
         top_focus_area = object.top_focus_areas.last
-        files_data = BxBlockUpload::FileType.joins(:multiple_upload_file)
-          .where(
-            "multiple_upload_files.choose_file = :choose_file AND " +
-            "(ARRAY_REMOVE(file_types.focus_areas, '')::varchar[] && ARRAY[:focus_areas]::varchar[] " +
-            "OR ARRAY_REMOVE(file_types.well_being_focus_areas, '')::integer[] && ARRAY[:wellbeing_ids]::integer[])",
-            focus_areas: top_focus_area&.select_focus_area_id,
-            wellbeing_ids: top_focus_area&.wellbeingfocus_id,
-            choose_file: BxBlockUpload::MultipleUploadFile.choose_files[choose_file]
-          )
+        
+        # Get the user's focus area IDs
+        user_focus_area_ids = top_focus_area&.select_focus_area_id || []
+        user_wellbeing_ids = top_focus_area&.wellbeingfocus_id || []
+        
+        # Get all files of the specified type
+        all_files = BxBlockUpload::FileType.joins(:multiple_upload_file)
+          .where(multiple_upload_files: { choose_file: BxBlockUpload::MultipleUploadFile.choose_files[choose_file] })
           .distinct
+        
+        # Filter in Ruby for MySQL compatibility (avoid PostgreSQL array syntax)
+        files_data = all_files.select do |file|
+          # Get focus_areas as array, handle nil/empty
+          file_focus_areas = file.focus_areas.is_a?(Array) ? file.focus_areas.reject(&:empty?) : []
+          file_wellbeing_areas = file.well_being_focus_areas.is_a?(Array) ? file.well_being_focus_areas : []
+          
+          # Check if any user focus area matches file focus areas
+          focus_match = user_focus_area_ids.present? && (file_focus_areas & user_focus_area_ids.map(&:to_s)).any?
+          wellbeing_match = user_wellbeing_ids.present? && (file_wellbeing_areas.map(&:to_i) & user_wellbeing_ids.map(&:to_i)).any?
+          
+          focus_match || wellbeing_match
+        end
 
-        files_data.each { |record| record.focus_areas.reject!(&:empty?) }
+        files_data.each { |record| record.focus_areas.reject!(&:empty?) if record.focus_areas.is_a?(Array) }
         media_details(files_data, params, choose_file)
       end
 

@@ -128,10 +128,27 @@ export default class WellBeingAssTestController extends BlockComponent<
   async componentDidMount() {
     super.componentDidMount();
     
-       this.setState({ token: this.context.state.token,selectedCatId:this.props.navigation.state.params.categoryId},()=>{
-            this.getQuestions();
-           
-           });
+    // Safely get categoryId from navigation params
+    const categoryId = this.props.navigation.getParam?.('categoryId') 
+      || this.props.navigation.state?.params?.categoryId
+      || this.props.route?.params?.categoryId;
+    
+    console.log('[WellBeingAssTest] componentDidMount - categoryId:', categoryId);
+    console.log('[WellBeingAssTest] navigation params:', this.props.navigation.state?.params);
+    
+    if (!categoryId) {
+      console.error('[WellBeingAssTest] No categoryId provided!');
+      this.setState({ loading: false, questionResponse: [] });
+      return;
+    }
+    
+    this.setState({ 
+      token: this.context.state.token,
+      selectedCatId: categoryId
+    }, () => {
+      console.log('[WellBeingAssTest] Making API call for category:', this.state.selectedCatId);
+      this.getQuestions();
+    });
     
     // Customizable Area Start
     BackHandler.addEventListener('hardwareBackPress',()=> true); 
@@ -151,20 +168,36 @@ export default class WellBeingAssTestController extends BlockComponent<
     );
  if(errorReponse)
       {
+        console.log('[WellBeingAssTest] API Error response:', errorReponse);
         this.setState({loading:false})
         return true;
       }
       else if(responseJson?.errors)
       {
-       
+        console.log('[WellBeingAssTest] API returned errors:', responseJson.errors);
         return true;
       }
 
     if (responseJson) {
-      this.setState({loading:false});        
+      this.setState({loading:false});
+      console.log('[WellBeingAssTest] API Response received:', JSON.stringify(responseJson).substring(0, 500));
  
   if(apiRequestCallId === this.getQuestionsApiCallId)
   {
+      console.log('[WellBeingAssTest] Questions API response - data length:', responseJson?.data?.length);
+      console.log('[WellBeingAssTest] Full response structure:', Object.keys(responseJson || {}));
+      
+      // Check if data exists and has questions
+      if (!responseJson?.data || responseJson.data.length === 0) {
+        console.log('[WellBeingAssTest] No questions found for category:', this.state.selectedCatId);
+        this.setState({
+          questionResponse: [],
+          selectedQue: null,
+          qtnIndex: 0,
+          question_id: 0
+        });
+        return;
+      }
 
       let fquestion = responseJson?.data[0]
      
@@ -187,17 +220,28 @@ export default class WellBeingAssTestController extends BlockComponent<
   }
 
   handleQtnSubmitRes=(responseJson:any)=>{
+    console.log('[WellBeingAssTest] handleQtnSubmitRes - response:', responseJson);
+    console.log('[WellBeingAssTest] handleQtnSubmitRes - last_question:', responseJson?.last_question);
+    console.log('[WellBeingAssTest] handleQtnSubmitRes - current qtnIndex:', this.state.qtnIndex);
 
     if(responseJson?.last_question)
     {
+        console.log('[WellBeingAssTest] Last question reached, navigating to WellbeingScore');
         this.props.navigation.navigate("WellbeingScore",{isFrom:"test"});
     }else{
-this.setState({ answer_id:"",question_id:"",qtnIndex:  this.state.qtnIndex+1 },()=>{
-  this.setState({selectedQue:this.state.questionResponse[this.state.qtnIndex]},()=>{
-      this.setState({question_id:this.state.selectedQue?.id});
-  })
-});
-}
+      const newIndex = this.state.qtnIndex + 1;
+      console.log('[WellBeingAssTest] Moving to next question - newIndex:', newIndex);
+      console.log('[WellBeingAssTest] Next question will be:', this.state.questionResponse[newIndex]);
+      
+      this.setState({ answer_id:"",question_id:"",qtnIndex: newIndex },()=>{
+        console.log('[WellBeingAssTest] State updated - qtnIndex now:', this.state.qtnIndex);
+        this.setState({selectedQue:this.state.questionResponse[this.state.qtnIndex]},()=>{
+            console.log('[WellBeingAssTest] selectedQue now:', this.state.selectedQue?.attributes?.question_answers?.question?.question);
+            // Fix: Use correct path to question id
+            this.setState({question_id: this.state.selectedQue?.attributes?.question_answers?.question?.id});
+        })
+      });
+    }
 
   }
 
@@ -210,13 +254,21 @@ this.setState({ answer_id:"",question_id:"",qtnIndex:  this.state.qtnIndex+1 },(
 
   nxtPressProps={
     onPress:()=>{
+      console.log('[WellBeingAssTest] Next pressed - current state:', {
+        qtnIndex: this.state.qtnIndex,
+        question_id: this.state.question_id,
+        answer_id: this.state.answer_id,
+        selectedQue_id: this.state.selectedQue?.id,
+        selectedQue_question_id: this.state.selectedQue?.attributes?.question_answers?.question?.id,
+        totalQuestions: this.state.questionResponse?.length
+      });
       
       const body = {
-    
         question_id: Number(this.state.question_id),
         answer_id: Number(this.state.answer_id)
-       
-    }
+      }
+      console.log('[WellBeingAssTest] Submitting answer:', body);
+      
       if(this.state.answer_id=="" || this.state.question_id=="")
       {
         this.showAlert("Alert !","No option is selected");
@@ -230,6 +282,10 @@ this.setState({ answer_id:"",question_id:"",qtnIndex:  this.state.qtnIndex+1 },(
   getQuestions(): boolean {
     // Customizable Area Start
     this.setState({loading:true});
+    
+    const endpoint = `bx_block_wellbeing/well_beings?category_id=${this.state.selectedCatId}`;
+    console.log('[WellBeingAssTest] Calling API endpoint:', endpoint);
+    console.log('[WellBeingAssTest] With token:', this.state.token ? 'Token present' : 'NO TOKEN!');
    
     const header = {
       "Content-Type": configJSON.dashboarContentType,
@@ -241,7 +297,7 @@ this.setState({ answer_id:"",question_id:"",qtnIndex:  this.state.qtnIndex+1 },(
     this.getQuestionsApiCallId = requestMessage.messageId;
     requestMessage.addData(
       getName(MessageEnum.RestAPIResponceEndPointMessage),
-      `bx_block_wellbeing/well_beings?category_id=${this.state.selectedCatId}`
+      endpoint
     );
 
     requestMessage.addData(
@@ -276,7 +332,7 @@ this.setState({ answer_id:"",question_id:"",qtnIndex:  this.state.qtnIndex+1 },(
 
     requestMessage.addData(
       getName(MessageEnum.RestAPIRequestHeaderMessage),
-      header
+      JSON.stringify(header)
     );
 
     requestMessage.addData(

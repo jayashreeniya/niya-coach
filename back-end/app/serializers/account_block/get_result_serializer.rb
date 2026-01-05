@@ -36,14 +36,17 @@ module AccountBlock
             cat_count = category_scores.count
             category_final_score = category_scores.reduce(0, :+) if category_scores.length > 0
             category_percentage=(category_final_score*10)/cat_count
-            user_answer_result = UserAnswerResult.where(category_id: cate.id ,subcategory_id: nil)
+            # Query for category-level results (where subcategory_id is null or empty)
+            user_answer_result = UserAnswerResult.where(category_id: cate.id).where("subcategory_id IS NULL OR subcategory_id = ''")
+            Rails.logger.info("Category #{cate.category_name}: score=#{category_final_score}, found #{user_answer_result.count} UserAnswerResult records")
             user_uar=nil
             cat_score_level=nil
             user_answer_result&.each do |uar|
-              if category_final_score>=uar&.min_score and category_final_score<=uar&.max_score
+              Rails.logger.info("  Checking UAR: min=#{uar&.min_score}, max=#{uar&.max_score}, score_level=#{uar&.score_level}")
+              if category_final_score>=uar&.min_score.to_i and category_final_score<=uar&.max_score.to_i
                 user_uar=uar&.advice
                 cat_score_level=uar.score_level
-            
+                Rails.logger.info("  MATCHED! advice=#{user_uar&.truncate(50)}")
                 break
               end
             end
@@ -79,7 +82,7 @@ module AccountBlock
             final_score = scores.length > 0? scores.reduce(0, :+):0 
             percentage=(final_score*10)/count if !count.zero?
             sub_user_answer_result = UserAnswerResult.where(category_id: cate.id).where(subcategory_id: sub_cate.id)
-            focus_area = BxBlockAssessmenttest::WellBeingFocusArea.find_by(well_being_sub_categoryid: sub_cate.id)&.answers
+            focus_area = BxBlockAssessmenttest::WellBeingFocusArea.find_by(well_being_sub_categoryid: sub_cate.id.to_s)&.answers
             sub_user_uar=nil
             score_level=nil
             sub_user_answer_result&.each do |uar|
@@ -107,21 +110,47 @@ module AccountBlock
                 profile_type << obj[:advice]
               end
               percentage = obj[:percentage]
-              well_being_focus_area = BxBlockAssessmenttest::WellBeingFocusArea.where(well_being_sub_categoryid: sub_cate&.id)
+              # Query with string conversion for MySQL compatibility
+              well_being_focus_area = BxBlockAssessmenttest::WellBeingFocusArea.where(well_being_sub_categoryid: sub_cate&.id.to_s)
+              Rails.logger.info("Focus area update - subcategory: #{sub_cate&.sub_category_name}, id: #{sub_cate&.id}, score_level: #{obj[:score_level]}, found: #{well_being_focus_area.count}")
+              
               if  (obj[:score_level] == "high" || obj[:score_level] == "medium") && percentage.present?
-                well_being_focus_area.map do|well_being_focus_area1|
-                  if well_being_focus_area1.present? &&  well_being_focus_area1.multiple_account.include?(object.id)
-                    well_being_focus_area1.multiple_account.delete(object.id)
-                    well_being_focus_area1.save
-                  end           
+                well_being_focus_area.each do|well_being_focus_area1|
+                  begin
+                    well_being_focus_area1.reload
+                    accounts = well_being_focus_area1.multiple_account
+                    # Handle legacy double-serialized data
+                    accounts = JSON.parse(accounts) if accounts.is_a?(String)
+                    accounts = [] if accounts.nil? || !accounts.is_a?(Array)
+                    if accounts.include?(object.id)
+                      accounts.delete(object.id)
+                      well_being_focus_area1.update!(multiple_account: accounts)
+                      Rails.logger.info("Removed user #{object.id} from focus area #{well_being_focus_area1.answers}")
+                    end
+                  rescue => e
+                    Rails.logger.error("FAILED to remove from focus area: #{e.message}")
+                  end
                 end
               end 
               if  obj[:score_level] == "low" && percentage.present?
-                well_being_focus_area.map do|well_being_focus_area1|
-                  unless well_being_focus_area1.multiple_account.include?(object.id)
-                    well_being_focus_area1.multiple_account<< object.id
-                    well_being_focus_area1.save 
-                  end           
+                well_being_focus_area.each do|well_being_focus_area1|
+                  begin
+                    well_being_focus_area1.reload
+                    accounts = well_being_focus_area1.multiple_account
+                    # Handle legacy double-serialized data
+                    accounts = JSON.parse(accounts) if accounts.is_a?(String)
+                    accounts = [] if accounts.nil? || !accounts.is_a?(Array)
+                    Rails.logger.info("Focus area #{well_being_focus_area1.answers}: current accounts = #{accounts.inspect}")
+                    
+                    unless accounts.include?(object.id)
+                      accounts << object.id
+                      well_being_focus_area1.update!(multiple_account: accounts)
+                      Rails.logger.info("SAVED user #{object.id} to focus area #{well_being_focus_area1.answers}, new value: #{accounts.inspect}")
+                    end
+                  rescue => e
+                    Rails.logger.error("FAILED to save focus area #{well_being_focus_area1.answers}: #{e.message}")
+                    Rails.logger.error(e.backtrace.first(3).join("\n"))
+                  end
                 end
               end 
             end

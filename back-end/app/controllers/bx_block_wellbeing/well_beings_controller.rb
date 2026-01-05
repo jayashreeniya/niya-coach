@@ -7,6 +7,11 @@ module BxBlockWellbeing
     FCM_CREDENTIALS_PATH = Rails.root.join('config', 'fcm_push_notification.json').to_s
 
     def index
+      unless current_user
+        render json: { error: "Unauthorized" }, status: :unauthorized
+        return
+      end
+      
       if params[:category_id].present?
         # Fetch all questions in the category
         all_questions = QuestionWellBeing.where(category_id: params[:category_id]).order('updated_at asc')
@@ -45,9 +50,19 @@ module BxBlockWellbeing
     end
 
     def user_answer
+      unless current_user
+        render json: { error: "Unauthorized" }, status: :unauthorized
+        return
+      end
+      
       useranswer = nil
-      # if current_user
-        category_id = QuestionWellBeing.find_by_id(params[:question_id]).category_id
+      question = QuestionWellBeing.find_by_id(params[:question_id])
+      unless question
+        render json: { error: "Question not found" }, status: :not_found
+        return
+      end
+      
+      category_id = question.category_id
         UserQuestionAnswer.where(wellbeing_test_id: nil).delete_all
         wellbeing_test = WellbeingTest.where(category_id: category_id, account_id: current_user.id).last
         if wellbeing_test.present? &&  wellbeing_test.status == true
