@@ -23,10 +23,16 @@ jobs:
           distribution: 'zulu'
           java-version: '11'
 
+      - name: Install yarn
+        run: npm install -g yarn
+
       - name: Install dependencies
         run: |
           cd front-end
-          npm install --legacy-peer-deps
+          yarn install --network-timeout 300000 --ignore-scripts
+          yarn postinstall || true
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Make gradlew executable
         run: chmod +x front-end/packages/mobile/android/gradlew
