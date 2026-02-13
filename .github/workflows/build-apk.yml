@@ -26,11 +26,21 @@ jobs:
       - name: Install yarn
         run: npm install -g yarn
 
+      - name: Remove problematic preinstall script
+        run: |
+          cd front-end
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            delete pkg.scripts.preinstall;
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+            console.log('Removed preinstall script');
+          "
+
       - name: Install dependencies
         run: |
           cd front-end
-          yarn install --network-timeout 300000 --ignore-scripts
-          yarn postinstall || true
+          yarn install --network-timeout 300000 || yarn install --network-timeout 300000 --no-lockfile
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
