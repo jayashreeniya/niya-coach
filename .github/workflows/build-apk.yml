@@ -29,24 +29,29 @@ jobs:
       - name: Configure git to use HTTPS instead of SSH
         run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
 
-      - name: Remove problematic preinstall script
+      - name: Remove problematic scripts from package.json
         run: |
           cd front-end
           node -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
             delete pkg.scripts.preinstall;
+            delete pkg.scripts.postinstall;
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-            console.log('Removed preinstall script');
+            console.log('Removed preinstall and postinstall scripts');
           "
 
       - name: Install dependencies
         run: |
           cd front-end
-          yarn install --network-timeout 300000 --ignore-scripts || yarn install --network-timeout 300000 --no-lockfile --ignore-scripts
-          npx patch-package || echo "Some patches failed to apply, continuing anyway..."
+          yarn install --network-timeout 300000 || yarn install --network-timeout 300000 --no-lockfile
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
+
+      - name: Apply patches
+        run: |
+          cd front-end
+          npx patch-package || echo "Some patches failed to apply, continuing anyway..."
 
       - name: Make gradlew executable
         run: chmod +x front-end/packages/mobile/android/gradlew
