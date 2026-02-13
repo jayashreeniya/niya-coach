@@ -1,0 +1,49 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: |
+          cd front-end
+          npm install --legacy-peer-deps
+
+      - name: Make gradlew executable
+        run: chmod +x front-end/packages/mobile/android/gradlew
+
+      - name: Build Release APK
+        run: |
+          cd front-end/packages/mobile/android
+          ./gradlew assembleRelease
+        env:
+          GRADLE_OPTS: '-Dorg.gradle.daemon=true -Xmx4g'
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: niya-release-apk
+          path: front-end/packages/mobile/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
