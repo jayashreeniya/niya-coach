@@ -11,5 +11,9 @@ module BxBlockUpload
 		def self.ransackable_attributes(auth_object = nil)
 			["choose_file", "created_at", "id", "updated_at"]
 		end
+
+		def self.ransackable_associations(auth_object = nil)
+			["file_types", "assesment_test_type_answer"]
+		end
 	end
 end

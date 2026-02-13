@@ -6,7 +6,11 @@ module BxBlockRating
 
         # Required for ActiveAdmin filtering/searching
         def self.ransackable_attributes(auth_object = nil)
-          ["account_id", "coach_rating", "created_at", "id", "updated_at"]
+          ["account_id", "app_rating", "coach_id", "coach_rating", "created_at", "feedback", "id", "organisation", "updated_at"]
+        end
+        
+        def self.ransackable_associations(auth_object = nil)
+          []
         end
 
         def update_rating

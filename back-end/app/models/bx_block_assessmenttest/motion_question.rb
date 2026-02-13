@@ -8,7 +8,11 @@ module BxBlockAssessmenttest
 
 		# Required for ActiveAdmin filtering/searching
 		def self.ransackable_attributes(auth_object = nil)
-			["created_at", "id", "motion_id", "updated_at"]
+			["created_at", "emo_question", "id", "motion_answer_ids", "motion_id", "question", "updated_at"]
+		end
+		
+		def self.ransackable_associations(auth_object = nil)
+			["motion", "motion_answers"]
 		end
 	end
 end

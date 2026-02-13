@@ -3,6 +3,10 @@ class WellbeingScoreReport < ApplicationRecord
 
 	# Required for ActiveAdmin filtering/searching
 	def self.ransackable_attributes(auth_object = nil)
-		["account_id", "created_at", "id", "updated_at"]
+		["account_id", "category_id", "category_result", "created_at", "id", "sub_category_result", "submitted_at", "updated_at"]
+	end
+	
+	def self.ransackable_associations(auth_object = nil)
+		["account"]
 	end
 end

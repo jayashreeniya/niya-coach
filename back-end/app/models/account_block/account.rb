@@ -13,7 +13,11 @@ module AccountBlock
     has_many :user_booked_slots, class_name: 'BxBlockSharecalendar::BookedSlot', foreign_key: "service_user_id"
     has_many :coach_leaves, class_name: "BxBlockAppointmentManagement::CoachLeave"
     has_many :coach_par_avails, class_name: "BxBlockAppointmentManagement::CoachParAvail"
+    has_many :available_coach_par_avails, -> { where("avail_type IS NULL OR avail_type = ?", "available") }, class_name: "BxBlockAppointmentManagement::CoachParAvail"
+    has_many :unavailable_coach_par_avails, -> { where(avail_type: "unavailable") }, class_name: "BxBlockAppointmentManagement::CoachParAvail"
     accepts_nested_attributes_for :coach_par_avails, allow_destroy: true
+    accepts_nested_attributes_for :available_coach_par_avails, allow_destroy: true
+    accepts_nested_attributes_for :unavailable_coach_par_avails, allow_destroy: true
     
     # Log when coach_par_avails_attributes are being processed
     # Use defined? check to avoid NameError when attribute is not being set

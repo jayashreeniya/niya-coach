@@ -96,9 +96,9 @@ ActiveAdmin.register BxBlockUpload::MultipleUploadFile, as: "Multiple Upload Fil
         t.input :file_content, label: "File Content"
         t.input :file_name, label: "File Name"
         t.input :file_discription , label: 'File Description'
-        t.input :assesment_test_type_answer_id, :input_html => { :value => BxBlockAssessmenttest::AssesmentTestTypeAnswer.first.id}, as: :hidden
-        t.input :focus_areas, as: :check_boxes, label: 'Focus Area Point', collection: BxBlockAssessmenttest::AssesmentTestTypeAnswer.all.map{|x| [x.answers, x.id, {checked: t.object.focus_areas.include?(x.id.to_s)}]}
-        t.input :well_being_focus_areas, as: :check_boxes, label: 'Well Being Focus Area', collection: BxBlockAssessmenttest::WellBeingFocusArea.all.map{|x| [x.answers, x.id, {checked: t.object.well_being_focus_areas.include?(x.id.to_s)}]}
+        t.input :assesment_test_type_answer_id, :input_html => { :value => BxBlockAssessmenttest::AssesmentTestTypeAnswer.first&.id}, as: :hidden
+        t.input :focus_areas, as: :check_boxes, label: 'Focus Area Point', collection: BxBlockAssessmenttest::AssesmentTestTypeAnswer.all.map{|x| [x.answers, x.id, {checked: (t.object.focus_areas || []).include?(x.id.to_s)}]}
+        t.input :well_being_focus_areas, as: :check_boxes, label: 'Well Being Focus Area', collection: BxBlockAssessmenttest::WellBeingFocusArea.all.map{|x| [x.answers, x.id, {checked: (t.object.well_being_focus_areas || []).include?(x.id.to_s)}]}
         # t.input :text_file, as: :file, input_html: {accept: '.txt'}
        end
     end

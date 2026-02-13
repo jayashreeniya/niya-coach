@@ -1,6 +1,8 @@
 module BxBlockAssessmenttest
 	class ActionItemsController < ApplicationController
 		include BuilderJsonWebToken::JsonWebTokenValidation
+		include Pagy::Backend
+		protect_from_forgery with: :null_session
 		before_action :validate_json_web_token
    	    before_action :track_login, only: [:start_game]
 		before_action :account_user

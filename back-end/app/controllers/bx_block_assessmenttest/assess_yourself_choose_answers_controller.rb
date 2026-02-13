@@ -1,6 +1,7 @@
 module BxBlockAssessmenttest
 	class AssessYourselfChooseAnswersController < ApplicationController
 		include BuilderJsonWebToken::JsonWebTokenValidation
+		protect_from_forgery with: :null_session
 		before_action :validate_json_web_token
 		before_action :account_user, only: [:create]
 		def create

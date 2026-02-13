@@ -1303,8 +1303,14 @@ _handleAppStateChange = (nextAppState: any) => {
       }
   
       else if (apiRequestCallId === this.addGoalApiCallId) {
-        this.updatedeleteGoalApiRes("");
-
+        if (responseJson?.error || responseJson?.errors) {
+          this.setState({ goalLoader: false });
+          const errorMsg = responseJson?.error || 
+            (responseJson?.errors?.focus_area_id ? "Please select a valid focus area" : "Failed to add goal");
+          this.showAlert("Error", errorMsg, "");
+        } else {
+          this.updatedeleteGoalApiRes(responseJson);
+        }
       }
       else if (apiRequestCallId === this.getCompetedGoalApiCallId) {
         this.setState({ goalLoader: false });
@@ -1323,8 +1329,13 @@ _handleAppStateChange = (nextAppState: any) => {
 
       else if (apiRequestCallId === this.createActionApiCallId) {
         this.setState({ actionLoader: false,action_time:""  });
-        this.toggleActionModal();
-        this.getActions();
+        if (responseJson?.error || responseJson?.errors) {
+          const errorMsg = responseJson.error || responseJson.errors?.[0]?.message || responseJson.errors?.[0] || "Failed to create action item";
+          Alert.alert("Error", errorMsg);
+        } else {
+          this.toggleActionModal();
+          this.getActions();
+        }
       }
       else if (apiRequestCallId === this.completeActionApiCallId) {
 
