@@ -48,10 +48,102 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
-      - name: Apply patches
+      - name: Apply patches manually
+        working-directory: front-end
         run: |
-          cd front-end
-          npx patch-package || echo "Some patches failed to apply, continuing anyway..."
+          node << 'NODESCRIPT'
+          const fs = require('fs');
+          const path = require('path');
+
+          function patchFile(filePath, description, transform) {
+            if (!fs.existsSync(filePath)) {
+              console.log('WARNING: ' + filePath + ' not found - skipping ' + description);
+              return false;
+            }
+            const original = fs.readFileSync(filePath, 'utf8');
+            const patched = transform(original);
+            if (patched !== original) {
+              fs.writeFileSync(filePath, patched);
+              console.log('APPLIED: ' + description);
+              return true;
+            }
+            console.log('SKIPPED (already patched or no match): ' + description);
+            return false;
+          }
+
+          // Patch 1: react-navigation-stack useTheme.js
+          // This fixes crash caused by importing useTheme from react-navigation v4 API
+          // when using react-navigation v2
+          console.log('\n=== Patch 1: react-navigation-stack useTheme.js ===');
+          const useThemePath = 'node_modules/react-navigation-stack/lib/module/utils/useTheme.js';
+          if (fs.existsSync(useThemePath)) {
+            const newContent = [
+              "import * as React from 'react';",
+              "const ThemeColors = {",
+              "  light: { header: '#fff', label: '#000', headerBorder: '#ccc' },",
+              "  dark: { header: '#000', label: '#fff', headerBorder: '#333' }",
+              "};",
+              "export default function useTheme() {",
+              "  const theme = 'light';",
+              "  return React.useMemo(function() {",
+              "    var colors = ThemeColors[theme];",
+              "    var dark = theme === 'dark';",
+              "    return { colors: colors, dark: dark };",
+              "  }, [theme]);",
+              "}",
+              ""
+            ].join('\n');
+            fs.writeFileSync(useThemePath, newContent);
+            console.log('APPLIED: useTheme.js rewritten for react-navigation v2 compat');
+          } else {
+            console.log('WARNING: useTheme.js not found');
+          }
+
+          // Patch 2: react-native-push-notification PendingIntent (Android 12+ compat)
+          console.log('\n=== Patch 2: PendingIntent fix for Android 12+ ===');
+          patchFile(
+            'node_modules/react-native-push-notification/android/src/main/java/com/dieam/reactnativepushnotification/modules/RNPushNotificationHelper.java',
+            'PendingIntent FLAG_MUTABLE for Android 12+',
+            function(content) {
+              if (content.includes('FLAG_MUTABLE')) return content;
+              return content.replace(
+                /PendingIntent\s+pendingIntent\s*=\s*PendingIntent\.getActivity\(context,\s*notificationID,\s*intent,\s*\n\s*PendingIntent\.FLAG_UPDATE_CURRENT\);/g,
+                [
+                  'PendingIntent pendingIntent = null;',
+                  '            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {',
+                  '                pendingIntent = PendingIntent.getActivity(context, notificationID, intent, PendingIntent.FLAG_MUTABLE);',
+                  '            } else {',
+                  '                pendingIntent = PendingIntent.getActivity(context, notificationID, intent, PendingIntent.FLAG_UPDATE_CURRENT);',
+                  '            }'
+                ].join('\n')
+              );
+            }
+          );
+
+          // Patch 3: react-native-material-dropdown propTypes fix
+          console.log('\n=== Patch 3: material-dropdown propTypes ===');
+          var mdBase = 'node_modules/react-native-material-dropdown/node_modules/react-native-material-textfield/src/components';
+          ['affix', 'helper', 'label'].forEach(function(comp) {
+            var target = path.join(mdBase, comp, 'index.js');
+            patchFile(target, comp + '/index.js propTypes fix', function(c) {
+              c = c.replace(/Animated\.Text\.propTypes?\.style/g, 'Text.propType');
+              c = c.replace("import { Animated } from 'react-native'", "import { Animated, Text } from 'react-native'");
+              c = c.replace("import { View, Animated } from 'react-native'", "import { View, Animated, Text } from 'react-native'");
+              return c;
+            });
+          });
+
+          console.log('\n=== All patches processed ===');
+          NODESCRIPT
+
+      - name: Verify patches applied
+        working-directory: front-end
+        run: |
+          echo "=== useTheme.js content ==="
+          cat node_modules/react-navigation-stack/lib/module/utils/useTheme.js
+          echo ""
+          echo "=== PendingIntent check ==="
+          grep -c "FLAG_MUTABLE" node_modules/react-native-push-notification/android/src/main/java/com/dieam/reactnativepushnotification/modules/RNPushNotificationHelper.java && echo "PendingIntent PATCHED" || echo "PendingIntent NOT patched"
 
       - name: Make gradlew executable
         run: chmod +x front-end/packages/mobile/android/gradlew
