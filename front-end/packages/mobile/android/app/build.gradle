@@ -297,3 +297,26 @@ task copyDownloadableDepsToLibs(type: Copy) {
 }
 
 apply from: file("../../../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project, "../../..")
+
+// Fix for RN 0.65 + Gradle 7: ensure JS bundle is copied into APK
+// Without this, the bundle task and copy task have no declared dependency,
+// causing the JS bundle to be missing from the final APK.
+afterEvaluate {
+    android.applicationVariants.all { variant ->
+        def targetName = variant.name.capitalize()
+        def bundleTask = tasks.findByName("bundle${targetName}JsAndAssets")
+        def copyTask = tasks.findByName("copy${targetName}BundledJs")
+        def mergeAssetsTask = tasks.findByName("merge${targetName}Assets")
+        def compressTask = tasks.findByName("compress${targetName}Assets")
+
+        if (bundleTask && mergeAssetsTask) {
+            bundleTask.dependsOn(mergeAssetsTask)
+        }
+        if (copyTask && bundleTask) {
+            copyTask.dependsOn(bundleTask)
+        }
+        if (compressTask && copyTask) {
+            compressTask.dependsOn(copyTask)
+        }
+    }
+}
