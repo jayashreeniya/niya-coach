@@ -19,7 +19,6 @@ import android.os.Build;
 import org.jetbrains.annotations.Nullable;
 
 // import com.imagepicker.ImagePickerPackage;
-import com.reactnativecommunity.webview.RNCWebViewPackage;
 // import com.reactnative.ivpusic.imagepicker.*;
 
 import com.agontuk.RNFusedLocation.RNFusedLocationPackage;
@@ -27,24 +26,12 @@ import com.agontuk.RNFusedLocation.RNFusedLocationPackage;
 import com.facebook.FacebookSdk;
 import com.facebook.reactnative.androidsdk.FBSDKPackage;
 
-import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
-
-import com.horcrux.svg.SvgPackage;
-
-import com.reactcommunity.rnlocalize.RNLocalizePackage;
-
 import live.videosdk.rnfgservice.ForegroundServicePackage;
 import live.videosdk.rnincallmanager.InCallManagerPackage;
 import live.videosdk.rnwebrtc.WebRTCModulePackage;
-import io.invertase.firebase.messaging.ReactNativeFirebaseMessagingPackage;
 import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
 import net.no_mad.tts.TextToSpeechPackage; 
 // import com.rnfs.RNFSPackage;
-import com.learnium.RNDeviceInfo.RNDeviceInfo;
-
-import com.reactnativecommunity.netinfo.NetInfoPackage;
-
-import com.reactnativecommunity.asyncstorage.AsyncStoragePackage;
 
 public class MainApplication extends MultiDexApplication implements ReactApplication {
 
@@ -60,19 +47,13 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
         protected List<ReactPackage> getPackages() {
           @SuppressWarnings("UnnecessaryLocalVariable")
           List<ReactPackage> packages = new PackageList(this).getPackages();
-          // Packages that cannot be autolinked yet can be added manually here
-          packages.add(new RNCWebViewPackage());
+          // Only add packages that are NOT autolinked
           packages.add(new RNFusedLocationPackage());
           packages.add(new ForegroundServicePackage());
           packages.add(new InCallManagerPackage());
           packages.add(new WebRTCModulePackage());
           packages.add(new ReactNativePushNotificationPackage());
           packages.add(new TextToSpeechPackage());
-          packages.add(new SvgPackage());
-          packages.add(new RNGestureHandlerPackage());
-          packages.add(new RNDeviceInfo());
-          packages.add(new NetInfoPackage());
-          packages.add(new AsyncStoragePackage());
           return packages;
         }
 
