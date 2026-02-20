@@ -158,6 +158,21 @@ jobs:
         env:
           GRADLE_OPTS: '-Dorg.gradle.daemon=true -Xmx4g'
 
+      - name: Verify APK contents
+        run: |
+          APK="front-end/packages/mobile/android/app/build/outputs/apk/release/app-release.apk"
+          echo "=== APK size ==="
+          ls -lh "$APK"
+          echo ""
+          echo "=== Checking for JS bundle ==="
+          unzip -l "$APK" | grep -i "index.android.bundle" || echo "WARNING: JS bundle NOT found in APK!"
+          echo ""
+          echo "=== Checking for native libs ==="
+          unzip -l "$APK" | grep "\.so$" | head -20
+          echo ""
+          echo "=== Checking for assets ==="
+          unzip -l "$APK" | grep "assets/" | head -10
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:

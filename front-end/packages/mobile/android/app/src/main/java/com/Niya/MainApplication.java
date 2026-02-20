@@ -16,6 +16,9 @@ import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.util.Log;
+import android.widget.Toast;
+import android.content.SharedPreferences;
 import org.jetbrains.annotations.Nullable;
 
 // import com.imagepicker.ImagePickerPackage;
@@ -80,10 +83,41 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
   @Override
   public void onCreate() {
     super.onCreate();
-    Radar.initialize(this, "prj_live_pk_dc7bbaa26e61343e20a955965be95a7035dd611a");
-    SoLoader.init(this, /* native exopackage */ false);
-    FacebookSdk.sdkInitialize(getApplicationContext());
-    // initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
+
+    Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        String trace = Log.getStackTraceString(e);
+        Log.e("NiyaCrash", "FATAL: " + e.getMessage() + "\n" + trace);
+        try {
+          SharedPreferences prefs = getSharedPreferences("crash_log", Context.MODE_PRIVATE);
+          prefs.edit().putString("last_crash", e.getClass().getName() + ": " + e.getMessage() + "\n" + trace).apply();
+          Intent crashIntent = new Intent(getApplicationContext(), CrashActivity.class);
+          crashIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+          startActivity(crashIntent);
+        } catch (Exception ignored) {}
+        android.os.Process.killProcess(android.os.Process.myPid());
+        System.exit(1);
+      }
+    });
+
+    try {
+      SoLoader.init(this, false);
+    } catch (Exception e) {
+      Log.e("NiyaCrash", "SoLoader.init failed: " + e.getMessage());
+    }
+
+    try {
+      Radar.initialize(this, "prj_live_pk_dc7bbaa26e61343e20a955965be95a7035dd611a");
+    } catch (Exception e) {
+      Log.e("NiyaCrash", "Radar.initialize failed: " + e.getMessage());
+    }
+
+    try {
+      FacebookSdk.sdkInitialize(getApplicationContext());
+    } catch (Exception e) {
+      Log.e("NiyaCrash", "FacebookSdk.init failed: " + e.getMessage());
+    }
   }
 
   /**
