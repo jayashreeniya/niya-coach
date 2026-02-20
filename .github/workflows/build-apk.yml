@@ -151,10 +151,23 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
+      - name: Pre-bundle JS assets
+        working-directory: front-end
+        run: |
+          mkdir -p packages/mobile/android/app/src/main/assets
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file packages/mobile/index.js \
+            --bundle-output packages/mobile/android/app/src/main/assets/index.android.bundle \
+            --assets-dest packages/mobile/android/app/src/main/res
+          echo "=== Bundle created ==="
+          ls -lh packages/mobile/android/app/src/main/assets/index.android.bundle
+
       - name: Build Release APK
         run: |
           cd front-end/packages/mobile/android
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease -x bundleReleaseJsAndAssets
         env:
           GRADLE_OPTS: '-Dorg.gradle.daemon=true -Xmx4g'
 
