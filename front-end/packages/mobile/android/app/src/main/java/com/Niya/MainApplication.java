@@ -80,6 +80,16 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
       }
   }
 
+  private void saveCrashLog(String msg) {
+    Log.e("NiyaCrash", msg);
+    try {
+      SharedPreferences prefs = getSharedPreferences("crash_log", Context.MODE_PRIVATE);
+      String existing = prefs.getString("last_crash", "");
+      if (!existing.isEmpty()) existing += "\n---\n";
+      prefs.edit().putString("last_crash", existing + msg).commit();
+    } catch (Throwable ignored) {}
+  }
+
   @Override
   public void onCreate() {
     super.onCreate();
@@ -87,37 +97,48 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
     Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
       @Override
       public void uncaughtException(Thread t, Throwable e) {
-        String trace = Log.getStackTraceString(e);
-        Log.e("NiyaCrash", "FATAL: " + e.getMessage() + "\n" + trace);
         try {
+          String trace = Log.getStackTraceString(e);
+          String msg = e.getClass().getName() + ": " + e.getMessage() + "\n" + trace;
+          Log.e("NiyaCrash", "FATAL: " + msg);
           SharedPreferences prefs = getSharedPreferences("crash_log", Context.MODE_PRIVATE);
-          prefs.edit().putString("last_crash", e.getClass().getName() + ": " + e.getMessage() + "\n" + trace).apply();
+          prefs.edit().putString("last_crash", msg).commit();
           Intent crashIntent = new Intent(getApplicationContext(), CrashActivity.class);
           crashIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
           startActivity(crashIntent);
-        } catch (Exception ignored) {}
+          Thread.sleep(1500);
+        } catch (Throwable ignored) {
+          Log.e("NiyaCrash", "Failed to save crash: " + ignored.getMessage());
+        }
         android.os.Process.killProcess(android.os.Process.myPid());
         System.exit(1);
       }
     });
 
+    saveCrashLog("onCreate started");
+
     try {
       SoLoader.init(this, false);
-    } catch (Exception e) {
-      Log.e("NiyaCrash", "SoLoader.init failed: " + e.getMessage());
+      saveCrashLog("SoLoader.init OK");
+    } catch (Throwable e) {
+      saveCrashLog("SoLoader.init FAILED: " + e.getClass().getName() + ": " + Log.getStackTraceString(e));
     }
 
     try {
       Radar.initialize(this, "prj_live_pk_dc7bbaa26e61343e20a955965be95a7035dd611a");
-    } catch (Exception e) {
-      Log.e("NiyaCrash", "Radar.initialize failed: " + e.getMessage());
+      saveCrashLog("Radar.init OK");
+    } catch (Throwable e) {
+      saveCrashLog("Radar.init FAILED: " + e.getClass().getName() + ": " + Log.getStackTraceString(e));
     }
 
     try {
       FacebookSdk.sdkInitialize(getApplicationContext());
-    } catch (Exception e) {
-      Log.e("NiyaCrash", "FacebookSdk.init failed: " + e.getMessage());
+      saveCrashLog("FacebookSdk.init OK");
+    } catch (Throwable e) {
+      saveCrashLog("FacebookSdk.init FAILED: " + e.getClass().getName() + ": " + Log.getStackTraceString(e));
     }
+
+    saveCrashLog("onCreate completed");
   }
 
   /**

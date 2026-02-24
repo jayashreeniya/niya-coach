@@ -7,5 +7,23 @@ module.exports = {
         },
       },
     },
+    'react-native-push-notification': {
+      platforms: { android: null },
+    },
+    'react-native-tts': {
+      platforms: { android: null },
+    },
+    'react-native-geolocation-service': {
+      platforms: { android: null },
+    },
+    '@videosdk.live/react-native-foreground-service': {
+      platforms: { android: null },
+    },
+    '@videosdk.live/react-native-incallmanager': {
+      platforms: { android: null },
+    },
+    '@videosdk.live/react-native-webrtc': {
+      platforms: { android: null },
+    },
   },
 };
