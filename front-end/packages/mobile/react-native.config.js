@@ -25,5 +25,23 @@ module.exports = {
     '@videosdk.live/react-native-webrtc': {
       platforms: { android: null },
     },
+    'react-native-webview': {
+      platforms: { android: null },
+    },
+    'react-native-gesture-handler': {
+      platforms: { android: null },
+    },
+    'react-native-svg': {
+      platforms: { android: null },
+    },
+    'react-native-device-info': {
+      platforms: { android: null },
+    },
+    '@react-native-community/netinfo': {
+      platforms: { android: null },
+    },
+    '@react-native-async-storage/async-storage': {
+      platforms: { android: null },
+    },
   },
 };

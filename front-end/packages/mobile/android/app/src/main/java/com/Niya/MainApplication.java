@@ -33,7 +33,13 @@ import live.videosdk.rnfgservice.ForegroundServicePackage;
 import live.videosdk.rnincallmanager.InCallManagerPackage;
 import live.videosdk.rnwebrtc.WebRTCModulePackage;
 import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
-import net.no_mad.tts.TextToSpeechPackage; 
+import net.no_mad.tts.TextToSpeechPackage;
+import com.reactnativecommunity.webview.RNCWebViewPackage;
+import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
+import com.horcrux.svg.SvgPackage;
+import com.learnium.RNDeviceInfo.RNDeviceInfo;
+import com.reactnativecommunity.netinfo.NetInfoPackage;
+import com.reactnativecommunity.asyncstorage.AsyncStoragePackage;
 // import com.rnfs.RNFSPackage;
 
 public class MainApplication extends MultiDexApplication implements ReactApplication {
@@ -57,6 +63,12 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
           packages.add(new WebRTCModulePackage());
           packages.add(new ReactNativePushNotificationPackage());
           packages.add(new TextToSpeechPackage());
+          packages.add(new RNCWebViewPackage());
+          packages.add(new RNGestureHandlerPackage());
+          packages.add(new SvgPackage());
+          packages.add(new RNDeviceInfo());
+          packages.add(new NetInfoPackage());
+          packages.add(new AsyncStoragePackage());
           return packages;
         }
 
