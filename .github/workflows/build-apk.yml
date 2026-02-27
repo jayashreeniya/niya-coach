@@ -160,7 +160,8 @@ jobs:
             --dev false \
             --entry-file packages/mobile/index.js \
             --bundle-output packages/mobile/android/app/src/main/assets/index.android.bundle \
-            --assets-dest packages/mobile/android/app/src/main/res
+            --assets-dest packages/mobile/android/app/src/main/res \
+            --config packages/mobile/metro.config.js
           echo "=== Bundle created ==="
           ls -lh packages/mobile/android/app/src/main/assets/index.android.bundle
 
