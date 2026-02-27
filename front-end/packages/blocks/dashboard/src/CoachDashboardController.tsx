@@ -162,6 +162,12 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
           this.getDelAccApiCallIdRes(responseJson);
   
       }
+        else if(apiRequestCallId === this.getvideocallApiCallId){
+          console.log("Video call API response:", responseJson);
+        }
+      }
+      else if(responseJson?.errors) {
+        console.log("API error:", responseJson.errors);
       }
       this.setState({ loading: false });
     }
@@ -250,15 +256,32 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
     });
   }
 
-  startMeeting = (id: string, start_id: any) => {
-    if(id==null){
-      this.showAlert("Alert","Something went wrong. Please try again later")
-      return
+  startMeeting = async (id: string, start_id: any) => {
+    let meetingId = id;
+    if (!meetingId) {
+      try {
+        const response = await fetch("https://api.videosdk.live/v1/meetings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: this.state.meetingToken,
+          },
+          body: JSON.stringify({ region: "in001" }),
+        });
+        const data = await response.json();
+        meetingId = data?.meetingId;
+      } catch (e) {
+        console.log("Failed to create meeting:", e);
+      }
+    }
+    if (!meetingId) {
+      this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.");
+      return;
     }
     this.beforeVideoCall(start_id);
     this.setState({
-      meetingId: id,
-      showMeetingModal: true
+      meetingId,
+      showMeetingModal: true,
     });
   }
 

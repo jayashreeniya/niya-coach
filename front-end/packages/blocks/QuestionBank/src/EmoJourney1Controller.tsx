@@ -127,13 +127,14 @@ export default class EmoJourney1Controller extends BlockComponent<
       );
        if(errorReponse)
       {
-       
+        console.log("EmoJourney API network error:", errorReponse);
         this.setState({loading:false})
         return;
       }
       else if(responseJson?.errors || (responseJson?.message && apiRequestCallId!=this.getStartGamesApiCallId))
       {
-         console.log(errorReponse,responseJson);
+         console.log("EmoJourney API error response:", errorReponse, responseJson);
+         this.setState({loading:false});
         return false;
       }
 
@@ -394,7 +395,7 @@ export default class EmoJourney1Controller extends BlockComponent<
 
     requestMessage.addData(
       getName(MessageEnum.RestAPIRequestHeaderMessage),
-      header
+      JSON.stringify(header)
     );
 
     requestMessage.addData(
