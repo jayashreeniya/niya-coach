@@ -135,6 +135,10 @@ export default class EmoJourney1Controller extends BlockComponent<
       {
          console.log("EmoJourney API error response:", errorReponse, responseJson);
          this.setState({loading:false});
+         const errText = responseJson?.errors
+           ? JSON.stringify(responseJson.errors)
+           : responseJson?.message || "Unknown error";
+         this.showAlert("Error", errText);
         return false;
       }
 
@@ -226,14 +230,23 @@ export default class EmoJourney1Controller extends BlockComponent<
 
   handleAnsQuestionSuccess=(responseJson:any)=>{
     this.setState({loading:false});
-       
-     const { meta } = responseJson;
+
+    if (responseJson?.errors || responseJson?.error) {
+      const errMsg = responseJson.error || JSON.stringify(responseJson.errors);
+      this.showAlert("Error", errMsg);
+      return;
+    }
+
+    const { meta } = responseJson;
     if(!this.state.isFirstQuestionAnswered)
     {
-      this.setState({selectedGameInfo:meta?.game_choosen, selectedGameName: meta?.game_choosen?.game_choosen},()=>{
-        });
-
-      this.setState({ isFirstQuestionAnswered: true});
+      this.setState({
+        selectedGameInfo: meta?.game_choosen,
+        selectedGameName: meta?.game_choosen?.game_choosen,
+        isFirstQuestionAnswered: true,
+        answer_id: "",
+        question_id: ""
+      });
     }
     else if(this.state.isFirstQuestionAnswered)
     {
@@ -244,7 +257,7 @@ export default class EmoJourney1Controller extends BlockComponent<
         else{
            this.setState({showGConfirmModal:false, showTxtConfirmModal: true});
         }
-        
+
     }
   }
 

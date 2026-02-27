@@ -55,9 +55,12 @@ export default StyleSheet.create({
     bottomTabStyle: {
         backgroundColor: COLORS.white,
         borderColor: COLORS.white,
+        borderTopColor: '#e0e0e0',
+        borderTopWidth: 1,
         height: scale(66),
         width: '100%',
         alignSelf: 'center',
+        flexDirection: 'row',
         paddingBottom: Platform.OS=="ios"?20:undefined
     },
 

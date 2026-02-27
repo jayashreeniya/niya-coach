@@ -6,16 +6,18 @@
  */
 
 const path = require('path');
+const rootDir = path.resolve(__dirname, '../../');
 
 module.exports = {
-  projectRoot: path.resolve(__dirname, '../../'),
-  watchFolders: [
-    path.resolve(__dirname, '../../'),
-  ],
+  projectRoot: rootDir,
+  watchFolders: [rootDir],
   resolver: {
     nodeModulesPaths: [
-      path.resolve(__dirname, '../../node_modules'),
+      path.resolve(rootDir, 'node_modules'),
     ],
+    extraNodeModules: {
+      'react-navigation-tabs': path.resolve(rootDir, 'node_modules/react-navigation-tabs'),
+    },
   },
   transformer: {
     getTransformOptions: async () => ({

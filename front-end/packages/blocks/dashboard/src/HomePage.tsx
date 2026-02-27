@@ -833,7 +833,7 @@ export default class HomePage extends HomePageController{
                 <CalendarStrip
                   initDate={this.state.goalCompetionDate}
                   onSelect={(m) => {
-                    if (m.isBefore(moment())) {
+                    if (m.isBefore(moment().startOf('day'))) {
                       this.showAlert("Alert", "Please choose a future date.", "");
                       return false;
                     } else {
@@ -904,7 +904,7 @@ export default class HomePage extends HomePageController{
           }}
           validationSchema={this.actionSchema}
           onSubmit={(data) => {
-            if (data.date.isBefore(moment())) {
+            if (data.date.isBefore(moment().startOf('day'))) {
               Alert.alert("", "Please select a future date");
               return;
             }
@@ -954,7 +954,7 @@ export default class HomePage extends HomePageController{
                   <CalendarStrip
                     initDate={values.date}
                     onSelect={(m) => {
-                      if (m.isBefore(moment())) {
+                      if (m.isBefore(moment().startOf('day'))) {
                         Alert.alert("", "Please select a future date");
                       }
                       setFieldValue("date", m);
@@ -1016,7 +1016,7 @@ export default class HomePage extends HomePageController{
           }}
           validationSchema={this.actionSchema}
           onSubmit={(data) => {
-            if (data.date.isBefore(moment())) {
+            if (data.date.isBefore(moment().startOf('day'))) {
               Alert.alert("", "Please select a future date");
               return;
             }
@@ -1059,7 +1059,7 @@ export default class HomePage extends HomePageController{
                   <CalendarStrip
                     initDate={values.date}
                     onSelect={(m) => {
-                      if (m.isBefore(moment())) {
+                      if (m.isBefore(moment().startOf('day'))) {
                         Alert.alert("", "Please select a future date");
                       }
                       setFieldValue("date", m);
@@ -1156,7 +1156,7 @@ export default class HomePage extends HomePageController{
             <CalendarStrip
               initDate={this.state.goalCompetionDate}
               onSelect={(m) => {
-                if (m.isBefore(moment())) {
+                if (m.isBefore(moment().startOf('day'))) {
                   this.showAlert("Alert", "Please choose a future date.", "");
                   return false;
                 } else {

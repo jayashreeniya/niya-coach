@@ -324,12 +324,33 @@ _handleAppStateChange = (nextAppState: any) => {
   this.stopeAudioplay()
 }
 
-  startMeeting = (id: string, book_id: any) => {
+  startMeeting = async (id: string, book_id: any) => {
+    let meetingId = id;
+    if (!meetingId) {
+      try {
+        const response = await fetch("https://api.videosdk.live/v1/meetings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: this.state.meeting.token,
+          },
+          body: JSON.stringify({ region: "in001" }),
+        });
+        const data = await response.json();
+        meetingId = data?.meetingId;
+      } catch (e) {
+        console.log("Failed to create meeting:", e);
+      }
+    }
+    if (!meetingId) {
+      this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.", "");
+      return;
+    }
     this.stopeAudioplay();
     this.beforeVideoCall(book_id);
     this.setState({
       meeting: {
-        id,
+        id: meetingId,
         token: this.state.meeting.token
       },
       showMeetingModal: true
@@ -1102,12 +1123,7 @@ _handleAppStateChange = (nextAppState: any) => {
   onMeetingPress=(disabled:boolean,item:any)=>{
     if (disabled) return;
     this.setState({ selectedCoach_id: item?.item?.attributes?.coach_details?.id })
-    if(item.item?.attributes?.meeting_code){
-    this.startMeeting(item.item?.attributes?.meeting_code, item?.item?.id)
-    }
-    else{
-      this.showAlert("Alert","Something went wrong. Please try again later","")
-    }
+    this.startMeeting(item.item?.attributes?.meeting_code || "", item?.item?.id)
   }
   onCancelPressbtn=(item:any,disabled:boolean)=>{
     if(item?.item?.id&&disabled){

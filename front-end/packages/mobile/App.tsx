@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import SplashScreen from 'react-native-splash-screen';
 import styles from './AppStyles'
 import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
-import {  LogBox, View, Image, Text } from 'react-native'
+import {  LogBox, View, Image, Text, TouchableOpacity, SafeAreaView } from 'react-native'
 import * as ReactNavigation from "react-navigation";
 // import { register } from "@videosdk.live/react-native-sdk"; // Removed - using Zoom links instead
 import * as RootNavigation from '../framework/src/RootNavigation';
@@ -105,22 +105,13 @@ import GamesCompleted from '../blocks/QuestionBank/src/GamesCompleted';
 import UserProfile from '../blocks/user-profile-basic/src/UserProfile';
 import TrackPlayer from "react-native-track-player";
 
-const reactNavigationKeys = Object.keys(ReactNavigation || {});
-console.log('[debug] react-navigation keys:', reactNavigationKeys);
 const {
   createStackNavigator,
-  createBottomTabNavigator,
   createSwitchNavigator,
   createNavigationContainer,
 } = ReactNavigation as any;
 
 const createAppContainerExport = (ReactNavigation as any).createAppContainer;
-console.log(
-  '[debug] createAppContainer type:',
-  typeof createAppContainerExport,
-  'createNavigationContainer type:',
-  typeof createNavigationContainer
-);
 
 const createAppContainer =
   createAppContainerExport ?? createNavigationContainer;
@@ -179,44 +170,66 @@ const renderEmoJourney=(focused:boolean)=>{
   )
 }
 
-const BottomTabNavigator = createBottomTabNavigator(
-  {
-    HomePage: { screen: HomePage, navigationOptions: { header: null, title: "HomePage" } },
-    ReassorOrContinue: { screen: ReassorOrContinue, navigationOptions: { header: null } },
-    MyCoachTab: { screen: LandingPage, navigationOptions: { title: "CoachTab" } },
-    EmoJourney: { screen: EmoJourney, navigationOptions: { header: null, title: "Journey" } }
-  },
-  {
-    initialRouteName: 'HomePage',
-    defaultNavigationOptions: ({ navigation }: any) => ({
-      tabBarIcon: ({ focused }: any) => {
-        const { routeName } = navigation.state;
+const TAB_ROUTES = [
+  { key: 'HomePage', screen: HomePage, render: renderBHome },
+  { key: 'ReassorOrContinue', screen: ReassorOrContinue, render: renderReassignorcont },
+  { key: 'MyCoachTab', screen: LandingPage, render: renderMyCoach },
+  { key: 'EmoJourney', screen: EmoJourney, render: renderEmoJourney },
+];
 
-        if (routeName === "HomePage") {
-          return renderBHome(focused);
-        }
-        if (routeName === "ReassorOrContinue") {
-          TrackPlayer.pause();
-          return renderReassignorcont(focused);
-        }
-        if (routeName === "MyCoachTab") {
-          TrackPlayer.pause();
-          return renderMyCoach(focused);
-        }
-        if (routeName === "EmoJourney") {
-          TrackPlayer.pause();
-          return renderEmoJourney(focused);
-        }
-        return null;
-      }
-    }),
-    tabBarOptions: {
-      style: styles.bottomTabStyle,
-      showLabel: false,
-      keyboardHidesTabBar: true
-    }
+class BottomTabNavigatorScreen extends React.Component<any, { activeTab: string }> {
+  static router: any;
+
+  constructor(props: any) {
+    super(props);
+    this.state = { activeTab: 'HomePage' };
   }
-);
+
+  switchTab = (key: string) => {
+    if (key !== 'HomePage') {
+      try { TrackPlayer.pause(); } catch (_e) {}
+    }
+    this.setState({ activeTab: key });
+  }
+
+  render() {
+    const { activeTab } = this.state;
+    return (
+      <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          {TAB_ROUTES.map((tab) => {
+            const Screen = tab.screen;
+            const isActive = tab.key === activeTab;
+            return (
+              <View key={tab.key} style={{ flex: 1, display: isActive ? 'flex' : 'none' }}>
+                <Screen
+                  navigation={this.props.navigation}
+                  screenProps={this.props.screenProps}
+                />
+              </View>
+            );
+          })}
+        </View>
+        <SafeAreaView style={styles.bottomTabStyle}>
+          {TAB_ROUTES.map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => this.switchTab(tab.key)}
+              style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+              activeOpacity={0.7}
+            >
+              {tab.render(tab.key === activeTab)}
+            </TouchableOpacity>
+          ))}
+        </SafeAreaView>
+      </View>
+    );
+  }
+}
+
+BottomTabNavigatorScreen.router = TAB_ROUTES[0].screen.router;
+
+const BottomTabNavigator = BottomTabNavigatorScreen;
 
 
 const SplashStack = createStackNavigator({
