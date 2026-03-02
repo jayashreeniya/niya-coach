@@ -4,7 +4,8 @@ import styles from './AppStyles'
 import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
 import {  LogBox, View, Image, Text, TouchableOpacity, SafeAreaView } from 'react-native'
 import * as ReactNavigation from "react-navigation";
-// import { register } from "@videosdk.live/react-native-sdk"; // Removed - using Zoom links instead
+import { register } from "@videosdk.live/react-native-sdk";
+register();
 import * as RootNavigation from '../framework/src/RootNavigation';
 import { AppProvider, useAppState } from '../components/src/context/AppContext';
 import UserList from "../blocks/ChatBackuprestore/src/UserList";

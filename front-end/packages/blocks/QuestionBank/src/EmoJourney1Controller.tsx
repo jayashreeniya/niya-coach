@@ -153,7 +153,7 @@ export default class EmoJourney1Controller extends BlockComponent<
         this.setState({loading:false});
          
                let fquestion = responseJson.data?.attributes?.motion_question_answer[0];
-              this.setState({question_id: fquestion, questionResponse: responseJson.data?.attributes?.motion_question_answer},()=>{
+              this.setState({question_id: fquestion?.question_1?.id || "", questionResponse: responseJson.data?.attributes?.motion_question_answer},()=>{
                 console.log("Question Selected>>",this.state.question_id);
               });
             
@@ -204,9 +204,7 @@ export default class EmoJourney1Controller extends BlockComponent<
     super.componentDidMount();
      this.setState({motionId: this.props.navigation.state.params.motionId},()=> {
         this.setState({ token: this.context.state.token,loading:true },()=>{
-           let frmdata = new FormData();
-            frmdata.append("motion",this.state.motionId);
-            this.getQuestions(frmdata);
+            this.getQuestions({ motion: this.state.motionId });
             this.getMoods();
            });
     }); 
@@ -285,7 +283,7 @@ export default class EmoJourney1Controller extends BlockComponent<
         motion_answer_id: Number(this.state.answer_id)
        
     }
-      if(this.state.answer_id=="" || this.state.question_id=="")
+      if(!this.state.answer_id || !this.state.question_id)
       {
         this.showAlert("Error","Please select an answer");
         return false;
@@ -360,7 +358,7 @@ export default class EmoJourney1Controller extends BlockComponent<
     this.setState({loading:true});
    
     const header = {
-      "Content-Type": configJSON.dashboarContentType,
+      "Content-Type": "application/json",
       token: this.state.token
     };
     const requestMessage = new Message(
@@ -384,7 +382,7 @@ export default class EmoJourney1Controller extends BlockComponent<
 
     requestMessage.addData(
         getName(MessageEnum.RestAPIRequestBodyMessage),
-        body 
+        JSON.stringify(body)
       );
     runEngine.sendMessage(requestMessage.id, requestMessage);
     // Customizable Area End

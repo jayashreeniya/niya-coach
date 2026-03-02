@@ -1387,6 +1387,14 @@ _handleAppStateChange = (nextAppState: any) => {
         this.cancelBookingApiResponse(responseJson)
 
       }
+      else if (apiRequestCallId === this.getvideocallApiCallId) {
+        console.log("Video call API response:", responseJson);
+        if (responseJson?.meeting_token) {
+          this.setState((prev: any) => ({
+            meeting: { ...prev.meeting, token: responseJson.meeting_token }
+          }));
+        }
+      }
      
 
     

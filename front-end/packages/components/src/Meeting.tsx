@@ -154,19 +154,29 @@ type MeetingViewProps = {
 
 const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, video }) => {
 
+  const hasJoinedRef = React.useRef(false);
+
   const { join, leave, toggleWebcam, toggleMic, participants, getWebcams, changeWebcam, localParticipant } = useMeeting({
     onMeetingJoined,
-    onMeetingLeft
+    onMeetingLeft,
+    onError: onMeetingError,
   });
 
   function onMeetingJoined() {
+    hasJoinedRef.current = true;
     onJoin(true);
     UseFrontCamera();
   }
 
-  function onMeetingLeft(){
+  function onMeetingLeft() {
     onJoin(false);
-    goBack();
+    if (hasJoinedRef.current) {
+      goBack();
+    }
+  }
+
+  function onMeetingError(error: any) {
+    console.log("VideoSDK error:", error);
   }
 
   async function UseFrontCamera(){

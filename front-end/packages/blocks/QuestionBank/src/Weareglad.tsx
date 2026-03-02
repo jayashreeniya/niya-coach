@@ -99,7 +99,7 @@ export default class Weareglad extends BlockComponent<Props, S, SS> {
          source={imgweareglad}
          >
         <TouchableWithoutFeedback testID="touchableKeyboard"
-          onPress={this.hideKeyboard()}
+          onPress={() => this.hideKeyboard()}
         >
             <View style={{alignContent:"center",alignItems:"center",justifyContent:"center" }}>
             <TouchableOpacity testID="btnBack" onPress={()=> this.props.navigation.navigate("HomePage")} style={{alignSelf:'flex-end',marginTop: Scale(20),marginRight: Scale(20)}}>
