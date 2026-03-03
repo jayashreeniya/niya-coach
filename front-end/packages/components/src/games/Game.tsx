@@ -3,9 +3,9 @@ import { Modal, View, StyleSheet, ImageBackground } from "react-native";
 
 import { modalBg } from "./assets";
 import { dimensions, Colors } from "../utils";
-import { Quiz } from "./quiz/quiz";
+import Quiz from "./quiz/Quiz";
 import Seashell from "./seashell/Seashell";
-import { Puzzle } from "./puzzle/puzzle";
+import Puzzle from "./puzzle/Puzzle";
 import Bubble from "./bubble/Bubble";
 import Wheel from "./wheeloffortune/Wheel";
 import Typography from "../Typography";
