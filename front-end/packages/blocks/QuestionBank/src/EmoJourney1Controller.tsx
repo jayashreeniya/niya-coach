@@ -131,14 +131,11 @@ export default class EmoJourney1Controller extends BlockComponent<
         this.setState({loading:false})
         return;
       }
-      else if(responseJson?.errors || (responseJson?.message && apiRequestCallId!=this.getStartGamesApiCallId))
+      else if(responseJson?.errors)
       {
-         console.log("EmoJourney API error response:", errorReponse, responseJson);
+         console.log("EmoJourney API error response:", responseJson);
          this.setState({loading:false});
-         const errText = responseJson?.errors
-           ? JSON.stringify(responseJson.errors)
-           : responseJson?.message || "Unknown error";
-         this.showAlert("Error", errText);
+         this.showAlert("Error", JSON.stringify(responseJson.errors));
         return false;
       }
 
@@ -151,13 +148,13 @@ export default class EmoJourney1Controller extends BlockComponent<
       if(apiRequestCallId === this.getQuestionsApiCallId)
       {
         this.setState({loading:false});
-         
-               let fquestion = responseJson.data?.attributes?.motion_question_answer[0];
-              this.setState({question_id: fquestion?.question_1?.id || "", questionResponse: responseJson.data?.attributes?.motion_question_answer},()=>{
-                console.log("Question Selected>>",this.state.question_id);
-              });
-            
-          
+        const questionArr = responseJson.data?.attributes?.motion_question_answer;
+        if (!questionArr || questionArr.length === 0) {
+          this.showAlert("Error", "No questions found for this mood. Please go back and try again.");
+          return;
+        }
+        const fquestion = questionArr[0];
+        this.setState({question_id: fquestion?.question_1?.id || "", questionResponse: questionArr});
       }
       else if(apiRequestCallId === this.ansFirstQuestionApiCallId)
       {
