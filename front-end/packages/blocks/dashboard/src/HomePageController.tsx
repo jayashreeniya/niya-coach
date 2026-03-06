@@ -324,15 +324,30 @@ _handleAppStateChange = (nextAppState: any) => {
   this.stopeAudioplay()
 }
 
-  startMeeting = async (id: string, book_id: any) => {
+  startMeeting = async (id: string, book_id: any, freshToken?: string) => {
     let meetingId = id;
+    let token = freshToken || this.state.meeting.token;
+
+    try {
+      const baseUrl = require("../../../framework/src/config").baseURL;
+      const res = await fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${book_id}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json", token: this.state.token },
+      });
+      const data = await res.json();
+      if (data?.meeting_token) token = data.meeting_token;
+      if (data?.meeting_code && !meetingId) meetingId = data.meeting_code;
+    } catch (e) {
+      console.log("Failed to fetch video call token:", e);
+    }
+
     if (!meetingId) {
       try {
         const response = await fetch("https://api.videosdk.live/v1/meetings", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            authorization: this.state.meeting.token,
+            authorization: token,
           },
           body: JSON.stringify({ region: "in001" }),
         });
@@ -347,19 +362,9 @@ _handleAppStateChange = (nextAppState: any) => {
       return;
     }
     this.stopeAudioplay();
-    this.beforeVideoCall(book_id);
     this.setState({
-      meeting: {
-        id: meetingId,
-        token: this.state.meeting.token
-      },
+      meeting: { id: meetingId, token: token },
       showMeetingModal: true
-    });
-  }
-  beforeVideoCall = async (book_id: any) => {
-    this.getvideocallApiCallId = this.CallApi({
-      endPoint: `bx_block_calendar/booked_slots/video_call?booked_slot_id=${book_id}`,
-      method: "GET",
     });
   }
    endMeeting = () => {
@@ -1123,7 +1128,8 @@ _handleAppStateChange = (nextAppState: any) => {
   onMeetingPress=(disabled:boolean,item:any)=>{
     if (disabled) return;
     this.setState({ selectedCoach_id: item?.item?.attributes?.coach_details?.id })
-    this.startMeeting(item.item?.attributes?.meeting_code || "", item?.item?.id)
+    const freshToken = item?.item?.attributes?.meeting_token;
+    this.startMeeting(item.item?.attributes?.meeting_code || "", item?.item?.id, freshToken || undefined)
   }
   onCancelPressbtn=(item:any,disabled:boolean)=>{
     if(item?.item?.id&&disabled){
@@ -1389,11 +1395,6 @@ _handleAppStateChange = (nextAppState: any) => {
       }
       else if (apiRequestCallId === this.getvideocallApiCallId) {
         console.log("Video call API response:", responseJson);
-        if (responseJson?.meeting_token) {
-          this.setState((prev: any) => ({
-            meeting: { ...prev.meeting, token: responseJson.meeting_token }
-          }));
-        }
       }
      
 

@@ -330,7 +330,9 @@ module BxBlockCalendar
             video_call_details.update(employee_presence: true)
           end
           VideoCallNotificationWorker.perform_async(slot.id, current_user.id) unless Rails.env.test?
-          render json: {message: "Video call started"}, status: 200
+          payload = { apikey: ENV['API_KEY'], permissions: ["allow_join", "allow_mod", "ask_join"] }
+          meeting_token = JWT.encode(payload, ENV['SECRET_KEY'], 'HS256')
+          render json: {message: "Video call started", meeting_token: meeting_token, meeting_code: slot.meeting_code}, status: 200
         end
       else
         return render json: {errors: "Booked slot id should present"}, status: :unprocessable_entity

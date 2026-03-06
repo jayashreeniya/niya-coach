@@ -23,6 +23,7 @@ type ControlsProps = {
   toggleWebcam: () => void;
   toggleMic: () => void;
   joined: boolean;
+  joinFailed?: boolean;
   mic: {
     micOn: boolean;
     setMicOn: (b: boolean) => void;
@@ -33,7 +34,7 @@ type ControlsProps = {
   }
 }
 
-const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMic, joined, mic, video }) => {
+const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMic, joined, joinFailed, mic, video }) => {
 
   const [pressed, setPressed] = useState<boolean>(false);
 
@@ -42,6 +43,10 @@ const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMi
     join();
     switchAudioDevice("SPEAKER_PHONE");
   }
+
+  React.useEffect(() => {
+    if (joinFailed) setPressed(false);
+  }, [joinFailed]);
 
   const switchWebCam = () => {
     video.setVideoOn(!video.videoOn);
@@ -52,6 +57,32 @@ const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMi
     mic.setMicOn(!mic.micOn);
     toggleMic();
   }
+
+  const renderNotJoined = () => {
+    if (joinFailed) {
+      return (
+        <View style={{ alignItems: "center" }}>
+          <Typography color="white" size={14} style={{ marginBottom: 10 }}>Connection failed. Try again or go back.</Typography>
+          <View style={{ flexDirection: "row" }}>
+            <TouchableOpacity onPress={onJoin} style={[styles.leaveButton, styles.joinButton, { marginRight: 15 }]}>
+              <Image source={call} style={styles.controlIcon} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={leave} style={styles.leaveButton}>
+              <Image source={call} style={styles.controlIcon} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+    if (!pressed) {
+      return (
+        <TouchableOpacity onPress={onJoin} style={[styles.leaveButton, styles.joinButton]}>
+          <Image source={call} style={styles.controlIcon} />
+        </TouchableOpacity>
+      );
+    }
+    return <Typography color="greyText" size={15}>Joining...</Typography>;
+  };
 
   return (
     <View style={styles.controls}>
@@ -65,12 +96,7 @@ const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMi
           <TouchableOpacity onPress={leave} style={styles.leaveButton}>
             <Image source={call} style={styles.controlIcon} />
           </TouchableOpacity>
-        ):(
-          !pressed?(<TouchableOpacity onPress={onJoin} style={[styles.leaveButton, styles.joinButton]}>
-            <Image source={call} style={styles.controlIcon} />
-          </TouchableOpacity>):
-          <Typography color="greyText" size={15}>Joining...</Typography>
-        )}
+        ): renderNotJoined()}
         {joined && (
           <TouchableOpacity onPress={switchWebCam} style={styles.leaveButton}>
             <Image source={!video.videoOn? videoOn: videoOff} style={styles.controlIcon} />
@@ -155,6 +181,7 @@ type MeetingViewProps = {
 const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, video }) => {
 
   const hasJoinedRef = React.useRef(false);
+  const [joinFailed, setJoinFailed] = React.useState(false);
 
   const { join, leave, toggleWebcam, toggleMic, participants, getWebcams, changeWebcam, localParticipant } = useMeeting({
     onMeetingJoined,
@@ -164,6 +191,7 @@ const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, 
 
   function onMeetingJoined() {
     hasJoinedRef.current = true;
+    setJoinFailed(false);
     onJoin(true);
     UseFrontCamera();
   }
@@ -172,11 +200,14 @@ const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, 
     onJoin(false);
     if (hasJoinedRef.current) {
       goBack();
+    } else {
+      setJoinFailed(true);
     }
   }
 
   function onMeetingError(error: any) {
     console.log("VideoSDK error:", error);
+    setJoinFailed(true);
   }
 
   async function UseFrontCamera(){
@@ -203,6 +234,7 @@ const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, 
         toggleWebcam={toggleWebcam}
         toggleMic={toggleMic}
         joined={joined}
+        joinFailed={joinFailed}
         mic={mic}
         video={video}
       />

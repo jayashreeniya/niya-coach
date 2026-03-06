@@ -258,13 +258,28 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
 
   startMeeting = async (id: string, start_id: any) => {
     let meetingId = id;
+    let token = this.state.meetingToken;
+
+    try {
+      const baseUrl = require("../../../framework/src/config").baseURL;
+      const res = await fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${start_id}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json", token: this.state.token },
+      });
+      const data = await res.json();
+      if (data?.meeting_token) token = data.meeting_token;
+      if (data?.meeting_code && !meetingId) meetingId = data.meeting_code;
+    } catch (e) {
+      console.log("Failed to fetch video call token:", e);
+    }
+
     if (!meetingId) {
       try {
         const response = await fetch("https://api.videosdk.live/v1/meetings", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            authorization: this.state.meetingToken,
+            authorization: token,
           },
           body: JSON.stringify({ region: "in001" }),
         });
@@ -278,9 +293,9 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
       this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.");
       return;
     }
-    this.beforeVideoCall(start_id);
     this.setState({
       meetingId,
+      meetingToken: token,
       showMeetingModal: true,
     });
   }
