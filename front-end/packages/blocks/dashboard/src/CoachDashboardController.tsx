@@ -259,6 +259,7 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
   startMeeting = async (id: string, start_id: any) => {
     let meetingId = id;
     let token = this.state.meetingToken;
+    let diagnostics: string[] = [];
 
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
@@ -267,10 +268,17 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
         headers: { "Content-Type": "application/json", token: this.state.token },
       });
       const data = await res.json();
-      if (data?.meeting_token) token = data.meeting_token;
-      if (data?.meeting_code && !meetingId) meetingId = data.meeting_code;
-    } catch (e) {
-      console.log("Failed to fetch video call token:", e);
+      diagnostics.push(`Backend: ${res.status}`);
+      if (data?.meeting_token) {
+        token = data.meeting_token;
+        diagnostics.push("Got fresh token");
+      }
+      if (data?.meeting_code && !meetingId) {
+        meetingId = data.meeting_code;
+        diagnostics.push(`Got meeting: ${meetingId}`);
+      }
+    } catch (e: any) {
+      diagnostics.push(`Backend err: ${e?.message || e}`);
     }
 
     if (!meetingId) {
@@ -285,14 +293,18 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
         });
         const data = await response.json();
         meetingId = data?.meetingId;
-      } catch (e) {
-        console.log("Failed to create meeting:", e);
+        diagnostics.push(`Created meeting: ${meetingId || 'FAILED'}`);
+        if (!meetingId) diagnostics.push(`VideoSDK resp: ${JSON.stringify(data).substring(0, 100)}`);
+      } catch (e: any) {
+        diagnostics.push(`VideoSDK err: ${e?.message || e}`);
       }
     }
     if (!meetingId) {
-      this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.");
+      Alert.alert("Video Call Failed", `Could not start call.\n\n${diagnostics.join('\n')}`);
       return;
     }
+    diagnostics.push(`Final meeting: ${meetingId}`);
+    console.log("Coach video call diagnostics:", diagnostics.join(' | '));
     this.setState({
       meetingId,
       meetingToken: token,

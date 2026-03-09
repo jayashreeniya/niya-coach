@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Platform } from "react-native";
+import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Platform, Alert } from "react-native";
 import {
   MeetingProvider,
   useMeeting,
@@ -201,12 +201,14 @@ const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, 
     if (hasJoinedRef.current) {
       goBack();
     } else {
+      Alert.alert("Video Call", "Meeting left before joining completed. The other party may not be available yet.");
       setJoinFailed(true);
     }
   }
 
   function onMeetingError(error: any) {
-    console.log("VideoSDK error:", error);
+    const errMsg = typeof error === 'object' ? JSON.stringify(error) : String(error);
+    Alert.alert("Video Call Error", errMsg);
     setJoinFailed(true);
   }
 
@@ -262,11 +264,14 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   }
 
   useEffect(() => {
+    InCallManager.requestRecordPermission();
+  }, []);
+
+  useEffect(() => {
     if(meetingId && token){
       setValid(true);
     }
-    InCallManager.requestRecordPermission();
-  }, []);
+  }, [meetingId, token]);
 
   return(
     <Modal
