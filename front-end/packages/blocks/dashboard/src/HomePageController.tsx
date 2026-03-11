@@ -324,30 +324,18 @@ _handleAppStateChange = (nextAppState: any) => {
   this.stopeAudioplay()
 }
 
-  startMeeting = async (id: string, book_id: any, freshToken?: string) => {
+  startMeeting = async (id: string, book_id: any) => {
     let meetingId = id;
-    let token = freshToken || this.state.meeting.token;
-    let diagnostics: string[] = [];
+    const token = this.state.meeting.token;
 
+    // Notify backend (fire-and-forget for notifications)
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
-      const res = await fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${book_id}`, {
+      fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${book_id}`, {
         method: "GET",
         headers: { "Content-Type": "application/json", token: this.state.token },
-      });
-      const data = await res.json();
-      diagnostics.push(`Backend: ${res.status}`);
-      if (data?.meeting_token) {
-        token = data.meeting_token;
-        diagnostics.push("Got fresh token");
-      }
-      if (data?.meeting_code && !meetingId) {
-        meetingId = data.meeting_code;
-        diagnostics.push(`Got meeting: ${meetingId}`);
-      }
-    } catch (e: any) {
-      diagnostics.push(`Backend err: ${e?.message || e}`);
-    }
+      }).catch(() => {});
+    } catch (_e) {}
 
     if (!meetingId) {
       try {
@@ -361,19 +349,14 @@ _handleAppStateChange = (nextAppState: any) => {
         });
         const data = await response.json();
         meetingId = data?.meetingId;
-        diagnostics.push(`Created meeting: ${meetingId || 'FAILED'}`);
-        if (!meetingId) diagnostics.push(`VideoSDK resp: ${JSON.stringify(data).substring(0, 100)}`);
       } catch (e: any) {
-        diagnostics.push(`VideoSDK err: ${e?.message || e}`);
+        console.log("Failed to create meeting:", e);
       }
     }
     if (!meetingId) {
-      Alert.alert("Video Call Failed", `Could not start call.\n\n${diagnostics.join('\n')}`);
+      this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.", "");
       return;
     }
-    diagnostics.push(`Final meeting: ${meetingId}`);
-    diagnostics.push(`Token: ...${token?.slice?.(-10) || 'NONE'}`);
-    console.log("Video call diagnostics:", diagnostics.join(' | '));
     this.stopeAudioplay();
     this.setState({
       meeting: { id: meetingId, token: token },
@@ -1141,8 +1124,7 @@ _handleAppStateChange = (nextAppState: any) => {
   onMeetingPress=(disabled:boolean,item:any)=>{
     if (disabled) return;
     this.setState({ selectedCoach_id: item?.item?.attributes?.coach_details?.id })
-    const freshToken = item?.item?.attributes?.meeting_token;
-    this.startMeeting(item.item?.attributes?.meeting_code || "", item?.item?.id, freshToken || undefined)
+    this.startMeeting(item.item?.attributes?.meeting_code || "", item?.item?.id)
   }
   onCancelPressbtn=(item:any,disabled:boolean)=>{
     if(item?.item?.id&&disabled){

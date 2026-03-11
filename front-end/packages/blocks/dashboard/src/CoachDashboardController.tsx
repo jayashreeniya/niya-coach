@@ -258,28 +258,16 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
 
   startMeeting = async (id: string, start_id: any) => {
     let meetingId = id;
-    let token = this.state.meetingToken;
-    let diagnostics: string[] = [];
+    const token = this.state.meetingToken;
 
+    // Notify backend (fire-and-forget for notifications)
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
-      const res = await fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${start_id}`, {
+      fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${start_id}`, {
         method: "GET",
         headers: { "Content-Type": "application/json", token: this.state.token },
-      });
-      const data = await res.json();
-      diagnostics.push(`Backend: ${res.status}`);
-      if (data?.meeting_token) {
-        token = data.meeting_token;
-        diagnostics.push("Got fresh token");
-      }
-      if (data?.meeting_code && !meetingId) {
-        meetingId = data.meeting_code;
-        diagnostics.push(`Got meeting: ${meetingId}`);
-      }
-    } catch (e: any) {
-      diagnostics.push(`Backend err: ${e?.message || e}`);
-    }
+      }).catch(() => {});
+    } catch (_e) {}
 
     if (!meetingId) {
       try {
@@ -293,21 +281,16 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
         });
         const data = await response.json();
         meetingId = data?.meetingId;
-        diagnostics.push(`Created meeting: ${meetingId || 'FAILED'}`);
-        if (!meetingId) diagnostics.push(`VideoSDK resp: ${JSON.stringify(data).substring(0, 100)}`);
       } catch (e: any) {
-        diagnostics.push(`VideoSDK err: ${e?.message || e}`);
+        console.log("Failed to create meeting:", e);
       }
     }
     if (!meetingId) {
-      Alert.alert("Video Call Failed", `Could not start call.\n\n${diagnostics.join('\n')}`);
+      this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.");
       return;
     }
-    diagnostics.push(`Final meeting: ${meetingId}`);
-    console.log("Coach video call diagnostics:", diagnostics.join(' | '));
     this.setState({
       meetingId,
-      meetingToken: token,
       showMeetingModal: true,
     });
   }
