@@ -326,33 +326,31 @@ _handleAppStateChange = (nextAppState: any) => {
 
   startMeeting = async (id: string, book_id: any) => {
     let meetingId = id;
-    const token = this.state.meeting.token;
+    let token = this.state.meeting.token;
 
-    // Notify backend (fire-and-forget for notifications)
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
-      fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${book_id}`, {
+      const res = await fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${book_id}`, {
         method: "GET",
         headers: { "Content-Type": "application/json", token: this.state.token },
-      }).catch(() => {});
+      });
+      const data = await res.json();
+      if (data?.meeting_code) meetingId = data.meeting_code;
+      if (data?.meeting_token) token = data.meeting_token;
     } catch (_e) {}
 
     if (!meetingId) {
       try {
         const response = await fetch("https://api.videosdk.live/v1/meetings", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            authorization: token,
-          },
+          headers: { "Content-Type": "application/json", authorization: token },
           body: JSON.stringify({ region: "in001" }),
         });
         const data = await response.json();
         meetingId = data?.meetingId;
-      } catch (e: any) {
-        console.log("Failed to create meeting:", e);
-      }
+      } catch (_e) {}
     }
+
     if (!meetingId) {
       this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.", "");
       return;
