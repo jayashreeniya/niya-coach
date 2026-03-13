@@ -20,6 +20,12 @@ module.exports = {
     },
   },
   transformer: {
+    minifierPath: require.resolve('metro-minify-terser'),
+    minifierConfig: {
+      ecma: 2020,
+      compress: { toplevel: true },
+      mangle: { toplevel: true },
+    },
     getTransformOptions: async () => ({
       transform: {
         experimentalImportSupport: false,
