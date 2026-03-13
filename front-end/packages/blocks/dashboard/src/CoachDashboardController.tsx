@@ -258,7 +258,7 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
 
   startMeeting = async (id: string, start_id: any) => {
     let meetingId = id;
-    let token = this.state.meetingToken;
+    const token = this.state.meetingToken;
 
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
@@ -268,7 +268,6 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
       });
       const data = await res.json();
       if (data?.meeting_code) meetingId = data.meeting_code;
-      if (data?.meeting_token) token = data.meeting_token;
     } catch (_e) {}
 
     if (!meetingId) {
@@ -289,7 +288,6 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
     }
     this.setState({
       meetingId,
-      meetingToken: token,
       showMeetingModal: true,
     });
   }

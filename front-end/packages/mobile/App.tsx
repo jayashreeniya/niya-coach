@@ -5,7 +5,7 @@ import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
 import {  LogBox, View, Image, Text, TouchableOpacity, SafeAreaView } from 'react-native'
 import * as ReactNavigation from "react-navigation";
 import { register } from "@videosdk.live/react-native-sdk";
-try { register(); } catch (e) { console.log("VideoSDK register failed:", e); }
+register().catch((e: any) => console.log("VideoSDK register failed:", e));
 import * as RootNavigation from '../framework/src/RootNavigation';
 import { AppProvider, useAppState } from '../components/src/context/AppContext';
 import UserList from "../blocks/ChatBackuprestore/src/UserList";

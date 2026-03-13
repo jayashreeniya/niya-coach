@@ -196,12 +196,13 @@ const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, 
     UseFrontCamera();
   }
 
-  function onMeetingLeft() {
+  function onMeetingLeft(reason: any) {
     onJoin(false);
     if (hasJoinedRef.current) {
       goBack();
     } else {
-      Alert.alert("Video Call", "Meeting left before joining completed. The other party may not be available yet.");
+      const reasonStr = reason ? (typeof reason === 'object' ? JSON.stringify(reason) : String(reason)) : 'unknown';
+      Alert.alert("Video Call", `Could not join. Reason: ${reasonStr}`);
       setJoinFailed(true);
     }
   }

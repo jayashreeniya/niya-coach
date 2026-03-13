@@ -326,7 +326,7 @@ _handleAppStateChange = (nextAppState: any) => {
 
   startMeeting = async (id: string, book_id: any) => {
     let meetingId = id;
-    let token = this.state.meeting.token;
+    const token = this.state.meeting.token;
 
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
@@ -336,7 +336,6 @@ _handleAppStateChange = (nextAppState: any) => {
       });
       const data = await res.json();
       if (data?.meeting_code) meetingId = data.meeting_code;
-      if (data?.meeting_token) token = data.meeting_token;
     } catch (_e) {}
 
     if (!meetingId) {
