@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+.env
+.env.*
+*.tsbuildinfo
+next-env.d.ts
+app-logs/
+azure-logs/
+deploy-package/
+*.json.bak

@@ -1,0 +1,38 @@
+{
+  "name": "niya-practice",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NIYA Practice — 90-Day Emotional Fitness Web App with Audio Guidance",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:seed": "node scripts/seed-database.js",
+    "db:verify": "node scripts/verify-practices.js",
+    "db:reset": "node scripts/reset-database.js && npm run db:seed"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.17",
+    "autoprefixer": "^10.4.19",
+    "clsx": "^2.1.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.38.0",
+    "mysql2": "^3.11.0",
+    "next": "^14.2.0",
+    "next-auth": "^4.24.0",
+    "postcss": "^8.4.38",
+    "react": "^18.3.0",
+    "react-confetti": "^6.1.0",
+    "react-dom": "^18.3.0",
+    "tailwindcss": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "dotenv": "^17.3.1",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.0",
+    "typescript": "^5.5.0"
+  }
+}

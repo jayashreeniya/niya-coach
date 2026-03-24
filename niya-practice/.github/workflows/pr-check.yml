@@ -1,0 +1,41 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          MYSQL_HOST: localhost
+          MYSQL_USER: test
+          MYSQL_PASSWORD: test
+          MYSQL_DATABASE: niya_test
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: test-secret-for-ci-only
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_NIYA_URL: http://localhost:3000
