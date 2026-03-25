@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { VOICES, DEFAULT_PROSODY } from '@/types/tts';
 import type { Practice, SupportedLanguage } from '@/types/database';
-import { speakWithFallback, cancelCurrent } from '@/lib/speech-fallback';
 
 interface AudioGuidedPlayerProps {
   practice: Practice;
@@ -28,36 +27,38 @@ export function AudioGuidedPlayer({
   const [gapCountdown, setGapCountdown] = useState(0);
   const [progress, setProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
-  const [source, setSource] = useState<'azure' | 'browser'>('azure');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const speechCtrlRef = useRef<{ pause: () => void; resume: () => void; cancel: () => void } | null>(null);
   const gapTimerRef = useRef<NodeJS.Timeout | null>(null);
   const gapIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
+  const stepIdxRef = useRef(0);
 
   useEffect(() => {
     return () => {
       mountedRef.current = false;
-      cleanup();
+      clearGapTimers();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        const src = audioRef.current.src;
+        audioRef.current.removeAttribute('src');
+        audioRef.current.load();
+        if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+      }
     };
   }, []);
 
-  const cleanup = useCallback(() => {
-    if (audioRef.current) {
-      const src = audioRef.current.src;
-      audioRef.current.pause();
-      audioRef.current.removeAttribute('src');
-      audioRef.current = null;
-      if (src.startsWith('blob:')) URL.revokeObjectURL(src);
-    }
-    if (speechCtrlRef.current) {
-      speechCtrlRef.current.cancel();
-      speechCtrlRef.current = null;
-    }
-    cancelCurrent();
-    if (gapTimerRef.current) clearTimeout(gapTimerRef.current);
-    if (gapIntervalRef.current) clearInterval(gapIntervalRef.current);
+  const clearGapTimers = useCallback(() => {
+    if (gapTimerRef.current) { clearTimeout(gapTimerRef.current); gapTimerRef.current = null; }
+    if (gapIntervalRef.current) { clearInterval(gapIntervalRef.current); gapIntervalRef.current = null; }
+  }, []);
+
+  const getOrCreateAudio = useCallback((): HTMLAudioElement => {
+    if (audioRef.current) return audioRef.current;
+    const el = new Audio();
+    el.preload = 'auto';
+    audioRef.current = el;
+    return el;
   }, []);
 
   const playStep = useCallback(
@@ -68,13 +69,23 @@ export function AudioGuidedPlayer({
         return;
       }
 
-      cleanup();
+      clearGapTimers();
+      stepIdxRef.current = idx;
       const step = steps[idx];
       setStepIdx(idx);
       setStatus('loading');
       setProgress(0);
 
+      const audio = getOrCreateAudio();
+
+      const oldSrc = audio.src;
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+      if (oldSrc.startsWith('blob:')) URL.revokeObjectURL(oldSrc);
+
       const startGapThenNext = (pauseSec: number) => {
+        if (!mountedRef.current) return;
         setStatus('gap');
         setGapCountdown(pauseSec);
         let remaining = pauseSec;
@@ -86,19 +97,6 @@ export function AudioGuidedPlayer({
           if (gapIntervalRef.current) clearInterval(gapIntervalRef.current);
           if (mountedRef.current) playStep(idx + 1);
         }, pauseSec * 1000);
-      };
-
-      const playViaBrowser = () => {
-        if (!mountedRef.current) return;
-        setSource('browser');
-        setStatus('playing');
-        speechCtrlRef.current = speakWithFallback({
-          text: step.text,
-          language,
-          rate: 0.85,
-          onEnd: () => { if (mountedRef.current) startGapThenNext(step.pause_after ?? 3); },
-          onError: (e) => { if (mountedRef.current) { setStatus('error'); setErrorMsg(`Browser speech: ${e}`); } },
-        });
       };
 
       try {
@@ -114,72 +112,84 @@ export function AudioGuidedPlayer({
         });
 
         if (!resp.ok) {
-          console.warn(`[AudioPlayer] Azure TTS returned ${resp.status}, falling back to browser speech`);
-          playViaBrowser();
+          console.warn(`[AudioPlayer] TTS returned ${resp.status}`);
+          if (mountedRef.current) {
+            setStatus('error');
+            setErrorMsg(`Audio generation failed (${resp.status}). Tap Retry.`);
+          }
           return;
         }
 
         const blob = await resp.blob();
         if (!mountedRef.current) return;
 
-        setSource('azure');
         const blobUrl = URL.createObjectURL(blob);
-        const audio = new Audio(blobUrl);
-        audioRef.current = audio;
+        audio.src = blobUrl;
 
         audio.ontimeupdate = () => {
-          if (audio.duration > 0) {
+          if (audio.duration > 0 && mountedRef.current) {
             setProgress(audio.currentTime / audio.duration);
           }
         };
 
-        audio.onended = () => startGapThenNext(step.pause_after ?? 3);
+        audio.onended = () => {
+          if (blobUrl.startsWith('blob:')) URL.revokeObjectURL(blobUrl);
+          startGapThenNext(step.pause_after ?? 3);
+        };
 
         audio.onerror = () => {
-          console.warn('[AudioPlayer] Audio element error, falling back to browser speech');
-          playViaBrowser();
+          console.warn('[AudioPlayer] Audio element error');
+          if (blobUrl.startsWith('blob:')) URL.revokeObjectURL(blobUrl);
+          if (mountedRef.current) {
+            setStatus('error');
+            setErrorMsg('Audio playback failed. Tap Retry.');
+          }
         };
 
         await audio.play();
         if (mountedRef.current) setStatus('playing');
       } catch (err: any) {
-        console.warn('[AudioPlayer] Fetch failed, falling back to browser speech', err);
-        playViaBrowser();
+        console.warn('[AudioPlayer] Fetch/play failed:', err?.message);
+        if (mountedRef.current) {
+          setStatus('error');
+          setErrorMsg('Could not play audio. Tap Retry.');
+        }
       }
     },
-    [steps, language, voiceInfo.voice, practice.id, router, cleanup]
+    [steps, language, voiceInfo.voice, practice.id, router, clearGapTimers, getOrCreateAudio]
   );
 
-  useEffect(() => {
+  const handleStart = useCallback(() => {
+    getOrCreateAudio();
     playStep(0);
-  }, [playStep]);
+  }, [getOrCreateAudio, playStep]);
 
   const handlePause = () => {
-    if (source === 'browser') {
-      speechCtrlRef.current?.pause();
-    } else {
-      audioRef.current?.pause();
-    }
+    audioRef.current?.pause();
     setStatus('paused');
   };
 
   const handleResume = () => {
-    if (source === 'browser') {
-      speechCtrlRef.current?.resume();
-    } else {
-      audioRef.current?.play().catch(() => {});
-    }
+    audioRef.current?.play().catch(() => {});
     setStatus('playing');
   };
 
   const handleSkip = () => {
-    cleanup();
+    clearGapTimers();
     playStep(stepIdx + 1);
+  };
+
+  const handleRetry = () => {
+    playStep(stepIdx);
   };
 
   const handleExit = () => {
     if (confirm('Are you sure you want to exit? Your progress will not be saved.')) {
-      cleanup();
+      clearGapTimers();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute('src');
+      }
       router.push('/practice');
     }
   };
@@ -229,6 +239,8 @@ export function AudioGuidedPlayer({
                     </svg>
                   ) : status === 'paused' ? (
                     <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>
+                  ) : status === 'idle' ? (
+                    <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                   ) : (
                     <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                   )}
@@ -246,9 +258,6 @@ export function AudioGuidedPlayer({
 
         {/* Status badges */}
         <div className="flex justify-center gap-2 mb-4">
-          {source === 'browser' && (
-            <span className="text-xs text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">Using browser voice</span>
-          )}
           {status === 'gap' && gapCountdown > 0 && (
             <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">Silence &middot; {gapCountdown}s</span>
           )}
@@ -266,32 +275,44 @@ export function AudioGuidedPlayer({
 
         {/* Controls */}
         <div className="flex flex-col items-center gap-4">
-          <button
-            onClick={status === 'paused' ? handleResume : handlePause}
-            disabled={status === 'loading'}
-            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-semibold px-12 py-4 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95 disabled:transform-none disabled:cursor-not-allowed"
-          >
-            {status === 'loading' ? (
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Loading...
-              </span>
-            ) : status === 'paused' ? (
+          {status === 'idle' ? (
+            <button
+              onClick={handleStart}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold px-12 py-4 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95"
+            >
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                Resume
+                Begin Session
               </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>
-                Pause
-              </span>
-            )}
-          </button>
+            </button>
+          ) : (
+            <button
+              onClick={status === 'paused' ? handleResume : handlePause}
+              disabled={status === 'loading' || status === 'gap'}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-semibold px-12 py-4 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95 disabled:transform-none disabled:cursor-not-allowed"
+            >
+              {status === 'loading' ? (
+                <span className="flex items-center gap-2">
+                  <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Loading...
+                </span>
+              ) : status === 'paused' ? (
+                <span className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  Resume
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>
+                  Pause
+                </span>
+              )}
+            </button>
+          )}
 
-          {!isLastStep && (
+          {status !== 'idle' && !isLastStep && (
             <button onClick={handleSkip} disabled={status === 'loading'} className="text-gray-600 hover:text-gray-900 font-medium px-6 py-2 rounded-full hover:bg-gray-100 transition-all disabled:opacity-50">
               Skip this step &rarr;
             </button>
@@ -306,7 +327,7 @@ export function AudioGuidedPlayer({
         {status === 'error' && (
           <div className="mt-6 text-center">
             <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3">{errorMsg}</p>
-            <button onClick={() => playStep(stepIdx)} className="mt-2 text-sm text-purple-600 underline">Retry</button>
+            <button onClick={handleRetry} className="mt-2 text-sm text-purple-600 underline">Retry</button>
           </div>
         )}
       </div>

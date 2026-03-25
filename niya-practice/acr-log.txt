@@ -1,0 +1,148 @@
+2026/03/19 10:51:15 Downloading source code...
+2026/03/19 10:51:15 Finished downloading source code
+2026/03/19 10:51:16 Using acb_vol_771a6706-b04b-4493-a19d-5795f7318689 as the home volume
+2026/03/19 10:51:16 Setting up Docker configuration...
+2026/03/19 10:51:16 Successfully set up Docker configuration
+2026/03/19 10:51:16 Logging in to registry: niyapractice.azurecr.io
+2026/03/19 10:51:17 Successfully logged into niyapractice.azurecr.io
+2026/03/19 10:51:17 Executing step ID: build. Timeout(sec): 28800, Working directory: '', Network: ''
+2026/03/19 10:51:17 Scanning for dependencies...
+2026/03/19 10:51:17 Successfully scanned dependencies
+2026/03/19 10:51:17 Launching container with name: build
+Sending build context to Docker daemon  507.9kB
+Step 1/28 : FROM node:20-alpine AS base
+20-alpine: Pulling from library/node
+589002ba0eae: Pulling fs layer
+ed2fdcee5269: Pulling fs layer
+7ad115895a6a: Pulling fs layer
+9d10d4687fae: Pulling fs layer
+9d10d4687fae: Waiting
+7ad115895a6a: Verifying Checksum
+7ad115895a6a: Download complete
+589002ba0eae: Verifying Checksum
+589002ba0eae: Download complete
+589002ba0eae: Pull complete
+ed2fdcee5269: Verifying Checksum
+ed2fdcee5269: Download complete
+9d10d4687fae: Verifying Checksum
+9d10d4687fae: Download complete
+ed2fdcee5269: Pull complete
+7ad115895a6a: Pull complete
+9d10d4687fae: Pull complete
+Digest: sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+Status: Downloaded newer image for node:20-alpine
+ ---> 6757e50d3b6b
+Step 2/28 : FROM base AS deps
+ ---> 6757e50d3b6b
+Step 3/28 : RUN apk add --no-cache libc6-compat
+ ---> Running in bd7dcc975362
+(1/3) Installing musl-obstack (1.2.3-r2)
+(2/3) Installing libucontext (1.3.3-r0)
+(3/3) Installing gcompat (1.1.0-r4)
+OK: 11.0 MiB in 21 packages
+Removing intermediate container bd7dcc975362
+ ---> 30558890bc00
+Step 4/28 : WORKDIR /app
+ ---> Running in 0e3a580729c4
+Removing intermediate container 0e3a580729c4
+ ---> faedeb5067cf
+Step 5/28 : COPY package.json package-lock.json* ./
+ ---> c393f8607562
+Step 6/28 : RUN npm ci
+ ---> Running in 5d4b781024fd
+[91mnpm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+[0m[91mnpm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+[0m[91mnpm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+[0m[91mnpm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+[0m[91mnpm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+[0m[91mnpm warn deprecated glob@10.3.10: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+[0m[91mnpm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+[0m
+
+added 441 packages, and audited 442 packages in 19s
+
+166 packages are looking for funding
+  run `npm fund` for details
+
+4 high severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+[91mnpm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.0
+npm notice To update run: npm install -g npm@11.12.0
+npm notice
+[0mRemoving intermediate container 5d4b781024fd
+ ---> 40a67b3aa594
+Step 7/28 : FROM base AS builder
+ ---> 6757e50d3b6b
+Step 8/28 : WORKDIR /app
+ ---> Running in 2f427e0c69b7
+Removing intermediate container 2f427e0c69b7
+ ---> 6be238599553
+Step 9/28 : COPY --from=deps /app/node_modules ./node_modules
+
+ ---> 37b3acca19a8
+Step 10/28 : COPY . .
+ ---> 95440367d3e0
+Step 11/28 : ENV NEXT_TELEMETRY_DISABLED=1
+ ---> Running in 5d03b84d5743
+Removing intermediate container 5d03b84d5743
+ ---> ee2939c9d175
+Step 12/28 : ENV NEXT_PUBLIC_APP_URL=https://practice.niya.app
+ ---> Running in e46ac738fe9e
+Removing intermediate container e46ac738fe9e
+ ---> c1abe114c550
+Step 13/28 : ENV NEXT_PUBLIC_NIYA_URL=https://niya.app
+ ---> Running in 54004e4eeba5
+Removing intermediate container 54004e4eeba5
+ ---> 54c5ef3f93ce
+Step 14/28 : RUN npm run build
+ ---> Running in 7dbb5865528b
+
+> niya-practice@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./components/navigation/NavBar.tsx
+34:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+[91mError: Missing required database environment variables. Set MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE.
+    at /app/.next/server/app/api/auth/[...nextauth]/route.js:5:1581
+    at 9487 (/app/.next/server/app/api/auth/[...nextauth]/route.js:5:2025)
+    at t (/app/.next/server/webpack-runtime.js:1:128)
+    at 10191 (/app/.next/server/app/api/auth/[...nextauth]/route.js:1:2574)
+    at t (/app/.next/server/webpack-runtime.js:1:128)
+    at 73572 (/app/.next/server/app/api/auth/[...nextauth]/route.js:1:1975)
+    at t (/app/.next/server/webpack-runtime.js:1:128)
+    at r (/app/.next/server/app/api/auth/[...nextauth]/route.js:5:2979)
+    at /app/.next/server/app/api/auth/[...nextauth]/route.js:5:3014
+    at t.X (/app/.next/server/webpack-runtime.js:1:1206)
+[0m[91m
+[0m[91m> Build error occurred
+[0m[91mError: Failed to collect page data for /api/auth/[...nextauth]
+    at /app/node_modules/next/dist/build/utils.js:1269:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  type: 'Error'
+}
+[0m[91mnpm notice
+npm notice New major version of npm available! 10.8.2 -> 11.12.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.0
+npm notice To update run: npm install -g npm@11.12.0
+npm notice
+[0mThe command '/bin/sh -c npm run build' returned a non-zero code: 1
+2026/03/19 10:52:40 Container failed during run: build. No retries remaining.
+failed to run step ID: build: exit status 1
+
+Run ID: cu3 failed after 1m26s. Error: failed during run, err: exit status 1
