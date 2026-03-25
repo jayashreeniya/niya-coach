@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Platform, Alert } from "react-native";
 import {
   MeetingProvider,
@@ -16,6 +16,10 @@ import { AppContext } from "./context/AppContext";
 import { Colors, dimensions } from "./utils";
 import { call, mic as micOn, micOff, video as videoOn, videoOff } from "./images";
 import Typography from "./Typography";
+
+function safeRequestRecordPermission() {
+  try { InCallManager.requestRecordPermission(); } catch (_e) {}
+}
 
 type ControlsProps = {
   join: () => void;
@@ -51,7 +55,7 @@ const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMi
   const switchWebCam = () => {
     video.setVideoOn(!video.videoOn);
     toggleWebcam();
-    InCallManager.requestRecordPermission();
+    safeRequestRecordPermission();
   }
   const switchMic = () => {
     mic.setMicOn(!mic.micOn);
@@ -256,6 +260,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
 
   const [joined, setJoined] = useState<boolean>(false);
   const [valid, setValid] = useState<boolean>(false);
+  const [sdkReady, setSdkReady] = useState<boolean>(false);
   const [micOn, setMicOn] = useState<boolean>(false);
   const [videoOn, setVideoOn] = useState<boolean>(false);
   const { state } = useContext(AppContext);
@@ -265,14 +270,25 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   }
 
   useEffect(() => {
-    InCallManager.requestRecordPermission();
+    let mounted = true;
+    (async () => {
+      try {
+        const { waitForVideoSDK } = require("../../mobile/App");
+        await waitForVideoSDK();
+      } catch (_e) {}
+      if (mounted) {
+        setSdkReady(true);
+        safeRequestRecordPermission();
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
-    if(meetingId && token){
+    if(meetingId && token && sdkReady){
       setValid(true);
     }
-  }, [meetingId, token]);
+  }, [meetingId, token, sdkReady]);
 
   return(
     <Modal

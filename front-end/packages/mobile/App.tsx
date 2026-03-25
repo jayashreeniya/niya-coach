@@ -5,7 +5,14 @@ import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
 import {  LogBox, View, Image, Text, TouchableOpacity, SafeAreaView } from 'react-native'
 import * as ReactNavigation from "react-navigation";
 import { register } from "@videosdk.live/react-native-sdk";
-register().catch((e: any) => console.log("VideoSDK register failed:", e));
+
+let _sdkReady = false;
+const _sdkReadyPromise = register()
+  .then(() => { _sdkReady = true; })
+  .catch((e: any) => console.log("VideoSDK register failed:", e));
+
+export function isVideoSDKReady(): boolean { return _sdkReady; }
+export function waitForVideoSDK(): Promise<void> { return _sdkReadyPromise as Promise<void>; }
 import * as RootNavigation from '../framework/src/RootNavigation';
 import { AppProvider, useAppState } from '../components/src/context/AppContext';
 import UserList from "../blocks/ChatBackuprestore/src/UserList";
@@ -402,7 +409,7 @@ if (!HomeScreen.instance) {
 LogBox.ignoreAllLogs(false);
 LogBox.ignoreLogs(['Warning:']);
 
-// VideoSDK registration removed - using Zoom links for video calls instead
+// VideoSDK is registered at module load (top of file) via register()
 
 const RootNavigator = createSwitchNavigator(
   {

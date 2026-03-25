@@ -12,7 +12,7 @@ import { AppContext } from "../../../components/src/context/AppContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { set_user_data } from "../../../components/src/context/actions";
 import { initState } from "../../../components/src/context/appContextReducer";
-import { Alert } from "react-native";
+import { Alert, Platform, PermissionsAndroid } from "react-native";
 // Customizable Area End
 
 export const configJSON = require("./config.js");
@@ -256,7 +256,34 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
     });
   }
 
+  requestVideoCallPermissions = async (): Promise<boolean> => {
+    if (Platform.OS !== "android") return true;
+    try {
+      const grants = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+      ]);
+      return (
+        grants[PermissionsAndroid.PERMISSIONS.CAMERA] === PermissionsAndroid.RESULTS.GRANTED &&
+        grants[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] === PermissionsAndroid.RESULTS.GRANTED
+      );
+    } catch (_e) {
+      return false;
+    }
+  }
+
   startMeeting = async (id: string, start_id: any) => {
+    const permsOk = await this.requestVideoCallPermissions();
+    if (!permsOk) {
+      this.showAlert("Alert", "Camera and microphone permissions are required for video calls.");
+      return;
+    }
+
+    try {
+      const { waitForVideoSDK } = require("../../../mobile/App");
+      await waitForVideoSDK();
+    } catch (_e) {}
+
     let meetingId = id;
     const token = this.state.meetingToken;
 
