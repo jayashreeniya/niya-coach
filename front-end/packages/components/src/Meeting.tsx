@@ -18,7 +18,11 @@ import { call, mic as micOn, micOff, video as videoOn, videoOff } from "./images
 import Typography from "./Typography";
 
 function safeRequestRecordPermission() {
-  try { InCallManager.requestRecordPermission(); } catch (_e) {}
+  try {
+    if (InCallManager && typeof InCallManager.requestRecordPermission === 'function') {
+      InCallManager.requestRecordPermission();
+    }
+  } catch (_e) {}
 }
 
 type ControlsProps = {
@@ -273,7 +277,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     let mounted = true;
     (async () => {
       try {
-        const { waitForVideoSDK } = require("../../mobile/App");
+        const { waitForVideoSDK } = require("../../../mobile/App");
         await waitForVideoSDK();
       } catch (_e) {}
       if (mounted) {

@@ -259,13 +259,12 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
   requestVideoCallPermissions = async (): Promise<boolean> => {
     if (Platform.OS !== "android") return true;
     try {
-      const grants = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.CAMERA,
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-      ]);
+      const CAMERA = "android.permission.CAMERA";
+      const MIC = "android.permission.RECORD_AUDIO";
+      const grants = await PermissionsAndroid.requestMultiple([CAMERA as any, MIC as any]);
       return (
-        grants[PermissionsAndroid.PERMISSIONS.CAMERA] === PermissionsAndroid.RESULTS.GRANTED &&
-        grants[PermissionsAndroid.PERMISSIONS.RECORD_AUDIO] === PermissionsAndroid.RESULTS.GRANTED
+        grants[CAMERA] === PermissionsAndroid.RESULTS.GRANTED &&
+        grants[MIC] === PermissionsAndroid.RESULTS.GRANTED
       );
     } catch (_e) {
       return false;
