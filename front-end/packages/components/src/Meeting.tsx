@@ -264,7 +264,6 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
 
   const [joined, setJoined] = useState<boolean>(false);
   const [valid, setValid] = useState<boolean>(false);
-  const [sdkReady, setSdkReady] = useState<boolean>(false);
   const [micOn, setMicOn] = useState<boolean>(false);
   const [videoOn, setVideoOn] = useState<boolean>(false);
   const { state } = useContext(AppContext);
@@ -274,25 +273,14 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   }
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const { waitForVideoSDK } = require("../../mobile/App");
-        await waitForVideoSDK();
-      } catch (_e) {}
-      if (mounted) {
-        setSdkReady(true);
-        safeRequestRecordPermission();
-      }
-    })();
-    return () => { mounted = false; };
+    safeRequestRecordPermission();
   }, []);
 
   useEffect(() => {
-    if(meetingId && token && sdkReady){
+    if(meetingId && token){
       setValid(true);
     }
-  }, [meetingId, token, sdkReady]);
+  }, [meetingId, token]);
 
   return(
     <Modal

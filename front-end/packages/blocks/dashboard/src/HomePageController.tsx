@@ -17,7 +17,7 @@ import TrackPlayer from "react-native-track-player";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import moment from "moment";
 import * as IMG_CONST from './assets'
-import { AppState, Alert, Platform, PermissionsAndroid } from "react-native";
+import { AppState, Alert } from "react-native";
 
 
 interface IosItemType     {
@@ -324,33 +324,7 @@ _handleAppStateChange = (nextAppState: any) => {
   this.stopeAudioplay()
 }
 
-  requestVideoCallPermissions = async (): Promise<boolean> => {
-    if (Platform.OS !== "android") return true;
-    try {
-      const CAMERA = "android.permission.CAMERA";
-      const MIC = "android.permission.RECORD_AUDIO";
-      const grants = await PermissionsAndroid.requestMultiple([CAMERA as any, MIC as any]);
-      return (
-        grants[CAMERA] === PermissionsAndroid.RESULTS.GRANTED &&
-        grants[MIC] === PermissionsAndroid.RESULTS.GRANTED
-      );
-    } catch (_e) {
-      return false;
-    }
-  }
-
   startMeeting = async (id: string, book_id: any) => {
-    const permsOk = await this.requestVideoCallPermissions();
-    if (!permsOk) {
-      this.showAlert("Alert", "Camera and microphone permissions are required for video calls.", "");
-      return;
-    }
-
-    try {
-      const { waitForVideoSDK } = require("../../../mobile/App");
-      await waitForVideoSDK();
-    } catch (_e) {}
-
     let meetingId = id;
     const token = this.state.meeting.token;
 

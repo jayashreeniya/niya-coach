@@ -5,14 +5,7 @@ import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
 import {  LogBox, View, Image, Text, TouchableOpacity, SafeAreaView } from 'react-native'
 import * as ReactNavigation from "react-navigation";
 import { register } from "@videosdk.live/react-native-sdk";
-
-let _sdkReady = false;
-const _sdkReadyPromise = register()
-  .then(() => { _sdkReady = true; })
-  .catch((e: any) => console.log("VideoSDK register failed:", e));
-
-export function isVideoSDKReady(): boolean { return _sdkReady; }
-export function waitForVideoSDK(): Promise<void> { return _sdkReadyPromise as Promise<void>; }
+register().catch((e: any) => console.log("VideoSDK register failed:", e));
 import * as RootNavigation from '../framework/src/RootNavigation';
 import { AppProvider, useAppState } from '../components/src/context/AppContext';
 import UserList from "../blocks/ChatBackuprestore/src/UserList";
