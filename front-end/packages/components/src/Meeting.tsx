@@ -277,7 +277,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     let mounted = true;
     (async () => {
       try {
-        const { waitForVideoSDK } = require("../../../mobile/App");
+        const { waitForVideoSDK } = require("../../mobile/App");
         await waitForVideoSDK();
       } catch (_e) {}
       if (mounted) {
