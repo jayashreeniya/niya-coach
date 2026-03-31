@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import SplashScreen from 'react-native-splash-screen';
 import styles from './AppStyles'
-import {request, PERMISSIONS, check, RESULTS} from 'react-native-permissions';
-import {  LogBox, View, Image, Text, TouchableOpacity, SafeAreaView } from 'react-native'
+import {  LogBox, View, Image, Text, TouchableOpacity, SafeAreaView, Platform, PermissionsAndroid } from 'react-native'
 import * as ReactNavigation from "react-navigation";
 import { register } from "@videosdk.live/react-native-sdk";
 register().catch((e: any) => console.log("VideoSDK register failed:", e));
@@ -480,23 +479,16 @@ export function App() {
   useEffect(() => {
     requestPermission()
   }, []);
-  
-  const requestNotificationPermission = async () => {
-    const result = await request(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
-    return result;
-  };
-  
-  const checkNotificationPermission = async () => {
-    const result = await check(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
-    return result;
-  };
 
   const requestPermission = async() => {
     try {
-      const checkPermission = await checkNotificationPermission();
-    if (checkPermission !== RESULTS.GRANTED) {
-      await requestNotificationPermission();
-    }
+      if (Platform.OS !== "android") return;
+      if (Number(Platform.Version) < 33) return;
+      const POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
+      const hasPermission = await PermissionsAndroid.check(POST_NOTIFICATIONS as any);
+      if (!hasPermission) {
+        await PermissionsAndroid.request(POST_NOTIFICATIONS as any);
+      }
     } catch (err) {
       alert('error')
     }
