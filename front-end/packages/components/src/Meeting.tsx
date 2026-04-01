@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Platform, Alert } from "react-native";
+import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Platform, Alert, PermissionsAndroid } from "react-native";
 import {
   MeetingProvider,
   useMeeting,
@@ -13,6 +13,21 @@ import { AppContext } from "./context/AppContext";
 import { Colors, dimensions } from "./utils";
 import { call, mic as micOn, micOff, video as videoOn, videoOff } from "./images";
 import Typography from "./Typography";
+
+async function requestMediaPermissions(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  try {
+    const result = await PermissionsAndroid.requestMultiple([
+      'android.permission.CAMERA' as any,
+      'android.permission.RECORD_AUDIO' as any,
+    ]);
+    const cam = result['android.permission.CAMERA'];
+    const mic = result['android.permission.RECORD_AUDIO'];
+    return cam === PermissionsAndroid.RESULTS.GRANTED && mic === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (_e) {
+    return false;
+  }
+}
 
 type ControlsProps = {
   join: () => void;
@@ -252,6 +267,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
 
   const [joined, setJoined] = useState<boolean>(false);
   const [valid, setValid] = useState<boolean>(false);
+  const [permissionsGranted, setPermissionsGranted] = useState<boolean>(false);
   const [micOn, setMicOn] = useState<boolean>(false);
   const [videoOn, setVideoOn] = useState<boolean>(false);
   const { state } = useContext(AppContext);
@@ -261,10 +277,21 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   }
 
   useEffect(() => {
-    if(meetingId && token){
+    if (visible) {
+      requestMediaPermissions().then((granted) => {
+        setPermissionsGranted(granted);
+        if (!granted) {
+          Alert.alert('Permissions Required', 'Camera and microphone access are needed for video calls.');
+        }
+      });
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if(meetingId && token && permissionsGranted){
       setValid(true);
     }
-  }, [meetingId, token]);
+  }, [meetingId, token, permissionsGranted]);
 
   return(
     <Modal
