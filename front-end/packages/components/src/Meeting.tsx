@@ -9,21 +9,10 @@ import {
   switchAudioDevice
   //@ts-ignore
 } from "@videosdk.live/react-native-sdk";
-//@ts-ignore
-import InCallManager from "@videosdk.live/react-native-incallmanager";
-
 import { AppContext } from "./context/AppContext";
 import { Colors, dimensions } from "./utils";
 import { call, mic as micOn, micOff, video as videoOn, videoOff } from "./images";
 import Typography from "./Typography";
-
-function safeRequestRecordPermission() {
-  try {
-    if (InCallManager && typeof InCallManager.requestRecordPermission === 'function') {
-      InCallManager.requestRecordPermission();
-    }
-  } catch (_e) {}
-}
 
 type ControlsProps = {
   join: () => void;
@@ -59,7 +48,6 @@ const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMi
   const switchWebCam = () => {
     video.setVideoOn(!video.videoOn);
     toggleWebcam();
-    safeRequestRecordPermission();
   }
   const switchMic = () => {
     mic.setMicOn(!mic.micOn);
@@ -271,10 +259,6 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const onJoin = (status: boolean) => {
     setJoined(status);
   }
-
-  useEffect(() => {
-    safeRequestRecordPermission();
-  }, []);
 
   useEffect(() => {
     if(meetingId && token){
