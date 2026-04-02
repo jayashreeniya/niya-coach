@@ -48,6 +48,10 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
+      - name: Apply vendor patches (VideoSDK WebRTC Android permissions)
+        working-directory: front-end
+        run: node scripts/apply-vendor-patches.js
+
       - name: Apply patches manually
         working-directory: front-end
         run: |

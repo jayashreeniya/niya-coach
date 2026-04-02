@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Platform, Alert, PermissionsAndroid } from "react-native";
+import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Platform, Alert } from "react-native";
 import {
   MeetingProvider,
   useMeeting,
@@ -9,6 +9,7 @@ import {
   switchAudioDevice
   //@ts-ignore
 } from "@videosdk.live/react-native-sdk";
+import { requestMultiple, PERMISSIONS, RESULTS } from "react-native-permissions";
 import { AppContext } from "./context/AppContext";
 import { Colors, dimensions } from "./utils";
 import { call, mic as micOn, micOff, video as videoOn, videoOff } from "./images";
@@ -17,13 +18,14 @@ import Typography from "./Typography";
 async function requestMediaPermissions(): Promise<boolean> {
   if (Platform.OS !== 'android') return true;
   try {
-    const result = await PermissionsAndroid.requestMultiple([
-      'android.permission.CAMERA' as any,
-      'android.permission.RECORD_AUDIO' as any,
+    const statuses = await requestMultiple([
+      PERMISSIONS.ANDROID.CAMERA,
+      PERMISSIONS.ANDROID.RECORD_AUDIO,
     ]);
-    const cam = result['android.permission.CAMERA'];
-    const mic = result['android.permission.RECORD_AUDIO'];
-    return cam === PermissionsAndroid.RESULTS.GRANTED && mic === PermissionsAndroid.RESULTS.GRANTED;
+    return (
+      statuses[PERMISSIONS.ANDROID.CAMERA] === RESULTS.GRANTED &&
+      statuses[PERMISSIONS.ANDROID.RECORD_AUDIO] === RESULTS.GRANTED
+    );
   } catch (_e) {
     return false;
   }
