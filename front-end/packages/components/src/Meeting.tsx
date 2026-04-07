@@ -191,7 +191,33 @@ type MeetingViewProps = {
   }
 }
 
-const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, video }) => {
+function formatSdkReason(reason: unknown): string {
+  if (reason === null || reason === undefined) {
+    return 'unknown (SDK gave no reason — often invalid/expired VideoSDK token, wrong meeting id, or network)';
+  }
+  if (typeof reason === 'string') return reason;
+  if (typeof reason === 'object') {
+    const o = reason as Record<string, unknown>;
+    const msg = o.message ?? o.msg ?? o.errorMessage ?? o.reason;
+    if (typeof msg === 'string' && msg.length) return msg;
+    if (msg != null && typeof msg === 'object') {
+      try {
+        return JSON.stringify(msg);
+      } catch (_e) {
+        return String(msg);
+      }
+    }
+    try {
+      const s = JSON.stringify(reason);
+      return s.length > 2 ? s : 'unknown (empty object from SDK)';
+    } catch (_e) {
+      return String(reason);
+    }
+  }
+  return String(reason);
+}
+
+const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = ({ onJoin, joined, goBack, mic, video, meetingIdForLog }) => {
 
   const hasJoinedRef = React.useRef(false);
   const [joinFailed, setJoinFailed] = React.useState(false);
@@ -214,14 +240,20 @@ const MeetingView: React.FC<MeetingViewProps> = ({ onJoin, joined, goBack, mic, 
     if (hasJoinedRef.current) {
       goBack();
     } else {
-      const reasonStr = reason ? (typeof reason === 'object' ? JSON.stringify(reason) : String(reason)) : 'unknown';
-      Alert.alert("Video Call", `Could not join. Reason: ${reasonStr}`);
+      const reasonStr = formatSdkReason(reason);
+      if (__DEV__) {
+        console.warn('[Meeting] onMeetingLeft before join', { reason, meetingId: meetingIdForLog });
+      }
+      Alert.alert("Video Call", `Could not join.\n\n${reasonStr}`);
       setJoinFailed(true);
     }
   }
 
   function onMeetingError(error: any) {
-    const errMsg = typeof error === 'object' ? JSON.stringify(error) : String(error);
+    const errMsg = formatSdkReason(error);
+    if (__DEV__) {
+      console.warn('[Meeting] onMeetingError', error, { meetingId: meetingIdForLog });
+    }
     Alert.alert("Video Call Error", errMsg);
     setJoinFailed(true);
   }
@@ -322,6 +354,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
               valid={valid}
               mic={{ micOn, setMicOn }}
               video={{ videoOn, setVideoOn }}
+              meetingIdForLog={meetingId}
             />
           </MeetingProvider>
         </View>
