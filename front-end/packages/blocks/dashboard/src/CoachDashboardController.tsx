@@ -258,7 +258,7 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
 
   startMeeting = async (id: string, start_id: any) => {
     let meetingId = id;
-    const token = this.state.meetingToken;
+    let videosdkToken = this.state.meetingToken;
 
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
@@ -266,15 +266,21 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
         method: "GET",
         headers: { "Content-Type": "application/json", token: this.state.token },
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const errMsg = data?.errors ?? data?.message ?? data?.error ?? `Video call failed (${res.status})`;
+        this.showAlert("Alert", String(errMsg));
+        return;
+      }
       if (data?.meeting_code) meetingId = data.meeting_code;
+      if (data?.meeting_token) videosdkToken = data.meeting_token;
     } catch (_e) {}
 
     if (!meetingId) {
       try {
         const response = await fetch("https://api.videosdk.live/v1/meetings", {
           method: "POST",
-          headers: { "Content-Type": "application/json", authorization: token },
+          headers: { "Content-Type": "application/json", authorization: videosdkToken },
           body: JSON.stringify({ region: "in001" }),
         });
         const data = await response.json();
@@ -288,6 +294,7 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
     }
     this.setState({
       meetingId,
+      meetingToken: videosdkToken,
       showMeetingModal: true,
     });
   }

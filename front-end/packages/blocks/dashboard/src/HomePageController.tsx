@@ -326,7 +326,8 @@ _handleAppStateChange = (nextAppState: any) => {
 
   startMeeting = async (id: string, book_id: any) => {
     let meetingId = id;
-    const token = this.state.meeting.token;
+    /** VideoSDK JWT: must use fresh token from backend video_call (meeting_token), not a stale hard-coded value. */
+    let videosdkToken = this.state.meeting.token;
 
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
@@ -334,15 +335,23 @@ _handleAppStateChange = (nextAppState: any) => {
         method: "GET",
         headers: { "Content-Type": "application/json", token: this.state.token },
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const errMsg = data?.errors ?? data?.message ?? data?.error ?? `Video call failed (${res.status})`;
+        this.showAlert("Alert", String(errMsg), "");
+        return;
+      }
       if (data?.meeting_code) meetingId = data.meeting_code;
-    } catch (_e) {}
+      if (data?.meeting_token) videosdkToken = data.meeting_token;
+    } catch (_e) {
+      /* Backend unreachable; may still join if meetingId from list + fallback token works */
+    }
 
     if (!meetingId) {
       try {
         const response = await fetch("https://api.videosdk.live/v1/meetings", {
           method: "POST",
-          headers: { "Content-Type": "application/json", authorization: token },
+          headers: { "Content-Type": "application/json", authorization: videosdkToken },
           body: JSON.stringify({ region: "in001" }),
         });
         const data = await response.json();
@@ -356,7 +365,7 @@ _handleAppStateChange = (nextAppState: any) => {
     }
     this.stopeAudioplay();
     this.setState({
-      meeting: { id: meetingId, token: token },
+      meeting: { id: meetingId, token: videosdkToken },
       showMeetingModal: true
     });
   }

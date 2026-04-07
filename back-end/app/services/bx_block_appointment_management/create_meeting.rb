@@ -35,9 +35,12 @@ module BxBlockAppointmentManagement
 
    def generate_token
      if ENV['API_KEY'].present? && ENV['SECRET_KEY'].present?
+       # VideoSDK expects a time-limited JWT; tokens without exp are often rejected after a short TTL.
+       now = Time.now.to_i
        payload = {
          apikey: ENV['API_KEY'],
-         permissions: ["allow_join", "allow_mod", "ask_join"]
+         permissions: ["allow_join", "allow_mod", "ask_join"],
+         exp: now + (24 * 60 * 60)
        }
        JWT.encode(payload, ENV['SECRET_KEY'], 'HS256')
      else
