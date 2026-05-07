@@ -81,7 +81,9 @@ import com.android.build.OutputFile
 
 project.ext.react = [
     entryFile: "packages/mobile/index.js",
-    root: "../../../../",
+    root: "../../../",
+    bundleAssetName: "index.android.bundle",
+    bundleInRelease: true,
     enableHermes: false,  // clean and rebuild if changing
     cliPath: ["node", "-e", "console.log(require('react-native/cli').bin);"].execute([], projectDir).text.trim(),
 ]
@@ -298,9 +300,8 @@ task copyDownloadableDepsToLibs(type: Copy) {
 
 apply from: file("../../../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project, "../../..")
 
-// Fix for RN 0.65 + Gradle 7: ensure JS bundle is copied into APK
-// Without this, the bundle task and copy task have no declared dependency,
-// causing the JS bundle to be missing from the final APK.
+// Fix for RN 0.65 + Gradle 7: ensure JS bundle is generated BEFORE assets are merged/compressed.
+// If these dependencies are reversed, release APK can be produced without index.android.bundle.
 afterEvaluate {
     android.applicationVariants.all { variant ->
         def targetName = variant.name.capitalize()
@@ -309,14 +310,13 @@ afterEvaluate {
         def mergeAssetsTask = tasks.findByName("merge${targetName}Assets")
         def compressTask = tasks.findByName("compress${targetName}Assets")
 
-        if (bundleTask && mergeAssetsTask) {
-            bundleTask.dependsOn(mergeAssetsTask)
-        }
         if (copyTask && bundleTask) {
             copyTask.dependsOn(bundleTask)
         }
         if (compressTask && copyTask) {
             compressTask.dependsOn(copyTask)
+        } else if (compressTask && bundleTask) {
+            compressTask.dependsOn(bundleTask)
         }
     }
 }

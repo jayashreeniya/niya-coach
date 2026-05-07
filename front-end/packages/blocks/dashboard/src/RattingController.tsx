@@ -156,14 +156,15 @@ export default class RattingController extends BlockComponent<
   }
   async componentDidMount() {
     super.componentDidMount();
-    
-  console.log("Coach parameter>>", this.props.navigation.state.params.coachId);
-  this.setState({coachID:this.props.navigation.state.params.coachId})
-       
-        this.setState({ token: this.context.state.token},()=>{
-            
-           });
-    
+    const params = this.props.navigation?.state?.params || {};
+    const rawCoachId = params.coachId;
+    const coachID =
+      typeof rawCoachId === "number"
+        ? rawCoachId
+        : parseInt(String(rawCoachId ?? "0"), 10) || 0;
+    const token = this.context?.state?.token || "";
+    console.log("Coach parameter>>", rawCoachId);
+    this.setState({ coachID, token });
 
  
     // Customizable Area Start
@@ -188,6 +189,10 @@ export default class RattingController extends BlockComponent<
             feedback: this.state.feedBack
         }
     }
+      if (this.state.coachID === 0 || Number.isNaN(this.state.coachID)) {
+        this.showAlert("Error", "Missing coach for this session. Go back to Home and try again.");
+        return;
+      }
       if(this.state.appRating==0 || this.state.coachRating==0)
       {
         this.showAlert("Error","Please rate");

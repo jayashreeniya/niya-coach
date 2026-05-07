@@ -29,8 +29,9 @@ module BxBlockCalendar
            .sort_by(&:start_time)
 
       if slots.present?
-        meeting_data = create_meetings 
-        render json: BxBlockCalendar::BookedSlotSerializer.new(booked_slots, params: { meeting_data: meeting_data, url: request.base_url })
+        # Do not attach a global meeting token in listing API; it can mismatch per-slot meeting_code.
+        # Clients must use /video_call for slot-specific meeting_code + token pairs.
+        render json: BxBlockCalendar::BookedSlotSerializer.new(booked_slots, params: { url: request.base_url })
       else
         render json: { errors: [{ availability: ERR_MSG }] }, status: :unprocessable_entity
       end
@@ -317,33 +318,65 @@ module BxBlockCalendar
     end
 
     def video_call
-      if params[:booked_slot_id].present?  
-        slot = BxBlockAppointmentManagement::BookedSlot.find(params[:booked_slot_id])
-        if current_user
-          video_call_details = VideoCallDetail.find_by(booked_slot_id: params[:booked_slot_id])
-          if video_call_details.nil?
-            video_call_details = VideoCallDetail.create(booked_slot_id: slot.id, coach: AccountBlock::Account.find(slot.service_provider_id).full_name , employee: AccountBlock::Account.find(slot.service_user_id).full_name)
-          end
-          if current_user.role_id == BxBlockRolesPermissions::Role.find_by_name(:coach).id
-            video_call_details.update(coach_presence: true)
-          else
-            video_call_details.update(employee_presence: true)
-          end
-          VideoCallNotificationWorker.perform_async(slot.id, current_user.id) unless Rails.env.test?
+      return render json: { errors: "Booked slot id should present" }, status: :unprocessable_entity if params[:booked_slot_id].blank?
+      return render json: { errors: "Unauthorized" }, status: :unauthorized unless current_user
 
-          if slot.meeting_code.blank?
-            meeting_data = create_meetings
-            slot.update(meeting_code: meeting_data[:meetingId]) if meeting_data[:meetingId].present?
-            slot.reload
-          end
+      slot = BxBlockAppointmentManagement::BookedSlot.find_by(id: params[:booked_slot_id])
+      return render json: { errors: "Booked slot not found" }, status: :not_found unless slot
+      logger.info("video_call start slot_id=#{slot.id} user_id=#{current_user.id} role_id=#{current_user.role_id} meeting_code_before=#{slot.meeting_code}")
 
-          meeting_service = BxBlockAppointmentManagement::CreateMeeting.new
-          meeting_token = meeting_service.token
-          render json: {message: "Video call started", meeting_token: meeting_token, meeting_code: slot.meeting_code}, status: 200
-        end
-      else
-        return render json: {errors: "Booked slot id should present"}, status: :unprocessable_entity
+      video_call_details = VideoCallDetail.find_or_create_by(booked_slot_id: slot.id) do |vcd|
+        vcd.coach = AccountBlock::Account.find_by(id: slot.service_provider_id)&.full_name.to_s
+        vcd.employee = AccountBlock::Account.find_by(id: slot.service_user_id)&.full_name.to_s
       end
+
+      coach_role = BxBlockRolesPermissions::Role.find_by_name(:coach)
+      is_coach = coach_role && current_user.role_id == coach_role.id
+
+      # Auto-refresh meeting code at the start of a call session.
+      # "Start" means neither side has joined yet for this booked slot.
+      fresh_meeting_token = nil
+      slot.with_lock do
+        slot.reload
+        video_call_details.reload
+        # If both were present, previous session likely finished; reset for a new session.
+        if video_call_details.coach_presence && video_call_details.employee_presence
+          video_call_details.update(coach_presence: false, employee_presence: false)
+          video_call_details.reload
+        end
+
+        # Always refresh meeting at call start so token+meeting pair are guaranteed from same source.
+        # This avoids cross-project / stale-room mismatches ("token is not valid for provided meetingId").
+        meeting_data = create_meetings
+        if meeting_data[:meetingId].present?
+          slot.update(meeting_code: meeting_data[:meetingId])
+          slot.reload
+        end
+        # If meeting service already generated a client token for this meeting, prefer that token.
+        fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
+
+        if is_coach
+          video_call_details.update(coach_presence: true)
+        else
+          video_call_details.update(employee_presence: true)
+        end
+      end
+
+      begin
+        VideoCallNotificationWorker.perform_async(slot.id, current_user.id) unless Rails.env.test?
+      rescue StandardError => e
+        logger.error("video_call worker enqueue failed: #{e.class} - #{e.message}")
+      end
+
+      return render json: { errors: "Meeting could not be created. Please try again." }, status: :unprocessable_entity if slot.meeting_code.blank?
+
+      meeting_service = BxBlockAppointmentManagement::CreateMeeting.new
+      meeting_token = fresh_meeting_token.presence || meeting_service.token(room_id: slot.meeting_code)
+      logger.info("video_call response slot_id=#{slot.id} meeting_code=#{slot.meeting_code} token_present=#{meeting_token.present?} token_len=#{meeting_token.to_s.length}")
+      render json: { message: "Video call started", meeting_token: meeting_token, meeting_code: slot.meeting_code }, status: :ok
+    rescue StandardError => e
+      logger.error("video_call failed: #{e.class} - #{e.message}")
+      render json: { errors: "Video call setup failed", detail: e.message }, status: :internal_server_error
     end
 
     def booked_slot_details

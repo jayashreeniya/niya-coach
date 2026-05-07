@@ -228,7 +228,7 @@ export default class HomePageController extends BlockComponent<Props, S, SS> {
       showMeetingModal: false,
       meeting: {
         id: "",
-        token: "eyJhbGciOiJIUzI1NiJ9.eyJhcGlrZXkiOiI0YzkwZWUwOS0xMjRmLTRjMjktYjkyZS00NzVlOTBlMDBiMjQiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIiwiYWxsb3dfbW9kIiwiYXNrX2pvaW4iXX0.3URufcS0zoLE6Emo9BLUZqF6hvfoqWor6QJDvIJtwRQ"
+        token: ""
       },
       videoModal: false,
       videoUrl: "",
@@ -324,10 +324,10 @@ _handleAppStateChange = (nextAppState: any) => {
   this.stopeAudioplay()
 }
 
-  startMeeting = async (id: string, book_id: any) => {
-    let meetingId = id;
-    /** VideoSDK JWT: must use fresh token from backend video_call (meeting_token), not a stale hard-coded value. */
-    let videosdkToken = this.state.meeting.token;
+  startMeeting = async (_id: string, book_id: any) => {
+    let meetingId = "";
+    /** Must use fresh token from backend video_call. */
+    let videosdkToken = "";
 
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
@@ -341,26 +341,15 @@ _handleAppStateChange = (nextAppState: any) => {
         this.showAlert("Alert", String(errMsg), "");
         return;
       }
-      if (data?.meeting_code) meetingId = data.meeting_code;
-      if (data?.meeting_token) videosdkToken = data.meeting_token;
+      meetingId = String(data?.meeting_code || "").trim();
+      videosdkToken = String(data?.meeting_token || "").trim();
     } catch (_e) {
-      /* Backend unreachable; may still join if meetingId from list + fallback token works */
+      this.showAlert("Alert", "Could not reach server for video call. Please check internet and try again.", "");
+      return;
     }
 
-    if (!meetingId) {
-      try {
-        const response = await fetch("https://api.videosdk.live/v1/meetings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", authorization: videosdkToken },
-          body: JSON.stringify({ region: "in001" }),
-        });
-        const data = await response.json();
-        meetingId = data?.meetingId;
-      } catch (_e) {}
-    }
-
-    if (!meetingId) {
-      this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.", "");
+    if (!meetingId || !videosdkToken) {
+      this.showAlert("Alert", "Could not start video call. Missing meeting credentials. Please try again.", "");
       return;
     }
     this.stopeAudioplay();
@@ -370,13 +359,20 @@ _handleAppStateChange = (nextAppState: any) => {
     });
   }
    endMeeting = () => {
+    const coachId = this.state.selectedCoach_id;
     this.setState({
       meeting: {
         id: "",
-        token: this.state.meeting.token
+        token: ""
       },
       showMeetingModal: false
-    }, () => this.props.navigation.navigate("Ratting", { coachId: this.state.selectedCoach_id }));
+    }, () => {
+      if (coachId != null && coachId !== "") {
+        this.props.navigation.navigate("Ratting", { coachId });
+      } else {
+        this.props.navigation.navigate("HomePage");
+      }
+    });
 
   }
 

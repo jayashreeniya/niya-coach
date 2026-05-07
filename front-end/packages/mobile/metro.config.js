@@ -20,7 +20,6 @@ module.exports = {
     },
   },
   transformer: {
-    minifierPath: require.resolve('metro-minify-terser'),
     minifierConfig: {
       ecma: 2020,
       compress: { toplevel: true },

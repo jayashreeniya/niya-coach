@@ -16,16 +16,30 @@ import { call, mic as micOn, micOff, video as videoOn, videoOff } from "./images
 import Typography from "./Typography";
 
 async function requestMediaPermissions(): Promise<boolean> {
-  if (Platform.OS !== 'android') return true;
   try {
-    const statuses = await requestMultiple([
-      PERMISSIONS.ANDROID.CAMERA,
-      PERMISSIONS.ANDROID.RECORD_AUDIO,
-    ]);
-    return (
-      statuses[PERMISSIONS.ANDROID.CAMERA] === RESULTS.GRANTED &&
-      statuses[PERMISSIONS.ANDROID.RECORD_AUDIO] === RESULTS.GRANTED
-    );
+    if (Platform.OS === 'android') {
+      const statuses = await requestMultiple([
+        PERMISSIONS.ANDROID.CAMERA,
+        PERMISSIONS.ANDROID.RECORD_AUDIO,
+      ]);
+      return (
+        statuses[PERMISSIONS.ANDROID.CAMERA] === RESULTS.GRANTED &&
+        statuses[PERMISSIONS.ANDROID.RECORD_AUDIO] === RESULTS.GRANTED
+      );
+    }
+
+    if (Platform.OS === 'ios') {
+      const statuses = await requestMultiple([
+        PERMISSIONS.IOS.CAMERA,
+        PERMISSIONS.IOS.MICROPHONE,
+      ]);
+      return (
+        statuses[PERMISSIONS.IOS.CAMERA] === RESULTS.GRANTED &&
+        statuses[PERMISSIONS.IOS.MICROPHONE] === RESULTS.GRANTED
+      );
+    }
+
+    return true;
   } catch (_e) {
     return false;
   }
@@ -38,6 +52,7 @@ type ControlsProps = {
   toggleMic: () => void;
   joined: boolean;
   joinFailed?: boolean;
+  canJoin?: boolean;
   mic: {
     micOn: boolean;
     setMicOn: (b: boolean) => void;
@@ -48,14 +63,23 @@ type ControlsProps = {
   }
 }
 
-const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMic, joined, joinFailed, mic, video }) => {
+const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMic, joined, joinFailed, canJoin, mic, video }) => {
 
   const [pressed, setPressed] = useState<boolean>(false);
 
   const onJoin = () => {
+    if (!canJoin) {
+      Alert.alert("Permissions Required", "Camera and microphone access are needed for video calls.");
+      return;
+    }
     setPressed(true);
-    join();
-    switchAudioDevice("SPEAKER_PHONE");
+    try {
+      // Do not call switchAudioDevice here — before onMeetingJoined it can crash native audio on some devices.
+      join();
+    } catch (_e) {
+      setPressed(false);
+      Alert.alert("Video Call", "Could not start the call. Please try again.");
+    }
   }
 
   React.useEffect(() => {
@@ -129,15 +153,29 @@ const ParticipantView: React.FC<ParticipantViewProps> = ({ participantId, me }) 
 
   const { webcamStream, webcamOn } = useParticipant(participantId);
   const myView = participantId === me;
+  const track = webcamStream && (webcamStream as { track?: unknown }).track;
+  let streamURL: string | undefined;
+  if (webcamOn && webcamStream && track) {
+    try {
+      const ms = new MediaStream([track as any]);
+      streamURL = typeof ms?.toURL === "function" ? ms.toURL() : undefined;
+    } catch (_e) {
+      streamURL = undefined;
+    }
+  }
 
-  return (webcamOn && webcamStream)?(
-    <RTCView
-      streamURL={new MediaStream([webcamStream?.track])?.toURL?.()}
-      objectFit={"cover"}
-      style={myView? styles.myWindow: styles.guestWindow}
-    />
-  ) : (
-    <View style={myView? styles.myWindow: [styles.guestWindow, styles.guestWindowEmpty]}>
+  if (streamURL) {
+    return (
+      <RTCView
+        streamURL={streamURL}
+        objectFit={"cover"}
+        style={myView ? styles.myWindow : styles.guestWindow}
+      />
+    );
+  }
+
+  return (
+    <View style={myView ? styles.myWindow : [styles.guestWindow, styles.guestWindowEmpty]}>
       <Typography color="greyText">{"NO VIDEO"}</Typography>
     </View>
   );
@@ -156,6 +194,7 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, me }) =
         return(
           // true
           <ParticipantView
+            key={item}
             participantId={item}
             me={me}
           />
@@ -232,6 +271,11 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
     hasJoinedRef.current = true;
     setJoinFailed(false);
     onJoin(true);
+    try {
+      switchAudioDevice("SPEAKER_PHONE");
+    } catch (_e) {
+      /* ignore */
+    }
     UseFrontCamera();
   }
 
@@ -259,12 +303,16 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
   }
 
   async function UseFrontCamera(){
-    const cams = await getWebcams();
-    if(cams.length){
-      const frontCam = cams.find((c: any) => c.facingMode === "front");
-      if(frontCam){
-        changeWebcam(frontCam.deviceId);
+    try {
+      const cams = await getWebcams();
+      if (Array.isArray(cams) && cams.length) {
+        const frontCam = cams.find((c: any) => c.facingMode === "front");
+        if (frontCam?.deviceId) {
+          changeWebcam(frontCam.deviceId);
+        }
       }
+    } catch (_e) {
+      // Ignore camera switch failure; call can still continue with default camera.
     }
   }
 
@@ -283,6 +331,7 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
         toggleMic={toggleMic}
         joined={joined}
         joinFailed={joinFailed}
+        canJoin={valid}
         mic={mic}
         video={video}
       />
@@ -318,6 +367,14 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
           Alert.alert('Permissions Required', 'Camera and microphone access are needed for video calls.');
         }
       });
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible) {
+      setValid(false);
+      setPermissionsGranted(false);
+      setJoined(false);
     }
   }, [visible]);
 

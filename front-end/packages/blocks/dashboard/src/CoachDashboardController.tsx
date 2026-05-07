@@ -78,7 +78,7 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
       profile: {},
       showMeetingModal: false,
       meetingId: "",
-      meetingToken: "eyJhbGciOiJIUzI1NiJ9.eyJhcGlrZXkiOiI0YzkwZWUwOS0xMjRmLTRjMjktYjkyZS00NzVlOTBlMDBiMjQiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIiwiYWxsb3dfbW9kIiwiYXNrX2pvaW4iXX0.3URufcS0zoLE6Emo9BLUZqF6hvfoqWor6QJDvIJtwRQ"
+      meetingToken: ""
     };
     // Customizable Area End
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -256,10 +256,9 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
     });
   }
 
-  startMeeting = async (id: string, start_id: any) => {
-    let meetingId = id;
-    let videosdkToken = this.state.meetingToken;
-
+  startMeeting = async (_id: string, start_id: any) => {
+    let meetingId = "";
+    let videosdkToken = "";
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
       const res = await fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${start_id}`, {
@@ -272,24 +271,15 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
         this.showAlert("Alert", String(errMsg));
         return;
       }
-      if (data?.meeting_code) meetingId = data.meeting_code;
-      if (data?.meeting_token) videosdkToken = data.meeting_token;
-    } catch (_e) {}
-
-    if (!meetingId) {
-      try {
-        const response = await fetch("https://api.videosdk.live/v1/meetings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", authorization: videosdkToken },
-          body: JSON.stringify({ region: "in001" }),
-        });
-        const data = await response.json();
-        meetingId = data?.meetingId;
-      } catch (_e) {}
+      meetingId = String(data?.meeting_code || "").trim();
+      videosdkToken = String(data?.meeting_token || "").trim();
+    } catch (_e) {
+      this.showAlert("Alert", "Could not reach server for video call. Please check internet and try again.");
+      return;
     }
 
-    if (!meetingId) {
-      this.showAlert("Alert", "Could not start video call. Please check your internet connection and try again.");
+    if (!meetingId || !videosdkToken) {
+      this.showAlert("Alert", "Could not start video call. Missing meeting credentials. Please try again.");
       return;
     }
     this.setState({

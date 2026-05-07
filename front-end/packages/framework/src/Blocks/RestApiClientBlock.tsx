@@ -79,7 +79,27 @@ export default class RestApiClientBlock<Entity> extends Block {
       });
     }
 
-      let responseJson = await response.json();
+      const responseText = await response.text();
+      let responseJson: any = {};
+      try {
+        responseJson = responseText ? JSON.parse(responseText) : {};
+      } catch (_parseErr) {
+        const snippet = responseText ? responseText.slice(0, 200) : "";
+        apiResponseMessage.addData(
+          getName(MessageEnum.RestAPIResponceErrorMessage),
+          snippet
+            ? `Server returned non-JSON (${response.status}). ${snippet}`
+            : `Request failed (${response.status}). Please try again.`
+        );
+        if (this.props) {
+          apiResponseMessage.addData(
+            getName(MessageEnum.NavigationPropsMessage),
+            this.props
+          );
+        }
+        this.send(apiResponseMessage);
+        return;
+      }
 
       //setting Response
       apiResponseMessage.addData(
@@ -94,7 +114,7 @@ export default class RestApiClientBlock<Entity> extends Block {
       console.log('Api Error' + JSON.stringify(error));
       apiResponseMessage.addData(
         getName(MessageEnum.RestAPIResponceErrorMessage),
-        'An error has occuured. Please try again later.'
+        'An error has occurred. Please try again later.'
       );
     }
 
