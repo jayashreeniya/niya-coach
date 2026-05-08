@@ -147,9 +147,13 @@ export default class Dashboard extends CoachDashboardController {
           const { name, booking_date, viewable_slots, id, meeting_code } = item?.attributes?.appointments;
           const [start, end] = viewable_slots?.split?.(" - ");
           const now = moment();
-          const startMoment = moment(start, ["DD/MM/YYYY HH:mm"]);
-          const endMoment = moment(end, ["DD/MM/YYYY HH:mm"]);
-          const disabled = !now.isBetween(startMoment, endMoment);
+          const startMoment = moment(start, ["DD/MM/YYYY HH:mm", "YYYY-MM-DD HH:mm", moment.ISO_8601], true);
+          const endMoment = moment(end, ["DD/MM/YYYY HH:mm", "YYYY-MM-DD HH:mm", moment.ISO_8601], true);
+          const canConnect =
+            startMoment.isValid() &&
+            endMoment.isValid() &&
+            now.isBetween(startMoment, endMoment, undefined, "[]");
+          const disabled = !canConnect;
           const bookingDate = moment(booking_date, "YYYY-MM-DD");
           // console.log(moment().format("DD-MM-YY hh:mm"), moment(start, ["DD/MM/YYYY HH:mm"]).subtract(5, "minutes").format("DD-MM-YYYY hh:mm"))
           return(

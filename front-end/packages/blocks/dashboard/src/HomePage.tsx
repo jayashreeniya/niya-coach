@@ -272,9 +272,13 @@ export default class HomePage extends HomePageController{
     let { id, viewable_slot } = item?.item?.attributes;
     const [start, end] = viewable_slot?.split?.(" - ");
     const now = moment();
-    const startMoment = moment(start, ["DD/MM/YYYY HH:mm"]);
-    const endMoment = moment(end, ["DD/MM/YYYY HH:mm"]);
-    const disabled = !now.isBetween(startMoment, endMoment);
+    const startMoment = moment(start, ["DD/MM/YYYY HH:mm", "YYYY-MM-DD HH:mm", moment.ISO_8601], true);
+    const endMoment = moment(end, ["DD/MM/YYYY HH:mm", "YYYY-MM-DD HH:mm", moment.ISO_8601], true);
+    const canConnect =
+      startMoment.isValid() &&
+      endMoment.isValid() &&
+      now.isBetween(startMoment, endMoment, undefined, "[]");
+    const disabled = !canConnect;
     const isAfterEndtime = now.isAfter(startMoment)
 
  return (

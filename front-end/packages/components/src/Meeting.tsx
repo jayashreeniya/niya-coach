@@ -256,7 +256,7 @@ function formatSdkReason(reason: unknown): string {
   return String(reason);
 }
 
-const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = ({ onJoin, joined, goBack, mic, video, meetingIdForLog }) => {
+const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = ({ onJoin, joined, valid, goBack, mic, video, meetingIdForLog }) => {
 
   const hasJoinedRef = React.useRef(false);
   const [joinFailed, setJoinFailed] = React.useState(false);
