@@ -351,6 +351,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const [joined, setJoined] = useState<boolean>(false);
   const [valid, setValid] = useState<boolean>(false);
   const [permissionsGranted, setPermissionsGranted] = useState<boolean>(false);
+  const [permissionsResolved, setPermissionsResolved] = useState<boolean>(false);
   const [micOn, setMicOn] = useState<boolean>(false);
   const [videoOn, setVideoOn] = useState<boolean>(false);
   const { state } = useContext(AppContext);
@@ -361,8 +362,10 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
 
   useEffect(() => {
     if (visible) {
+      setPermissionsResolved(false);
       requestMediaPermissions().then((granted) => {
         setPermissionsGranted(granted);
+        setPermissionsResolved(true);
         if (!granted) {
           Alert.alert('Permissions Required', 'Camera and microphone access are needed for video calls.');
         }
@@ -374,6 +377,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     if (!visible) {
       setValid(false);
       setPermissionsGranted(false);
+      setPermissionsResolved(false);
       setJoined(false);
     }
   }, [visible]);
@@ -417,7 +421,32 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
         </View>
       ):(
         <View style={[styles.container, styles.loaderContainer]}>
-          <ActivityIndicator color={Colors.accent} size="large" />
+          {!permissionsResolved ? (
+            <>
+              <ActivityIndicator color={Colors.accent} size="large" />
+              <Typography color="white" size={14} style={{ marginTop: 12 }}>
+                Preparing video call...
+              </Typography>
+            </>
+          ) : !permissionsGranted ? (
+            <>
+              <Typography color="white" size={14} align="center" style={{ marginBottom: 12, paddingHorizontal: 20 }}>
+                Camera and microphone permission is required to join this call.
+              </Typography>
+              <TouchableOpacity onPress={onClose} style={[styles.leaveButton, { backgroundColor: Colors.accent }]}>
+                <Typography color="white" size={13}>Back</Typography>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Typography color="white" size={14} align="center" style={{ marginBottom: 12, paddingHorizontal: 20 }}>
+                Missing meeting details. Please close and try Connect now again.
+              </Typography>
+              <TouchableOpacity onPress={onClose} style={[styles.leaveButton, { backgroundColor: Colors.accent }]}>
+                <Typography color="white" size={13}>Back</Typography>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       )}
     </Modal>
