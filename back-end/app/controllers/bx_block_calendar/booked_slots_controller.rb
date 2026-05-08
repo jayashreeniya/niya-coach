@@ -352,8 +352,10 @@ module BxBlockCalendar
           slot.update(meeting_code: meeting_data[:meetingId])
           slot.reload
         end
-        # If meeting service already generated a client token for this meeting, prefer that token.
-        fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
+        # Only use service-provided token when a fresh meetingId was actually created in this call.
+        # If meeting creation fails and meetingId is absent, meeting_data[:token] can be an API/crawler token
+        # which is not valid for client join; fall back to participant token for slot.meeting_code below.
+        fresh_meeting_token = meeting_data[:token] if meeting_data[:meetingId].present? && meeting_data[:token].present?
 
         if is_coach
           video_call_details.update(coach_presence: true)

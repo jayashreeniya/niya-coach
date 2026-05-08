@@ -35,18 +35,23 @@ module BxBlockAppointmentManagement
       end
 
       meeting_id = parsed[:meetingId]
-      # Do not return the crawler/API token to clients — they need an rtc participant token.
-      client_token = if meeting_id.present? && !using_fallback_api_token? && !used_fallback_for_meeting
-                       participant_access_token(room_id: meeting_id)
+      # Do not return crawler/API token to clients.
+      # If no meetingId was created, return nil and let caller mint participant token for known room.
+      client_token = if meeting_id.present?
+                       if !using_fallback_api_token? && !used_fallback_for_meeting
+                         participant_access_token(room_id: meeting_id)
+                       else
+                         request['authorization']
+                       end
                      else
-                       request['authorization']
+                       nil
                      end
 
       Rails.logger.info(
         "videosdk generate_meeting_data meeting_id_present=#{meeting_id.present?} " \
         "used_fallback_for_meeting=#{used_fallback_for_meeting} " \
         "using_fallback_api_token=#{using_fallback_api_token?} " \
-        "client_token_len=#{client_token.to_s.length}"
+        "client_token_present=#{client_token.present?} client_token_len=#{client_token.to_s.length}"
       )
 
       parsed.merge(token: client_token)
