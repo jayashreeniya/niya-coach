@@ -400,6 +400,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
               meetingId,
               micEnabled: false,
               webcamEnabled: false,
+              multistream: false,
               name: state.name,
               notification: {
                 title: "Niya",

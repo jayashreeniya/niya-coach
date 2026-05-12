@@ -26,26 +26,37 @@ module BxBlockAppointmentManagement
       request.body = { region: 'in001', user_meeting_id: user_meeting_id }.to_json
       response = http.request(request)
       parsed = JSON.parse(response.read_body, symbolize_names: true) rescue {}
+      if parsed[:meetingId].blank?
+        Rails.logger.warn(
+          "videosdk POST /v1/meetings primary failed status=#{response.code} body=#{response.body.to_s.truncate(800)}"
+        )
+      end
       used_fallback_for_meeting = false
       if parsed[:meetingId].blank? && !using_fallback_api_token?
         request['authorization'] = FALLBACK_TOKEN
         response = http.request(request)
         parsed = JSON.parse(response.read_body, symbolize_names: true) rescue {}
         used_fallback_for_meeting = parsed[:meetingId].present?
+        unless used_fallback_for_meeting
+          Rails.logger.warn(
+            "videosdk POST /v1/meetings fallback failed status=#{response.code} body=#{response.body.to_s.truncate(800)}"
+          )
+        end
       end
 
       meeting_id = parsed[:meetingId]
-      # Do not return crawler/API token to clients.
-      # If no meetingId was created, return nil and let caller mint participant token for known room.
-      client_token = if meeting_id.present?
-                       if !using_fallback_api_token? && !used_fallback_for_meeting
-                         participant_access_token(room_id: meeting_id)
-                       else
-                         request['authorization']
-                       end
-                     else
-                       nil
-                     end
+      # Never send crawler JWT to clients. If the room was created with FALLBACK HTTP auth, the join token
+      # must be that project's participant JWT (embedded FALLBACK_TOKEN), not ENV-key-signed tokens.
+      client_token =
+        if meeting_id.blank?
+          nil
+        elsif used_fallback_for_meeting && !using_fallback_api_token?
+          FALLBACK_TOKEN
+        elsif using_fallback_api_token?
+          FALLBACK_TOKEN
+        else
+          participant_access_token(room_id: meeting_id)
+        end
 
       Rails.logger.info(
         "videosdk generate_meeting_data meeting_id_present=#{meeting_id.present?} " \
@@ -84,9 +95,8 @@ module BxBlockAppointmentManagement
       JWT.encode(payload, videosdk_secret, 'HS256')
     end
 
-    # For MeetingProvider / native SDK join.
-    # NOTE: RN SDK 0.0.54 expects legacy participant token shape (v1-style claims),
-    # so avoid v2-only claims (version/roles/roomId) here.
+    # For MeetingProvider / native SDK join — must use rtc role + roomId for the created meeting
+    # (see VideoSDK token docs: crawler tokens cannot join RTC; room-scoped joins need version 2 + roomId).
     def participant_access_token(room_id: nil)
       return FALLBACK_TOKEN if using_fallback_api_token?
 
@@ -95,7 +105,15 @@ module BxBlockAppointmentManagement
         permissions: ['allow_join', 'allow_mod', 'ask_join'],
         exp: token_exp
       }
-      Rails.logger.info("videosdk participant_access_token legacy_format=true room_scoped_ignored=#{room_id.present?} api_key_present=#{ENV['API_KEY'].present?} secret_present=#{videosdk_secret.present?}")
+      if room_id.present?
+        payload[:version] = 2
+        payload[:roles] = ['rtc']
+        payload[:roomId] = room_id.to_s
+      end
+      Rails.logger.info(
+        "videosdk participant_access_token v2_rtc=#{room_id.present?} api_key_present=#{ENV['API_KEY'].present?} " \
+        "secret_present=#{videosdk_secret.present?}"
+      )
       JWT.encode(payload, videosdk_secret, 'HS256')
     end
   end
