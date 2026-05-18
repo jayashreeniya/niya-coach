@@ -345,17 +345,21 @@ module BxBlockCalendar
           video_call_details.reload
         end
 
-        # Always refresh meeting at call start so token+meeting pair are guaranteed from same source.
-        # This avoids cross-project / stale-room mismatches ("token is not valid for provided meetingId").
-        meeting_data = create_meetings
-        if meeting_data[:meetingId].present?
-          slot.update(meeting_code: meeting_data[:meetingId])
-          slot.reload
+        # Reuse the same room when the other party already started this session.
+        # Creating a new room per /video_call left coach and client in different rooms.
+        session_in_progress = video_call_details.coach_presence || video_call_details.employee_presence
+        fresh_meeting_token = nil
+
+        if slot.meeting_code.blank? || !session_in_progress
+          meeting_data = create_meetings
+          if meeting_data[:meetingId].present?
+            slot.update(meeting_code: meeting_data[:meetingId])
+            slot.reload
+            fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
+          end
+        else
+          logger.info("video_call reusing meeting_code=#{slot.meeting_code} slot_id=#{slot.id}")
         end
-        # Only use service-provided token when a fresh meetingId was actually created in this call.
-        # If meeting creation fails and meetingId is absent, meeting_data[:token] can be an API/crawler token
-        # which is not valid for client join; fall back to participant token for slot.meeting_code below.
-        fresh_meeting_token = meeting_data[:token] if meeting_data[:meetingId].present? && meeting_data[:token].present?
 
         if is_coach
           video_call_details.update(coach_presence: true)
@@ -373,8 +377,11 @@ module BxBlockCalendar
       return render json: { errors: "Meeting could not be created. Please try again." }, status: :unprocessable_entity if slot.meeting_code.blank?
 
       meeting_service = BxBlockAppointmentManagement::CreateMeeting.new
-      meeting_token = fresh_meeting_token.presence || meeting_service.token(room_id: slot.meeting_code)
-      logger.info("video_call response slot_id=#{slot.id} meeting_code=#{slot.meeting_code} token_present=#{meeting_token.present?} token_len=#{meeting_token.to_s.length}")
+      meeting_token = fresh_meeting_token.presence || meeting_service.token
+      logger.info(
+        "video_call response slot_id=#{slot.id} meeting_code=#{slot.meeting_code} " \
+        "token_present=#{meeting_token.present?} token_len=#{meeting_token.to_s.length} reused=#{fresh_meeting_token.blank?}"
+      )
       render json: { message: "Video call started", meeting_token: meeting_token, meeting_code: slot.meeting_code }, status: :ok
     rescue StandardError => e
       logger.error("video_call failed: #{e.class} - #{e.message}")

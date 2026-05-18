@@ -1,9 +1,10 @@
 require "securerandom"
+require "base64"
+require "json"
 
 module BxBlockAppointmentManagement
   class CreateMeeting
 
-    # Legacy dashboard-style JWT (same apikey as below). Used only for crawler auth when ENV keys are missing.
     FALLBACK_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhcGlrZXkiOiI0YzkwZWUwOS0xMjRmLTRjMjktYjkyZS00NzVlOTBlMDBiMjQiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIiwiYWxsb3dfbW9kIiwiYXNrX2pvaW4iXX0.3URufcS0zoLE6Emo9BLUZqF6hvfoqWor6QJDvIJtwRQ".freeze
     FALLBACK_API_KEY = "4c90ee09-124f-4c29-b92e-475e90e00b24".freeze
 
@@ -11,37 +12,33 @@ module BxBlockAppointmentManagement
       generate_meeting_data
     end
 
-    # Token for mobile/web clients joining a room.
+    # Join token for mobile RN SDK — legacy shape (no roomId in JWT; meetingId is passed separately).
     def token(room_id: nil)
-      participant_access_token(room_id: room_id)
+      participant_access_token
     end
 
     private
 
-    # Prefer v2 /rooms (same product surface as rtc+roomId join tokens). v1 /meetings + v2 participant tokens can mismatch.
     def generate_meeting_data
-      parsed, auth_mode = create_room_v2
-      meeting_id = parsed[:roomId].presence || parsed[:meetingId].presence
+      parsed, auth_mode = create_room
+      meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
 
       if meeting_id.blank?
         Rails.logger.warn(
-          "videosdk v2/rooms failed status=#{parsed[:_http_status]} body=#{parsed[:_http_body].to_s.truncate(800)} auth_mode=#{auth_mode}"
+          "videosdk create_room failed status=#{parsed[:_http_status]} body=#{parsed[:_http_body].to_s.truncate(800)} auth_mode=#{auth_mode}"
         )
-        return { token: nil, meetingId: nil, roomId: nil }.merge(parsed.except(:_http_status, :_http_body))
+        return { token: nil, meetingId: nil, roomId: nil }
       end
 
       client_token =
         case auth_mode
         when :env
-          participant_access_token(room_id: meeting_id)
+          participant_access_token
         when :fallback
-          # Room was created with FALLBACK_TOKEN; join JWT must be signed for that apikey + roomId.
           if videosdk_fallback_secret.present?
-            participant_access_token(room_id: meeting_id, api_key: FALLBACK_API_KEY, secret: videosdk_fallback_secret)
+            participant_access_token(api_key: FALLBACK_API_KEY, secret: videosdk_fallback_secret)
           else
-            Rails.logger.error(
-              "videosdk room created with fallback auth but VIDEOSDK_FALLBACK_SECRET_KEY is unset — cannot mint room-scoped join token"
-            )
+            Rails.logger.error("videosdk fallback room created but VIDEOSDK_FALLBACK_SECRET_KEY unset")
             nil
           end
         else
@@ -49,46 +46,69 @@ module BxBlockAppointmentManagement
         end
 
       if client_token.blank?
-        Rails.logger.error("videosdk abandoning room_id=#{meeting_id} — no join token minted")
-        return { token: nil, meetingId: nil, roomId: nil }.merge(parsed.except(:_http_status, :_http_body))
+        Rails.logger.error("videosdk abandoning room_id=#{meeting_id} — no join token")
+        return { token: nil, meetingId: nil, roomId: nil }
       end
 
       Rails.logger.info(
-        "videosdk v2/rooms meeting_id_present=#{meeting_id.present?} auth_mode=#{auth_mode} " \
-        "client_token_present=#{client_token.present?} client_token_len=#{client_token.to_s.length}"
+        "videosdk create_room ok meeting_id=#{meeting_id} auth_mode=#{auth_mode} " \
+        "token_len=#{client_token.length} token_has_roomId=#{jwt_claim(client_token, 'roomId').present?}"
       )
 
-      parsed.except(:_http_status, :_http_body).merge(
+      {
         meetingId: meeting_id,
         roomId: meeting_id,
         token: client_token
-      )
+      }
     end
 
-    # Returns [parsed_hash_including_http_meta, :env | :fallback | :failed]
-    def create_room_v2
-      base = ENV["VIDEOSDK_API_BASE"].presence || "https://api.videosdk.live/v2"
-      uri = URI("#{base.to_s.chomp('/')}/rooms")
-
+    # v1 /meetings first (matches @videosdk.live/react-native-sdk 0.0.54), then v2 /rooms.
+    def create_room
       unless using_fallback_api_token?
-        parsed = post_json_rooms(uri, api_access_token)
-        meeting_id = parsed[:roomId].presence || parsed[:meetingId].presence
+        parsed = create_room_v1(api_access_token)
+        meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
         return [parsed, :env] if meeting_id.present?
 
         Rails.logger.warn(
-          "videosdk v2/rooms primary failed status=#{parsed[:_http_status]} body=#{parsed[:_http_body].to_s.truncate(500)}"
+          "videosdk v1/meetings failed status=#{parsed[:_http_status]} body=#{parsed[:_http_body].to_s.truncate(400)}"
         )
+
+        parsed = create_room_v2(api_access_token)
+        meeting_id = parsed[:roomId].presence || parsed[:meetingId].presence
+        return [parsed, :env] if meeting_id.present?
+
         return [parsed, :failed]
       end
 
-      parsed = post_json_rooms(uri, FALLBACK_TOKEN)
+      parsed = create_room_v1(FALLBACK_TOKEN)
+      meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
+      return [parsed, :fallback] if meeting_id.present?
+
+      parsed = create_room_v2(FALLBACK_TOKEN)
       meeting_id = parsed[:roomId].presence || parsed[:meetingId].presence
       return [parsed, :fallback] if meeting_id.present?
 
       [parsed, :failed]
     end
 
-    def post_json_rooms(uri, authorization)
+    def create_room_v1(authorization)
+      uri = URI("https://api.videosdk.live/v1/meetings")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      request = Net::HTTP::Post.new(uri)
+      request["Content-Type"] = "application/json"
+      request["authorization"] = authorization
+      region = ENV["VIDEOSDK_REGION"].presence || "in001"
+      request.body = { region: region, user_meeting_id: SecureRandom.alphanumeric(10) }.to_json
+      response = http.request(request)
+      parsed = JSON.parse(response.body, symbolize_names: true) rescue {}
+      parsed.merge(_http_status: response.code, _http_body: response.body.to_s)
+    end
+
+    def create_room_v2(authorization)
+      base = ENV["VIDEOSDK_API_BASE"].presence || "https://api.videosdk.live/v2"
+      uri = URI("#{base.to_s.chomp('/')}/rooms")
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       http.verify_mode = OpenSSL::SSL::VERIFY_PEER
@@ -106,7 +126,6 @@ module BxBlockAppointmentManagement
       ENV["API_KEY"].blank? || videosdk_secret.blank?
     end
 
-    # VideoSDK secret must NOT use ENV['SECRET_KEY'] — that variable is used for app user JWTs (HS512).
     def videosdk_secret
       ENV["VIDEOSDK_SECRET_KEY"].presence || ENV["VIDEO_SDK_SECRET"].presence
     end
@@ -119,7 +138,6 @@ module BxBlockAppointmentManagement
       Time.now.to_i + (24 * 60 * 60)
     end
 
-    # For VideoSDK REST (e.g. POST /v2/rooms) — crawler role, not rtc.
     def api_access_token
       return FALLBACK_TOKEN if using_fallback_api_token?
 
@@ -133,13 +151,15 @@ module BxBlockAppointmentManagement
       JWT.encode(payload, videosdk_secret, "HS256")
     end
 
-    # For MeetingProvider / native SDK join (rtc + roomId when room_id present), per VideoSDK server examples.
-    def participant_access_token(room_id: nil, api_key: nil, secret: nil)
+    # Legacy participant JWT — do NOT embed roomId (RN SDK 0.0.54 + VideoSDK docs default).
+    # Room is selected via meetingId on the client; room-scoped JWTs caused
+    # "'token' is not valid for the provided meetingId" when claims drifted from config.
+    def participant_access_token(api_key: nil, secret: nil)
       key = api_key.presence || ENV["API_KEY"]
       sec = secret.presence || videosdk_secret
 
       if key.blank? || sec.blank?
-        return FALLBACK_TOKEN if using_fallback_api_token? && room_id.blank?
+        return FALLBACK_TOKEN if using_fallback_api_token?
 
         Rails.logger.warn("videosdk participant_access_token missing key or secret")
         return nil
@@ -147,20 +167,22 @@ module BxBlockAppointmentManagement
 
       payload = {
         apikey: key,
-        permissions: ["allow_join", "allow_mod"],
-        exp: token_exp,
-        jti: SecureRandom.uuid
+        permissions: ["allow_join", "allow_mod", "ask_join"],
+        exp: token_exp
       }
-      if room_id.present?
-        payload[:version] = 2
-        payload[:roles] = ["rtc"]
-        payload[:roomId] = room_id.to_s
-      end
-
-      Rails.logger.info(
-        "videosdk participant_access_token v2_rtc=#{room_id.present?} api_key_suffix=#{key.to_s[-4, 4]}"
-      )
       JWT.encode(payload, sec, "HS256")
+    end
+
+    def jwt_claim(token, claim)
+      return nil if token.blank?
+
+      segment = token.to_s.split(".")[1]
+      return nil if segment.blank?
+
+      padded = segment + "=" * ((4 - segment.length % 4) % 4)
+      JSON.parse(Base64.urlsafe_decode64(padded))[claim]
+    rescue StandardError
+      nil
     end
   end
 end
