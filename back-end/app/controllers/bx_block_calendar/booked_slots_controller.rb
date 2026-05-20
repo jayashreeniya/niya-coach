@@ -333,32 +333,35 @@ module BxBlockCalendar
       coach_role = BxBlockRolesPermissions::Role.find_by_name(:coach)
       is_coach = coach_role && current_user.role_id == coach_role.id
 
-      # Auto-refresh meeting code at the start of a call session.
-      # "Start" means neither side has joined yet for this booked slot.
       fresh_meeting_token = nil
+      response_meeting_code = nil
+
       slot.with_lock do
         slot.reload
         video_call_details.reload
-        # If both were present, previous session likely finished; reset for a new session.
         if video_call_details.coach_presence && video_call_details.employee_presence
           video_call_details.update(coach_presence: false, employee_presence: false)
           video_call_details.reload
         end
 
-        # Reuse the same room when the other party already started this session.
-        # Creating a new room per /video_call left coach and client in different rooms.
         session_in_progress = video_call_details.coach_presence || video_call_details.employee_presence
-        fresh_meeting_token = nil
 
         if slot.meeting_code.blank? || !session_in_progress
           meeting_data = create_meetings
-          if meeting_data[:meetingId].present?
-            slot.update(meeting_code: meeting_data[:meetingId])
-            slot.reload
+          new_meeting_id = meeting_data[:meetingId].presence || meeting_data[:roomId].presence
+          if new_meeting_id.present?
+            # slot.update runs heavy validations and silently fails — meeting_code never saved (see Azure logs).
+            slot.update_column(:meeting_code, new_meeting_id)
+            response_meeting_code = new_meeting_id
             fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
+            logger.info("video_call created meeting_code=#{new_meeting_id} slot_id=#{slot.id}")
+          else
+            logger.error("video_call create_meetings missing meetingId slot_id=#{slot.id}")
           end
         else
-          logger.info("video_call reusing meeting_code=#{slot.meeting_code} slot_id=#{slot.id}")
+          slot.reload
+          response_meeting_code = slot.meeting_code
+          logger.info("video_call reusing meeting_code=#{response_meeting_code} slot_id=#{slot.id}")
         end
 
         if is_coach
@@ -374,15 +377,16 @@ module BxBlockCalendar
         logger.error("video_call worker enqueue failed: #{e.class} - #{e.message}")
       end
 
-      return render json: { errors: "Meeting could not be created. Please try again." }, status: :unprocessable_entity if slot.meeting_code.blank?
+      response_meeting_code = response_meeting_code.presence || slot.reload.meeting_code
+      return render json: { errors: "Meeting could not be created. Please try again." }, status: :unprocessable_entity if response_meeting_code.blank?
 
       meeting_service = BxBlockAppointmentManagement::CreateMeeting.new
       meeting_token = fresh_meeting_token.presence || meeting_service.token
       logger.info(
-        "video_call response slot_id=#{slot.id} meeting_code=#{slot.meeting_code} " \
+        "video_call response slot_id=#{slot.id} meeting_code=#{response_meeting_code} db_meeting_code=#{slot.meeting_code} " \
         "token_present=#{meeting_token.present?} token_len=#{meeting_token.to_s.length} reused=#{fresh_meeting_token.blank?}"
       )
-      render json: { message: "Video call started", meeting_token: meeting_token, meeting_code: slot.meeting_code }, status: :ok
+      render json: { message: "Video call started", meeting_token: meeting_token, meeting_code: response_meeting_code }, status: :ok
     rescue StandardError => e
       logger.error("video_call failed: #{e.class} - #{e.message}")
       render json: { errors: "Video call setup failed", detail: e.message }, status: :internal_server_error
