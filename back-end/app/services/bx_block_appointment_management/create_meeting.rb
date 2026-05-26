@@ -22,73 +22,96 @@ module BxBlockAppointmentManagement
     def generate_meeting_data
       parsed, auth_mode = create_room
       meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
+      client_token = mint_join_token(auth_mode)
 
-      if meeting_id.blank?
-        Rails.logger.warn(
-          "videosdk create_room failed status=#{parsed[:_http_status]} body=#{parsed[:_http_body].to_s.truncate(800)} auth_mode=#{auth_mode}"
+      if meeting_id.blank? || client_token.blank?
+        Rails.logger.error(
+          "videosdk create_room failed auth_mode=#{auth_mode} status=#{parsed[:_http_status]} " \
+          "body=#{parsed[:_http_body].to_s.truncate(400)}"
         )
         return { token: nil, meetingId: nil, roomId: nil }
       end
 
-      client_token =
-        case auth_mode
-        when :env
-          participant_access_token
-        when :fallback
-          if videosdk_fallback_secret.present?
-            participant_access_token(api_key: FALLBACK_API_KEY, secret: videosdk_fallback_secret)
-          else
-            Rails.logger.error("videosdk fallback room created but VIDEOSDK_FALLBACK_SECRET_KEY unset")
-            nil
-          end
-        else
-          nil
-        end
+      unless room_valid_for_token?(meeting_id, client_token)
+        Rails.logger.warn(
+          "videosdk env credentials failed validate for room=#{meeting_id} — retrying with fallback project"
+        )
+        parsed, auth_mode = create_room_with_auth(FALLBACK_TOKEN, :fallback)
+        meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
+        client_token = FALLBACK_TOKEN
+      end
 
-      if client_token.blank?
-        Rails.logger.error("videosdk abandoning room_id=#{meeting_id} — no join token")
+      if meeting_id.blank? || client_token.blank?
+        Rails.logger.error("videosdk abandoning — no valid room/token after fallback")
         return { token: nil, meetingId: nil, roomId: nil }
       end
 
       Rails.logger.info(
-        "videosdk create_room ok meeting_id=#{meeting_id} auth_mode=#{auth_mode} " \
-        "token_len=#{client_token.length} token_has_roomId=#{jwt_claim(client_token, 'roomId').present?}"
+        "videosdk ready meeting_id=#{meeting_id} auth_mode=#{auth_mode} token_len=#{client_token.length} " \
+        "token_apikey_last4=#{jwt_claim(client_token, 'apikey').to_s[-4, 4]}"
       )
 
-      {
-        meetingId: meeting_id,
-        roomId: meeting_id,
-        token: client_token
-      }
+      { meetingId: meeting_id, roomId: meeting_id, token: client_token }
+    end
+
+    def mint_join_token(auth_mode)
+      case auth_mode
+      when :env
+        participant_access_token
+      when :fallback
+        if videosdk_fallback_secret.present?
+          participant_access_token(api_key: FALLBACK_API_KEY, secret: videosdk_fallback_secret)
+        else
+          FALLBACK_TOKEN
+        end
+      else
+        nil
+      end
     end
 
     # v1 /meetings first (matches @videosdk.live/react-native-sdk 0.0.54), then v2 /rooms.
     def create_room
-      unless using_fallback_api_token?
-        parsed = create_room_v1(api_access_token)
-        meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
-        return [parsed, :env] if meeting_id.present?
+      return create_room_with_auth(FALLBACK_TOKEN, :fallback) if using_fallback_api_token?
 
-        Rails.logger.warn(
-          "videosdk v1/meetings failed status=#{parsed[:_http_status]} body=#{parsed[:_http_body].to_s.truncate(400)}"
-        )
+      create_room_with_auth(api_access_token, :env)
+    end
 
-        parsed = create_room_v2(api_access_token)
-        meeting_id = parsed[:roomId].presence || parsed[:meetingId].presence
-        return [parsed, :env] if meeting_id.present?
-
-        return [parsed, :failed]
-      end
-
-      parsed = create_room_v1(FALLBACK_TOKEN)
+    def create_room_with_auth(authorization, auth_mode)
+      parsed = create_room_v1(authorization)
       meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
-      return [parsed, :fallback] if meeting_id.present?
+      return [parsed, auth_mode] if meeting_id.present?
 
-      parsed = create_room_v2(FALLBACK_TOKEN)
+      Rails.logger.warn(
+        "videosdk v1/meetings failed auth_mode=#{auth_mode} status=#{parsed[:_http_status]} " \
+        "body=#{parsed[:_http_body].to_s.truncate(300)}"
+      )
+
+      parsed = create_room_v2(authorization)
       meeting_id = parsed[:roomId].presence || parsed[:meetingId].presence
-      return [parsed, :fallback] if meeting_id.present?
+      return [parsed, auth_mode] if meeting_id.present?
 
       [parsed, :failed]
+    end
+
+    def room_valid_for_token?(room_id, token)
+      return false if room_id.blank? || token.blank?
+
+      uri = URI("https://api.videosdk.live/v2/rooms/validate/#{room_id}")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.read_timeout = 10
+      http.open_timeout = 10
+      request = Net::HTTP::Get.new(uri)
+      request["Authorization"] = token
+      response = http.request(request)
+      ok = response.code.to_i == 200
+      Rails.logger.info(
+        "videosdk validate room=#{room_id} ok=#{ok} status=#{response.code} body=#{response.body.to_s.truncate(200)}"
+      )
+      ok
+    rescue StandardError => e
+      Rails.logger.warn("videosdk validate error: #{e.class} - #{e.message}")
+      false
     end
 
     def create_room_v1(authorization)

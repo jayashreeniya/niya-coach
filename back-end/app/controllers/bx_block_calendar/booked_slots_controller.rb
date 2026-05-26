@@ -350,7 +350,6 @@ module BxBlockCalendar
           meeting_data = create_meetings
           new_meeting_id = meeting_data[:meetingId].presence || meeting_data[:roomId].presence
           if new_meeting_id.present?
-            # slot.update runs heavy validations and silently fails — meeting_code never saved (see Azure logs).
             slot.update_column(:meeting_code, new_meeting_id)
             response_meeting_code = new_meeting_id
             fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
@@ -383,8 +382,10 @@ module BxBlockCalendar
       meeting_service = BxBlockAppointmentManagement::CreateMeeting.new
       meeting_token = fresh_meeting_token.presence || meeting_service.token
       logger.info(
-        "video_call response slot_id=#{slot.id} meeting_code=#{response_meeting_code} db_meeting_code=#{slot.meeting_code} " \
-        "token_present=#{meeting_token.present?} token_len=#{meeting_token.to_s.length} reused=#{fresh_meeting_token.blank?}"
+        "video_call FINAL slot_id=#{slot.id} response_meeting_code=#{response_meeting_code} " \
+        "db_meeting_code=#{slot.reload.meeting_code} codes_match=#{response_meeting_code == slot.meeting_code} " \
+        "token_present=#{meeting_token.present?} token_len=#{meeting_token.to_s.length} " \
+        "fresh_token_used=#{fresh_meeting_token.present?} user_id=#{current_user.id} is_coach=#{is_coach}"
       )
       render json: { message: "Video call started", meeting_token: meeting_token, meeting_code: response_meeting_code }, status: :ok
     rescue StandardError => e
