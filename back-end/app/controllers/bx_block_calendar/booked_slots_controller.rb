@@ -380,7 +380,7 @@ module BxBlockCalendar
       return render json: { errors: "Meeting could not be created. Please try again." }, status: :unprocessable_entity if response_meeting_code.blank?
 
       meeting_service = BxBlockAppointmentManagement::CreateMeeting.new
-      meeting_token = fresh_meeting_token.presence || meeting_service.token
+      meeting_token = fresh_meeting_token.presence || meeting_service.token(room_id: response_meeting_code)
       logger.info(
         "video_call FINAL slot_id=#{slot.id} response_meeting_code=#{response_meeting_code} " \
         "db_meeting_code=#{slot.reload.meeting_code} codes_match=#{response_meeting_code == slot.meeting_code} " \

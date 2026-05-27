@@ -12,9 +12,9 @@ module BxBlockAppointmentManagement
       generate_meeting_data
     end
 
-    # Join token for mobile RN SDK — legacy shape (no roomId in JWT; meetingId is passed separately).
+    # Join token for mobile SDK — room-scoped rtc JWT when room_id is known.
     def token(room_id: nil)
-      participant_access_token
+      participant_access_token(room_id: room_id)
     end
 
     private
@@ -22,7 +22,7 @@ module BxBlockAppointmentManagement
     def generate_meeting_data
       parsed, auth_mode = create_room
       meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
-      client_token = mint_join_token(auth_mode)
+      client_token = mint_join_token(auth_mode, meeting_id)
 
       if meeting_id.blank? || client_token.blank?
         Rails.logger.error(
@@ -38,7 +38,7 @@ module BxBlockAppointmentManagement
         )
         parsed, auth_mode = create_room_with_auth(FALLBACK_TOKEN, :fallback)
         meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
-        client_token = FALLBACK_TOKEN
+        client_token = mint_join_token(:fallback, meeting_id)
       end
 
       if meeting_id.blank? || client_token.blank?
@@ -174,10 +174,8 @@ module BxBlockAppointmentManagement
       JWT.encode(payload, videosdk_secret, "HS256")
     end
 
-    # Legacy participant JWT — do NOT embed roomId (RN SDK 0.0.54 + VideoSDK docs default).
-    # Room is selected via meetingId on the client; room-scoped JWTs caused
-    # "'token' is not valid for the provided meetingId" when claims drifted from config.
-    def participant_access_token(api_key: nil, secret: nil)
+    # Participant JWT for SDK join. When room_id is present, include v2 rtc + roomId (required by current VideoSDK project).
+    def participant_access_token(api_key: nil, secret: nil, room_id: nil)
       key = api_key.presence || ENV["API_KEY"]
       sec = secret.presence || videosdk_secret
 
@@ -190,9 +188,14 @@ module BxBlockAppointmentManagement
 
       payload = {
         apikey: key,
-        permissions: ["allow_join", "allow_mod", "ask_join"],
+        permissions: ["allow_join", "allow_mod"],
         exp: token_exp
       }
+      if room_id.present?
+        payload[:version] = 2
+        payload[:roles] = ["rtc"]
+        payload[:roomId] = room_id.to_s
+      end
       JWT.encode(payload, sec, "HS256")
     end
 

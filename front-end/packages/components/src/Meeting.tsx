@@ -397,17 +397,18 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
         <View style={styles.container}>
           <MeetingProvider
             config={{
-              meetingId,
+              meetingId: meetingId.trim(),
               micEnabled: false,
               webcamEnabled: false,
               multistream: false,
-              name: state.name,
+              debugMode: true,
+              name: (state.name && String(state.name).trim()) || "Participant",
               notification: {
                 title: "Niya",
                 message: "Meet started",
               },
             }}
-            token={token}
+            token={token.trim()}
           >
             <MeetingView
               onJoin={onJoin}
