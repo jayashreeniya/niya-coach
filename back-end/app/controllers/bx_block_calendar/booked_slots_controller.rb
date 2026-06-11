@@ -360,7 +360,19 @@ module BxBlockCalendar
         else
           slot.reload
           response_meeting_code = slot.meeting_code
-          logger.info("video_call reusing meeting_code=#{response_meeting_code} slot_id=#{slot.id}")
+          meeting_checker = BxBlockAppointmentManagement::CreateMeeting.new
+          if response_meeting_code.present? && !meeting_checker.room_exists?(response_meeting_code)
+            logger.warn("video_call stale meeting_code=#{response_meeting_code} slot_id=#{slot.id} — creating new room")
+            meeting_data = create_meetings
+            new_meeting_id = meeting_data[:meetingId].presence || meeting_data[:roomId].presence
+            if new_meeting_id.present?
+              slot.update_column(:meeting_code, new_meeting_id)
+              response_meeting_code = new_meeting_id
+              fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
+            end
+          else
+            logger.info("video_call reusing meeting_code=#{response_meeting_code} slot_id=#{slot.id}")
+          end
         end
 
         if is_coach
@@ -381,6 +393,7 @@ module BxBlockCalendar
 
       meeting_service = BxBlockAppointmentManagement::CreateMeeting.new
       meeting_token = fresh_meeting_token.presence || meeting_service.token(room_id: response_meeting_code)
+      return render json: { errors: "Meeting token could not be created. Please try again." }, status: :unprocessable_entity if meeting_token.blank?
       logger.info(
         "video_call FINAL slot_id=#{slot.id} response_meeting_code=#{response_meeting_code} " \
         "db_meeting_code=#{slot.reload.meeting_code} codes_match=#{response_meeting_code == slot.meeting_code} " \

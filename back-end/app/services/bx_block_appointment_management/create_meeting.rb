@@ -17,6 +17,13 @@ module BxBlockAppointmentManagement
       participant_access_token(room_id: room_id)
     end
 
+    def room_exists?(room_id)
+      return false if room_id.blank?
+
+      room_valid_for_token?(room_id, auth_mode: :env) ||
+        room_valid_for_token?(room_id, auth_mode: :fallback)
+    end
+
     private
 
     def generate_meeting_data
@@ -32,7 +39,7 @@ module BxBlockAppointmentManagement
         return { token: nil, meetingId: nil, roomId: nil }
       end
 
-      unless room_valid_for_token?(meeting_id, client_token)
+      unless room_valid_for_token?(meeting_id, auth_mode: auth_mode)
         Rails.logger.warn(
           "videosdk env credentials failed validate for room=#{meeting_id} — retrying with fallback project"
         )
@@ -54,15 +61,16 @@ module BxBlockAppointmentManagement
       { meetingId: meeting_id, roomId: meeting_id, token: client_token }
     end
 
-    def mint_join_token(auth_mode)
+    def mint_join_token(auth_mode, meeting_id = nil)
       case auth_mode
       when :env
-        participant_access_token
+        participant_access_token(room_id: meeting_id)
       when :fallback
         if videosdk_fallback_secret.present?
-          participant_access_token(api_key: FALLBACK_API_KEY, secret: videosdk_fallback_secret)
+          participant_access_token(api_key: FALLBACK_API_KEY, secret: videosdk_fallback_secret, room_id: meeting_id)
         else
-          FALLBACK_TOKEN
+          Rails.logger.error("videosdk fallback secret missing — cannot mint room-scoped join token")
+          nil
         end
       else
         nil
@@ -93,8 +101,12 @@ module BxBlockAppointmentManagement
       [parsed, :failed]
     end
 
-    def room_valid_for_token?(room_id, token)
-      return false if room_id.blank? || token.blank?
+    # Validate room exists using crawler/admin token (v2 validate API rejects rtc role tokens).
+    def room_valid_for_token?(room_id, auth_mode: :env)
+      return false if room_id.blank?
+
+      authorization = authorization_for_auth_mode(auth_mode)
+      return false if authorization.blank?
 
       uri = URI("https://api.videosdk.live/v2/rooms/validate/#{room_id}")
       http = Net::HTTP.new(uri.host, uri.port)
@@ -102,7 +114,7 @@ module BxBlockAppointmentManagement
       http.read_timeout = 10
       http.open_timeout = 10
       request = Net::HTTP::Get.new(uri)
-      request["Authorization"] = token
+      request["Authorization"] = authorization
       response = http.request(request)
       ok = response.code.to_i == 200
       Rails.logger.info(
@@ -112,6 +124,17 @@ module BxBlockAppointmentManagement
     rescue StandardError => e
       Rails.logger.warn("videosdk validate error: #{e.class} - #{e.message}")
       false
+    end
+
+    def authorization_for_auth_mode(auth_mode)
+      case auth_mode
+      when :fallback
+        FALLBACK_TOKEN
+      when :env
+        api_access_token
+      else
+        nil
+      end
     end
 
     def create_room_v1(authorization)
