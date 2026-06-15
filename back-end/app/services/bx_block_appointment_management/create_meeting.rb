@@ -12,9 +12,14 @@ module BxBlockAppointmentManagement
       generate_meeting_data
     end
 
-    # Join token for mobile SDK — room-scoped rtc JWT when room_id is known.
+    # Join token for mobile SDK — uses ENV credentials when available (proper v2 JWT),
+    # falls back to static legacy token only when no secret is configured.
     def token(room_id: nil)
-      participant_access_token(room_id: room_id)
+      if using_fallback_api_token?
+        mint_join_token(:fallback, room_id)
+      else
+        mint_join_token(:env, room_id)
+      end
     end
 
     def room_exists?(room_id)
@@ -39,13 +44,17 @@ module BxBlockAppointmentManagement
         return { token: nil, meetingId: nil, roomId: nil }
       end
 
-      unless room_valid_for_token?(meeting_id, auth_mode: auth_mode)
-        Rails.logger.warn(
-          "videosdk env credentials failed validate for room=#{meeting_id} — retrying with fallback project"
-        )
-        parsed, auth_mode = create_room_with_auth(FALLBACK_TOKEN, :fallback)
-        meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
-        client_token = mint_join_token(:fallback, meeting_id)
+      # Validate the room when using env credentials to ensure it's accessible.
+      # If validation fails, retry with fallback project as a safety net.
+      if auth_mode == :env
+        unless room_valid_for_token?(meeting_id, auth_mode: auth_mode)
+          Rails.logger.warn(
+            "videosdk env credentials failed validate for room=#{meeting_id} — retrying with fallback project"
+          )
+          parsed, auth_mode = create_room_with_auth(FALLBACK_TOKEN, :fallback)
+          meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
+          client_token = mint_join_token(:fallback, meeting_id)
+        end
       end
 
       if meeting_id.blank? || client_token.blank?
@@ -69,19 +78,21 @@ module BxBlockAppointmentManagement
         if videosdk_fallback_secret.present?
           participant_access_token(api_key: FALLBACK_API_KEY, secret: videosdk_fallback_secret, room_id: meeting_id)
         else
-          Rails.logger.error("videosdk fallback secret missing — cannot mint room-scoped join token")
-          nil
+          FALLBACK_TOKEN
         end
       else
         nil
       end
     end
 
-    # v1 /meetings first (matches @videosdk.live/react-native-sdk 0.0.54), then v2 /rooms.
+    # Create rooms using the same project credentials that will be used for join tokens.
+    # Room + token MUST be from the same VideoSDK project, otherwise SDK rejects the join.
     def create_room
-      return create_room_with_auth(FALLBACK_TOKEN, :fallback) if using_fallback_api_token?
-
-      create_room_with_auth(api_access_token, :env)
+      if using_fallback_api_token?
+        create_room_with_auth(FALLBACK_TOKEN, :fallback)
+      else
+        create_room_with_auth(api_access_token, :env)
+      end
     end
 
     def create_room_with_auth(authorization, auth_mode)

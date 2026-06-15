@@ -281,7 +281,6 @@ dependencies {
 
     implementation project(':react-native-view-shot')
     implementation project(':react-native-image-to-pdf')
-    implementation project(':rnfgservice')
     implementation project(':rnwebrtc')
     implementation project(':rnincallmanager')
     implementation project(':react-native-push-notification')

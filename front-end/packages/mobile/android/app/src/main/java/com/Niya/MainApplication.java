@@ -29,7 +29,6 @@ import com.agontuk.RNFusedLocation.RNFusedLocationPackage;
 import com.facebook.FacebookSdk;
 import com.facebook.reactnative.androidsdk.FBSDKPackage;
 
-import live.videosdk.rnfgservice.ForegroundServicePackage;
 import live.videosdk.rnincallmanager.InCallManagerPackage;
 import live.videosdk.rnwebrtc.WebRTCModulePackage;
 import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
@@ -58,7 +57,6 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
           List<ReactPackage> packages = new PackageList(this).getPackages();
           // Only add packages that are NOT autolinked
           packages.add(new RNFusedLocationPackage());
-          packages.add(new ForegroundServicePackage());
           packages.add(new InCallManagerPackage());
           packages.add(new WebRTCModulePackage());
           packages.add(new ReactNativePushNotificationPackage());

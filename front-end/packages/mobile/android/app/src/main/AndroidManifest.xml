@@ -97,22 +97,6 @@
         </service>
          <!-- notifcation end -->
 
-    <!-- Video sdk metadata -->
-
-    <meta-data
-        android:name="live.videosdk.rnfgservice.notification_channel_name"
-        android:value="Meeting Notification"
-      />
-      <meta-data
-        android:name="live.videosdk.rnfgservice.notification_channel_description"
-        android:value="Whenever meeting started notification will appear."
-      />
-      <meta-data
-        android:name="live.videosdk.rnfgservice.notification_color"
-        android:resource="@color/red"
-      />
-      <service android:name="live.videosdk.rnfgservice.ForegroundService" android:foregroundServiceType="mediaProjection"></service>
-      <service android:name="live.videosdk.rnfgservice.ForegroundServiceTask"></service>
     </application>
 
     <queries>

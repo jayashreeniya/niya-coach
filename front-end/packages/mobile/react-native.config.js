@@ -16,9 +16,6 @@ module.exports = {
     'react-native-geolocation-service': {
       platforms: { android: null },
     },
-    '@videosdk.live/react-native-foreground-service': {
-      platforms: { android: null },
-    },
     '@videosdk.live/react-native-incallmanager': {
       platforms: { android: null },
     },

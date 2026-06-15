@@ -60,8 +60,6 @@ project(':rnwebrtc').projectDir = new File(rootProject.projectDir, '../../../nod
 include ':rnincallmanager'
 project(':rnincallmanager').projectDir = new File(rootProject.projectDir, '../../../node_modules/@videosdk.live/react-native-incallmanager/android')
 
-include ':rnfgservice'
-project(':rnfgservice').projectDir = new File(rootProject.projectDir, '../../../node_modules/@videosdk.live/react-native-foreground-service/android')
 
 
 include ':react-native-push-notification'
