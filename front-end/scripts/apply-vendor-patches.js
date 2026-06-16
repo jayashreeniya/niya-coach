@@ -136,9 +136,8 @@ patchReactNativePermissionsAndroid();
 
 /**
  * The new @videosdk.live/react-native-webrtc (0.0.24) declares a maven dependency
- * on io.github.webrtc-sdk:android. Some Gradle configurations don't propagate the
- * root allprojects repositories to externally-included modules. Ensure the module
- * has its own repositories block so dependencies resolve correctly.
+ * on io.github.webrtc-sdk:android which fails to resolve in our Gradle setup.
+ * Replace it with a local AAR reference (AAR downloaded in CI step).
  */
 function patchWebrtcBuildGradle() {
   const rel = 'node_modules/@videosdk.live/react-native-webrtc/android/build.gradle';
@@ -148,14 +147,18 @@ function patchWebrtcBuildGradle() {
     return;
   }
   let s = fs.readFileSync(p, 'utf8');
-  if (s.includes('NIYA_WEBRTC_REPOS_PATCH')) {
+  if (s.includes('NIYA_WEBRTC_LOCAL_AAR')) {
     console.log('[apply-vendor-patches] webrtc build.gradle already patched');
     return;
   }
-  // Add repositories block before the dependencies block
+  // Replace maven dependency with local AAR via flatDir
   s = s.replace(
     "dependencies {",
-    "// NIYA_WEBRTC_REPOS_PATCH\nrepositories {\n    mavenCentral()\n    google()\n}\n\ndependencies {"
+    "// NIYA_WEBRTC_LOCAL_AAR\nrepositories {\n    flatDir { dirs 'libs' }\n}\n\ndependencies {"
+  );
+  s = s.replace(
+    "api 'io.github.webrtc-sdk:android:125.6422.06.1'",
+    "api(name: 'webrtc-android', ext: 'aar')"
   );
   fs.writeFileSync(p, s, 'utf8');
   console.log('[apply-vendor-patches] applied ->', rel);
