@@ -133,3 +133,30 @@ function patchReactNativePermissionsAndroid() {
 }
 
 patchReactNativePermissionsAndroid();
+
+/**
+ * The new @videosdk.live/react-native-webrtc (0.0.24) declares a maven dependency
+ * on io.github.webrtc-sdk:android which may not resolve on all CI environments.
+ * Patch its build.gradle to also include local AAR files from libs/ as a fallback.
+ */
+function patchWebrtcBuildGradle() {
+  const rel = 'node_modules/@videosdk.live/react-native-webrtc/android/build.gradle';
+  const p = path.join(root, rel);
+  if (!fs.existsSync(p)) {
+    console.warn('[apply-vendor-patches] skip webrtc build.gradle (not found)');
+    return;
+  }
+  let s = fs.readFileSync(p, 'utf8');
+  if (s.includes('fileTree')) {
+    console.log('[apply-vendor-patches] webrtc build.gradle already patched');
+    return;
+  }
+  s = s.replace(
+    "api 'io.github.webrtc-sdk:android:125.6422.06.1'",
+    "api fileTree(dir: 'libs', include: ['*.aar'])\n    api 'io.github.webrtc-sdk:android:125.6422.06.1'"
+  );
+  fs.writeFileSync(p, s, 'utf8');
+  console.log('[apply-vendor-patches] applied ->', rel);
+}
+
+patchWebrtcBuildGradle();

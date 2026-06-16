@@ -48,6 +48,15 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
+      - name: Ensure VideoSDK WebRTC native AAR is available
+        working-directory: front-end
+        run: |
+          WEBRTC_LIBS="node_modules/@videosdk.live/react-native-webrtc/android/libs"
+          mkdir -p "$WEBRTC_LIBS"
+          curl -sL "https://repo1.maven.org/maven2/io/github/webrtc-sdk/android/125.6422.06.1/android-125.6422.06.1.aar" \
+            -o "$WEBRTC_LIBS/webrtc-android.aar"
+          echo "Downloaded WebRTC AAR: $(ls -lh $WEBRTC_LIBS/webrtc-android.aar | awk '{print $5}')"
+
       - name: Apply vendor patches (VideoSDK WebRTC Android permissions)
         working-directory: front-end
         run: node scripts/apply-vendor-patches.js
