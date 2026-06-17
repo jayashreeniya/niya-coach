@@ -21,7 +21,7 @@ module.exports = {
   },
   transformer: {
     minifierConfig: {
-      ecma: 2020,
+      ecma: 5,
       compress: { toplevel: true },
       mangle: { toplevel: true },
     },
