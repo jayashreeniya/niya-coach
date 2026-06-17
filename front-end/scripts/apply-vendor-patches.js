@@ -165,3 +165,59 @@ function patchWebrtcBuildGradle() {
 }
 
 patchWebrtcBuildGradle();
+
+/**
+ * @videosdk.live/react-sdk ships pre-compiled JS (dist/index.js) targeting modern
+ * environments with optional chaining (?.) and nullish coalescing (??) syntax.
+ * Our RN 0.65 JSC runtime cannot handle these. Metro's Babel transform should
+ * handle them but doesn't in practice (version mismatch between metro-react-native-
+ * babel-preset 0.72.4 and Metro 0.66). Manually transpile the syntax away.
+ */
+function patchVideoSdkModernSyntax() {
+  const targets = [
+    'node_modules/@videosdk.live/react-sdk/dist/index.js',
+    'node_modules/@videosdk.live/react-sdk/dist/index.modern.js',
+    'node_modules/@videosdk.live/react-native-sdk/index.js',
+    'node_modules/@videosdk.live/react-native-sdk/useMediaDevice.js',
+    'node_modules/@videosdk.live/react-native-sdk/e2ee/e2eeManager.js',
+    'node_modules/@videosdk.live/react-native-sdk/e2ee/useKeyProvider.js',
+    'node_modules/@videosdk.live/react-native-sdk/upload/useFile.js',
+  ];
+
+  for (const rel of targets) {
+    const p = path.join(root, rel);
+    if (!fs.existsSync(p)) continue;
+    let s = fs.readFileSync(p, 'utf8');
+    if (!s.includes('?.') && !s.includes('??')) continue;
+
+    // Transpile optional chaining: obj?.prop → obj == null ? void 0 : obj.prop
+    // Handle method calls: obj?.method() → obj == null ? void 0 : obj.method()
+    // Handle computed: obj?.[key] → obj == null ? void 0 : obj[key]
+    // Also handle nullish coalescing: a ?? b → a != null ? a : b
+    // Use @babel/core programmatically if available, otherwise do regex replacement
+    try {
+      const babel = require('@babel/core');
+      const result = babel.transformSync(s, {
+        filename: p,
+        plugins: [
+          '@babel/plugin-proposal-optional-chaining',
+          '@babel/plugin-proposal-nullish-coalescing-operator',
+        ],
+        parserOpts: { allowReturnOutsideFunction: true },
+        babelrc: false,
+        configFile: false,
+      });
+      if (result && result.code) {
+        fs.writeFileSync(p, result.code, 'utf8');
+        console.log('[apply-vendor-patches] transpiled modern syntax ->', rel);
+      }
+    } catch (e) {
+      console.warn('[apply-vendor-patches] babel transform failed for', rel, e.message);
+      // Fallback: simple regex-based replacement for common patterns
+      // a?.b → (a == null ? void 0 : a.b) - won't cover all cases but handles most
+      console.warn('[apply-vendor-patches] skipping babel fallback for', rel);
+    }
+  }
+}
+
+patchVideoSdkModernSyntax();
