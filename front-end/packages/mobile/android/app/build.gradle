@@ -84,7 +84,7 @@ project.ext.react = [
     root: "../../../",
     bundleAssetName: "index.android.bundle",
     bundleInRelease: true,
-    enableHermes: true,  // clean and rebuild if changing
+    enableHermes: false,  // clean and rebuild if changing
     cliPath: ["node", "-e", "console.log(require('react-native/cli').bin);"].execute([], projectDir).text.trim(),
 ]
 
