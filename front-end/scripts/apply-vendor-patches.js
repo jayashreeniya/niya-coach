@@ -174,15 +174,25 @@ patchWebrtcBuildGradle();
  * babel-preset 0.72.4 and Metro 0.66). Manually transpile the syntax away.
  */
 function patchVideoSdkModernSyntax() {
-  const targets = [
-    'node_modules/@videosdk.live/react-sdk/dist/index.js',
-    'node_modules/@videosdk.live/react-sdk/dist/index.modern.js',
-    'node_modules/@videosdk.live/react-native-sdk/index.js',
-    'node_modules/@videosdk.live/react-native-sdk/useMediaDevice.js',
-    'node_modules/@videosdk.live/react-native-sdk/e2ee/e2eeManager.js',
-    'node_modules/@videosdk.live/react-native-sdk/e2ee/useKeyProvider.js',
-    'node_modules/@videosdk.live/react-native-sdk/upload/useFile.js',
+  // Find all JS files in VideoSDK packages that may contain modern syntax
+  const sdkDirs = [
+    'node_modules/@videosdk.live/react-sdk',
+    'node_modules/@videosdk.live/react-native-sdk',
   ];
+  const targets = [];
+  for (const dir of sdkDirs) {
+    const absDir = path.join(root, dir);
+    if (!fs.existsSync(absDir)) continue;
+    (function walk(d) {
+      for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
+        if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== 'android' && entry.name !== 'ios') {
+          walk(path.join(d, entry.name));
+        } else if (entry.isFile() && entry.name.endsWith('.js')) {
+          targets.push(path.relative(root, path.join(d, entry.name)).replace(/\\/g, '/'));
+        }
+      }
+    })(absDir);
+  }
 
   for (const rel of targets) {
     const p = path.join(root, rel);
@@ -200,12 +210,14 @@ function patchVideoSdkModernSyntax() {
       const result = babel.transformSync(s, {
         filename: p,
         plugins: [
+          '@babel/plugin-syntax-jsx',
           '@babel/plugin-proposal-optional-chaining',
           '@babel/plugin-proposal-nullish-coalescing-operator',
         ],
         parserOpts: { allowReturnOutsideFunction: true },
         babelrc: false,
         configFile: false,
+        sourceType: 'unambiguous',
       });
       if (result && result.code) {
         fs.writeFileSync(p, result.code, 'utf8');
@@ -213,9 +225,6 @@ function patchVideoSdkModernSyntax() {
       }
     } catch (e) {
       console.warn('[apply-vendor-patches] babel transform failed for', rel, e.message);
-      // Fallback: simple regex-based replacement for common patterns
-      // a?.b → (a == null ? void 0 : a.b) - won't cover all cases but handles most
-      console.warn('[apply-vendor-patches] skipping babel fallback for', rel);
     }
   }
 }
