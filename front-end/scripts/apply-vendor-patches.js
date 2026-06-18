@@ -175,12 +175,24 @@ patchWebrtcBuildGradle();
  */
 function patchVideoSdkModernSyntax() {
   // Find all JS files in VideoSDK packages that may contain modern syntax.
-  // react-sdk may be hoisted or nested inside react-native-sdk/node_modules.
+  // react-sdk may be hoisted, nested, or resolved via yarn workspaces.
   const sdkDirs = [
     'node_modules/@videosdk.live/react-sdk',
     'node_modules/@videosdk.live/react-native-sdk',
     'node_modules/@videosdk.live/react-native-sdk/node_modules/@videosdk.live/react-sdk',
   ];
+  // Dynamically find react-sdk wherever yarn placed it
+  try {
+    const resolved = require.resolve('@videosdk.live/react-sdk/package.json', { paths: [root] });
+    const resolvedDir = path.dirname(resolved);
+    const relDir = path.relative(root, resolvedDir).replace(/\\/g, '/');
+    if (!sdkDirs.includes(relDir)) {
+      sdkDirs.push(relDir);
+      console.log('[apply-vendor-patches] found react-sdk at:', relDir);
+    }
+  } catch (e) {
+    console.warn('[apply-vendor-patches] could not resolve @videosdk.live/react-sdk:', e.message);
+  }
   const targets = [];
   for (const dir of sdkDirs) {
     const absDir = path.join(root, dir);
