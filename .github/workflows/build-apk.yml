@@ -197,15 +197,12 @@ jobs:
             const fs = require('fs');
             const bundlePath = 'packages/mobile/android/app/src/main/assets/index.android.bundle';
             const code = fs.readFileSync(bundlePath, 'utf8');
-            if (!code.includes('?.') && !code.includes('??')) {
-              console.log('Bundle has no modern syntax - skipping');
-              process.exit(0);
-            }
-            console.log('Bundle contains modern syntax - transpiling...');
+            console.log('Post-processing bundle to ensure JSC compatibility...');
             const result = babel.transformSync(code, {
               plugins: [
                 '@babel/plugin-transform-optional-chaining',
                 '@babel/plugin-transform-nullish-coalescing-operator',
+                '@babel/plugin-transform-logical-assignment-operators',
               ],
               parserOpts: { allowReturnOutsideFunction: true },
               babelrc: false,
