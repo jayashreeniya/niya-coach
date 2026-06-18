@@ -189,6 +189,33 @@ jobs:
           echo "=== Bundle created ==="
           ls -lh packages/mobile/android/app/src/main/assets/index.android.bundle
 
+      - name: Post-process bundle (remove modern syntax for JSC)
+        working-directory: front-end
+        run: |
+          node -e "
+            const babel = require('@babel/core');
+            const fs = require('fs');
+            const bundlePath = 'packages/mobile/android/app/src/main/assets/index.android.bundle';
+            const code = fs.readFileSync(bundlePath, 'utf8');
+            if (!code.includes('?.') && !code.includes('??')) {
+              console.log('Bundle has no modern syntax - skipping');
+              process.exit(0);
+            }
+            console.log('Bundle contains modern syntax - transpiling...');
+            const result = babel.transformSync(code, {
+              plugins: [
+                '@babel/plugin-transform-optional-chaining',
+                '@babel/plugin-transform-nullish-coalescing-operator',
+              ],
+              parserOpts: { allowReturnOutsideFunction: true },
+              babelrc: false,
+              configFile: false,
+              sourceType: 'script',
+            });
+            fs.writeFileSync(bundlePath, result.code);
+            console.log('Bundle post-processed successfully (' + (result.code.length/1024/1024).toFixed(1) + ' MB)');
+          "
+
       - name: Build Release APK
         run: |
           cd front-end/packages/mobile/android
