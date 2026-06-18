@@ -174,10 +174,12 @@ patchWebrtcBuildGradle();
  * babel-preset 0.72.4 and Metro 0.66). Manually transpile the syntax away.
  */
 function patchVideoSdkModernSyntax() {
-  // Find all JS files in VideoSDK packages that may contain modern syntax
+  // Find all JS files in VideoSDK packages that may contain modern syntax.
+  // react-sdk may be hoisted or nested inside react-native-sdk/node_modules.
   const sdkDirs = [
     'node_modules/@videosdk.live/react-sdk',
     'node_modules/@videosdk.live/react-native-sdk',
+    'node_modules/@videosdk.live/react-native-sdk/node_modules/@videosdk.live/react-sdk',
   ];
   const targets = [];
   for (const dir of sdkDirs) {
@@ -193,6 +195,7 @@ function patchVideoSdkModernSyntax() {
       }
     })(absDir);
   }
+  console.log('[apply-vendor-patches] VideoSDK JS files to check:', targets.length);
 
   for (const rel of targets) {
     const p = path.join(root, rel);
