@@ -360,19 +360,7 @@ module BxBlockCalendar
         else
           slot.reload
           response_meeting_code = slot.meeting_code
-          meeting_checker = BxBlockAppointmentManagement::CreateMeeting.new
-          if response_meeting_code.present? && !meeting_checker.room_exists?(response_meeting_code)
-            logger.warn("video_call stale meeting_code=#{response_meeting_code} slot_id=#{slot.id} — creating new room")
-            meeting_data = create_meetings
-            new_meeting_id = meeting_data[:meetingId].presence || meeting_data[:roomId].presence
-            if new_meeting_id.present?
-              slot.update_column(:meeting_code, new_meeting_id)
-              response_meeting_code = new_meeting_id
-              fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
-            end
-          else
-            logger.info("video_call reusing meeting_code=#{response_meeting_code} slot_id=#{slot.id}")
-          end
+          logger.info("video_call reusing meeting_code=#{response_meeting_code} slot_id=#{slot.id} session_in_progress=true")
         end
 
         if is_coach
