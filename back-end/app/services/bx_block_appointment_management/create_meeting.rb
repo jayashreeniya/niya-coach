@@ -12,14 +12,19 @@ module BxBlockAppointmentManagement
       generate_meeting_data
     end
 
-    # Join token for mobile SDK — uses ENV credentials when available (proper v2 JWT),
-    # falls back to static legacy token only when no secret is configured.
+    # Join token for mobile SDK — always produces a v2 JWT with roomId embedded.
+    # Tries env credentials first, then fallback secret for proper token generation.
     def token(room_id: nil)
-      if using_fallback_api_token?
-        mint_join_token(:fallback, room_id)
-      else
-        mint_join_token(:env, room_id)
+      unless using_fallback_api_token?
+        t = mint_join_token(:env, room_id)
+        return t if t.present? && t != FALLBACK_TOKEN
       end
+
+      if videosdk_fallback_secret.present?
+        return participant_access_token(api_key: FALLBACK_API_KEY, secret: videosdk_fallback_secret, room_id: room_id)
+      end
+
+      mint_join_token(:fallback, room_id)
     end
 
     def room_exists?(room_id)
@@ -41,24 +46,6 @@ module BxBlockAppointmentManagement
           "videosdk create_room failed auth_mode=#{auth_mode} status=#{parsed[:_http_status]} " \
           "body=#{parsed[:_http_body].to_s.truncate(400)}"
         )
-        return { token: nil, meetingId: nil, roomId: nil }
-      end
-
-      # Validate the room when using env credentials to ensure it's accessible.
-      # If validation fails, retry with fallback project as a safety net.
-      if auth_mode == :env
-        unless room_valid_for_token?(meeting_id, auth_mode: auth_mode)
-          Rails.logger.warn(
-            "videosdk env credentials failed validate for room=#{meeting_id} — retrying with fallback project"
-          )
-          parsed, auth_mode = create_room_with_auth(FALLBACK_TOKEN, :fallback)
-          meeting_id = parsed[:meetingId].presence || parsed[:roomId].presence
-          client_token = mint_join_token(:fallback, meeting_id)
-        end
-      end
-
-      if meeting_id.blank? || client_token.blank?
-        Rails.logger.error("videosdk abandoning — no valid room/token after fallback")
         return { token: nil, meetingId: nil, roomId: nil }
       end
 

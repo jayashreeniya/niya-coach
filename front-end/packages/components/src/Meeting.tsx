@@ -352,8 +352,8 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const [valid, setValid] = useState<boolean>(false);
   const [permissionsGranted, setPermissionsGranted] = useState<boolean>(false);
   const [permissionsResolved, setPermissionsResolved] = useState<boolean>(false);
-  const [micOn, setMicOn] = useState<boolean>(false);
-  const [videoOn, setVideoOn] = useState<boolean>(false);
+  const [micOn, setMicOn] = useState<boolean>(true);
+  const [videoOn, setVideoOn] = useState<boolean>(true);
   const { state } = useContext(AppContext);
 
   const onJoin = (status: boolean) => {
@@ -398,8 +398,8 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
           <MeetingProvider
             config={{
               meetingId: meetingId.trim(),
-              micEnabled: false,
-              webcamEnabled: false,
+              micEnabled: true,
+              webcamEnabled: true,
               multistream: false,
               debugMode: true,
               name: (state.name && String(state.name).trim()) || "Participant",
