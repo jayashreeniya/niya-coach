@@ -260,7 +260,7 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
   const joinAttemptedRef = React.useRef(false);
   const [joinFailed, setJoinFailed] = React.useState(false);
 
-  const { join, leave, toggleWebcam, toggleMic, participants, getWebcams, changeWebcam, localParticipant } = useMeeting({
+  const { join, leave, toggleWebcam, toggleMic, participants, localParticipant } = useMeeting({
     onMeetingJoined,
     onMeetingLeft,
     onError: onMeetingError,
@@ -287,8 +287,7 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
     console.log('[Meeting] joined successfully, meetingId=', meetingIdForLog, 'participants=', [...participants.keys()].length);
     setTimeout(() => {
       try { switchAudioDevice("SPEAKER_PHONE"); } catch (_e) { /* ignore */ }
-    }, 500);
-    UseFrontCamera();
+    }, 1000);
   }
 
   function onMeetingLeft(reason: any) {
@@ -314,21 +313,6 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
     setJoinFailed(true);
   }
 
-  async function UseFrontCamera(){
-    try {
-      const cams = await getWebcams();
-      if (Array.isArray(cams) && cams.length) {
-        const frontCam = cams.find((c: any) =>
-          c.facingMode === "front" || c.facingMode === "user"
-        );
-        if (frontCam?.deviceId) {
-          changeWebcam(frontCam.deviceId);
-        }
-      }
-    } catch (_e) {
-      // Ignore camera switch failure; call can still continue with default camera.
-    }
-  }
 
   const participantsArrId = [...participants.keys()];
 
@@ -420,7 +404,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
               micEnabled: true,
               webcamEnabled: true,
               defaultCamera: "front",
-              multistream: true,
+              multistream: false,
               debugMode: true,
               name: (state.name && String(state.name).trim()) || "Participant",
               notification: {
