@@ -410,7 +410,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
               micEnabled: true,
               webcamEnabled: true,
               defaultCamera: "front",
-              multistream: false,
+              multistream: true,
               debugMode: true,
               name: (state.name && String(state.name).trim()) || "Participant",
               notification: {
