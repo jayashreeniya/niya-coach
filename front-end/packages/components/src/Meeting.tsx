@@ -111,14 +111,7 @@ const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMi
         </View>
       );
     }
-    if (!pressed) {
-      return (
-        <TouchableOpacity onPress={onJoin} style={[styles.leaveButton, styles.joinButton]}>
-          <Image source={call} style={styles.controlIcon} />
-        </TouchableOpacity>
-      );
-    }
-    return <Typography color="greyText" size={15}>Joining...</Typography>;
+    return <Typography color="greyText" size={15}>Joining call...</Typography>;
   };
 
   return (
@@ -190,10 +183,8 @@ type ParticipantListProps = {
 const ParticipantList: React.FC<ParticipantListProps> = ({ participants, me }) => {
  return participants.length > 0 ? (
     <>
-      
       {participants.map(item => {
         return(
-          // true
           <ParticipantView
             key={item}
             participantId={item}
@@ -211,7 +202,8 @@ const ParticipantList: React.FC<ParticipantListProps> = ({ participants, me }) =
         alignItems: "center",
       }}
     >
-      <Typography size={15}>Press the call button when you're ready to join</Typography>
+      <ActivityIndicator color={Colors.accent} size="large" />
+      <Typography size={15} style={{ marginTop: 10 }}>Connecting to call...</Typography>
     </View>
   );
 }
@@ -260,6 +252,7 @@ function formatSdkReason(reason: unknown): string {
 const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = ({ onJoin, joined, valid, goBack, mic, video, meetingIdForLog }) => {
 
   const hasJoinedRef = React.useRef(false);
+  const joinAttemptedRef = React.useRef(false);
   const [joinFailed, setJoinFailed] = React.useState(false);
 
   const { join, leave, toggleWebcam, toggleMic, participants, getWebcams, changeWebcam, localParticipant } = useMeeting({
@@ -267,22 +260,29 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
     onMeetingLeft,
     onError: onMeetingError,
     onParticipantJoined: (participant: any) => {
-      if (__DEV__) console.log('[Meeting] participant joined:', participant?.id, participant?.displayName);
+      console.log('[Meeting] participant joined:', participant?.id, participant?.displayName);
     },
     onParticipantLeft: (participant: any) => {
-      if (__DEV__) console.log('[Meeting] participant left:', participant?.id);
+      console.log('[Meeting] participant left:', participant?.id);
     },
   });
+
+  useEffect(() => {
+    if (valid && !hasJoinedRef.current && !joinAttemptedRef.current) {
+      joinAttemptedRef.current = true;
+      console.log('[Meeting] auto-joining meetingId=', meetingIdForLog);
+      try { join(); } catch (_e) { /* handled by onError */ }
+    }
+  }, [valid]);
 
   function onMeetingJoined() {
     hasJoinedRef.current = true;
     setJoinFailed(false);
     onJoin(true);
-    try {
-      switchAudioDevice("SPEAKER_PHONE");
-    } catch (_e) {
-      /* ignore */
-    }
+    console.log('[Meeting] joined successfully, meetingId=', meetingIdForLog, 'participants=', [...participants.keys()].length);
+    setTimeout(() => {
+      try { switchAudioDevice("SPEAKER_PHONE"); } catch (_e) { /* ignore */ }
+    }, 500);
     UseFrontCamera();
   }
 
