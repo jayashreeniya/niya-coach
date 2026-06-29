@@ -266,6 +266,12 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
     onMeetingJoined,
     onMeetingLeft,
     onError: onMeetingError,
+    onParticipantJoined: (participant: any) => {
+      if (__DEV__) console.log('[Meeting] participant joined:', participant?.id, participant?.displayName);
+    },
+    onParticipantLeft: (participant: any) => {
+      if (__DEV__) console.log('[Meeting] participant left:', participant?.id);
+    },
   });
 
   function onMeetingJoined() {
@@ -413,6 +419,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
               },
             }}
             token={token.trim()}
+            joinWithoutUserInteraction={true}
           >
             <MeetingView
               onJoin={onJoin}
