@@ -259,6 +259,7 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
   startMeeting = async (_id: string, start_id: any) => {
     let meetingId = "";
     let videosdkToken = "";
+
     try {
       const baseUrl = require("../../../framework/src/config").baseURL;
       const res = await fetch(`${baseUrl}/bx_block_calendar/booked_slots/video_call?booked_slot_id=${start_id}`, {

@@ -169,6 +169,7 @@ const ParticipantView: React.FC<ParticipantViewProps> = ({ participantId, me }) 
       <RTCView
         streamURL={streamURL}
         objectFit={"cover"}
+        mirror={myView}
         style={myView ? styles.myWindow : styles.guestWindow}
       />
     );
@@ -306,7 +307,9 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
     try {
       const cams = await getWebcams();
       if (Array.isArray(cams) && cams.length) {
-        const frontCam = cams.find((c: any) => c.facingMode === "front");
+        const frontCam = cams.find((c: any) =>
+          c.facingMode === "front" || c.facingMode === "user"
+        );
         if (frontCam?.deviceId) {
           changeWebcam(frontCam.deviceId);
         }
@@ -400,6 +403,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
               meetingId: meetingId.trim(),
               micEnabled: true,
               webcamEnabled: true,
+              defaultCamera: "front",
               multistream: false,
               debugMode: true,
               name: (state.name && String(state.name).trim()) || "Participant",

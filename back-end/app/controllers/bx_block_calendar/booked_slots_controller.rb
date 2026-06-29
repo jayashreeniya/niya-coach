@@ -339,28 +339,30 @@ module BxBlockCalendar
       slot.with_lock do
         slot.reload
         video_call_details.reload
-        if video_call_details.coach_presence && video_call_details.employee_presence
-          video_call_details.update(coach_presence: false, employee_presence: false)
-          video_call_details.reload
+
+        slot_expired = begin
+          end_time = Time.parse(slot.end_time)
+          Time.now.utc > end_time + 5.minutes
+        rescue
+          false
         end
 
-        session_in_progress = video_call_details.coach_presence || video_call_details.employee_presence
+        needs_new_meeting = slot.meeting_code.blank? || slot_expired
 
-        if slot.meeting_code.blank? || !session_in_progress
+        if needs_new_meeting
           meeting_data = create_meetings
           new_meeting_id = meeting_data[:meetingId].presence || meeting_data[:roomId].presence
           if new_meeting_id.present?
             slot.update_column(:meeting_code, new_meeting_id)
             response_meeting_code = new_meeting_id
             fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
-            logger.info("video_call created meeting_code=#{new_meeting_id} slot_id=#{slot.id}")
+            logger.info("video_call created meeting_code=#{new_meeting_id} slot_id=#{slot.id} reason=#{slot_expired ? 'expired' : 'blank'}")
           else
             logger.error("video_call create_meetings missing meetingId slot_id=#{slot.id}")
           end
         else
-          slot.reload
           response_meeting_code = slot.meeting_code
-          logger.info("video_call reusing meeting_code=#{response_meeting_code} slot_id=#{slot.id} session_in_progress=true")
+          logger.info("video_call reusing meeting_code=#{response_meeting_code} slot_id=#{slot.id}")
         end
 
         if is_coach
