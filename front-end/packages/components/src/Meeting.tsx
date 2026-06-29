@@ -144,7 +144,7 @@ type ParticipantViewProps = {
 
 const ParticipantView: React.FC<ParticipantViewProps> = ({ participantId, me }) => {
 
-  const { webcamStream, webcamOn } = useParticipant(participantId);
+  const { webcamStream, webcamOn, micStream, micOn, displayName, isLocal } = useParticipant(participantId);
   const myView = participantId === me;
   const track = webcamStream && (webcamStream as { track?: unknown }).track;
   let streamURL: string | undefined;
@@ -157,20 +157,25 @@ const ParticipantView: React.FC<ParticipantViewProps> = ({ participantId, me }) 
     }
   }
 
+  const debugInfo = `${displayName || participantId}\ncam:${webcamOn ? 'ON' : 'OFF'} mic:${micOn ? 'ON' : 'OFF'}\nstream:${webcamStream ? 'yes' : 'no'} track:${track ? 'yes' : 'no'}\nisLocal:${isLocal} url:${streamURL ? 'yes' : 'no'}`;
+
   if (streamURL) {
     return (
-      <RTCView
-        streamURL={streamURL}
-        objectFit={"cover"}
-        mirror={myView}
-        style={myView ? styles.myWindow : styles.guestWindow}
-      />
+      <View style={myView ? styles.myWindow : styles.guestWindow}>
+        <RTCView
+          streamURL={streamURL}
+          objectFit={"cover"}
+          mirror={myView}
+          style={{ flex: 1 }}
+        />
+        <Typography color="white" size={10} style={{ position: 'absolute', top: 4, left: 4, backgroundColor: 'rgba(0,0,0,0.6)', padding: 2 }}>{debugInfo}</Typography>
+      </View>
     );
   }
 
   return (
     <View style={myView ? styles.myWindow : [styles.guestWindow, styles.guestWindowEmpty]}>
-      <Typography color="greyText">{"NO VIDEO"}</Typography>
+      <Typography color="white" size={12} align="center" style={{ padding: 10, backgroundColor: 'rgba(0,0,0,0.7)' }}>{debugInfo}</Typography>
     </View>
   );
 }
@@ -329,6 +334,11 @@ const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = (
 
   return (
     <View style={{ flex: 1 }}>
+      <View style={{ position: 'absolute', top: 40, left: 0, right: 0, zIndex: 999, alignItems: 'center' }}>
+        <Typography color="white" size={11} style={{ backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 }}>
+          {`Room: ${meetingIdForLog} | Participants: ${participantsArrId.length} | Me: ${localParticipant?.id || 'n/a'}`}
+        </Typography>
+      </View>
       <ParticipantList
         participants={participantsArrId}
         me={localParticipant?.id}
