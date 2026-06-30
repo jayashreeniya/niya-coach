@@ -12,6 +12,8 @@ services:
         value: "true"
       - key: RAILS_LOG_TO_STDOUT
         value: "true"
+      - key: STORAGE_SERVICE
+        value: cloudflare
       - key: SECRET_KEY_BASE
         sync: false
       - key: DATABASE_URL
@@ -20,11 +22,13 @@ services:
         sync: false
       - key: VIDEOSDK_SECRET_KEY
         sync: false
-      - key: AZURE_STORAGE_ACCOUNT_NAME
-        sync: false
-      - key: AZURE_STORAGE_ACCESS_KEY
-        sync: false
-      - key: AZURE_STORAGE_CONTAINER
-        sync: false
       - key: SECRET_KEY
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ENDPOINT
         sync: false
