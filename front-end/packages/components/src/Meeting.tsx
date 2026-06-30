@@ -403,7 +403,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
               meetingId: meetingId.trim(),
               micEnabled: true,
               webcamEnabled: true,
-              multistream: false,
+              multistream: true,
               debugMode: true,
               name: (state.name && String(state.name).trim()) || "Participant",
               notification: {
