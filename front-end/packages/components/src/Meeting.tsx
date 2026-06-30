@@ -404,9 +404,10 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
               micEnabled: true,
               webcamEnabled: true,
               defaultCamera: "front",
-              multistream: false,
+              multistream: true,
               debugMode: true,
               name: (state.name && String(state.name).trim()) || "Participant",
+              webcamResolution: "h180p_w320p",
               notification: {
                 title: "Niya",
                 message: "Meet started",
