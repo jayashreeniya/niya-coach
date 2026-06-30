@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: niya-backend
+    runtime: docker
+    dockerfilePath: ./back-end/Dockerfile
+    dockerContext: ./back-end
+    plan: free
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_SERVE_STATIC_FILES
+        value: "true"
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+      - key: SECRET_KEY_BASE
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: VIDEOSDK_SECRET_KEY
+        sync: false
+      - key: AZURE_STORAGE_ACCOUNT_NAME
+        sync: false
+      - key: AZURE_STORAGE_ACCESS_KEY
+        sync: false
+      - key: AZURE_STORAGE_CONTAINER
+        sync: false
+      - key: SECRET_KEY
+        sync: false
