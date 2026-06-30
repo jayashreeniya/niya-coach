@@ -28,8 +28,8 @@ Rails.application.configure do
   # config.action_dispatch.x_sendfile_header = 'X-Sendfile' # for Apache
   # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for NGINX
 
-  # Store uploaded files on Azure Blob Storage (see config/storage.yml for options).
-  config.active_storage.service = :microsoft
+  # Store uploaded files on Cloudflare R2 (S3-compatible, see config/storage.yml).
+  config.active_storage.service = ENV['STORAGE_SERVICE']&.to_sym || :cloudflare
 
   # Force HTTPS and secure cookies in production
   config.force_ssl = true

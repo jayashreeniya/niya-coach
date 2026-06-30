@@ -15,6 +15,16 @@ minio:
   endpoint: <%= ENV['STORAGE_ENDPOINT']%>
   force_path_style: true
 
+# Cloudflare R2 (S3-compatible, free 10GB)
+cloudflare:
+  service: S3
+  access_key_id: <%= ENV['R2_ACCESS_KEY_ID'] %>
+  secret_access_key: <%= ENV['R2_SECRET_ACCESS_KEY'] %>
+  region: auto
+  bucket: <%= ENV['R2_BUCKET'] || 'niya-storage' %>
+  endpoint: <%= ENV['R2_ENDPOINT'] %>
+  force_path_style: true
+
 # Use rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:
 #   service: S3
