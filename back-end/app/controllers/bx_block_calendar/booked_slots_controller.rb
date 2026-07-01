@@ -333,43 +333,45 @@ module BxBlockCalendar
       coach_role = BxBlockRolesPermissions::Role.find_by_name(:coach)
       is_coach = coach_role && current_user.role_id == coach_role.id
 
-      fresh_meeting_token = nil
-      response_meeting_code = nil
+      slot_expired = begin
+        end_time = Time.parse(slot.end_time)
+        Time.now.utc > end_time + 5.minutes
+      rescue
+        false
+      end
 
-      slot.with_lock do
-        slot.reload
-        video_call_details.reload
+      # Atomic approach: only create a new meeting if meeting_code is blank or expired.
+      # Use UPDATE...WHERE to atomically claim the slot, avoiding race conditions
+      # that TiDB optimistic transactions don't prevent with SELECT...FOR UPDATE.
+      if slot.meeting_code.blank? || slot_expired
+        meeting_data = create_meetings
+        new_meeting_id = meeting_data[:meetingId].presence || meeting_data[:roomId].presence
 
-        slot_expired = begin
-          end_time = Time.parse(slot.end_time)
-          Time.now.utc > end_time + 5.minutes
-        rescue
-          false
-        end
-
-        needs_new_meeting = slot.meeting_code.blank? || slot_expired
-
-        if needs_new_meeting
-          meeting_data = create_meetings
-          new_meeting_id = meeting_data[:meetingId].presence || meeting_data[:roomId].presence
-          if new_meeting_id.present?
+        if new_meeting_id.present?
+          if slot_expired
             slot.update_column(:meeting_code, new_meeting_id)
-            response_meeting_code = new_meeting_id
-            fresh_meeting_token = meeting_data[:token] if meeting_data[:token].present?
-            logger.info("video_call created meeting_code=#{new_meeting_id} slot_id=#{slot.id} reason=#{slot_expired ? 'expired' : 'blank'}")
+            logger.info("video_call replaced expired meeting slot_id=#{slot.id} new=#{new_meeting_id}")
           else
-            logger.error("video_call create_meetings missing meetingId slot_id=#{slot.id}")
+            rows = BxBlockAppointmentManagement::BookedSlot.where(id: slot.id, meeting_code: [nil, ""]).update_all(meeting_code: new_meeting_id)
+            if rows == 0
+              logger.info("video_call lost race slot_id=#{slot.id}, another request already set meeting_code")
+            else
+              logger.info("video_call created meeting_code=#{new_meeting_id} slot_id=#{slot.id}")
+            end
           end
         else
-          response_meeting_code = slot.meeting_code
-          logger.info("video_call reusing meeting_code=#{response_meeting_code} slot_id=#{slot.id}")
+          logger.error("video_call create_meetings returned no meetingId slot_id=#{slot.id}")
         end
+      end
 
-        if is_coach
-          video_call_details.update(coach_presence: true)
-        else
-          video_call_details.update(employee_presence: true)
-        end
+      slot.reload
+      response_meeting_code = slot.meeting_code
+      return render json: { errors: "Meeting could not be created. Please try again." }, status: :unprocessable_entity if response_meeting_code.blank?
+
+      if is_coach
+        video_call_details.update(coach_presence: true)
+      else
+        video_call_details.update(employee_presence: true)
       end
 
       begin
@@ -378,17 +380,14 @@ module BxBlockCalendar
         logger.error("video_call worker enqueue failed: #{e.class} - #{e.message}")
       end
 
-      response_meeting_code = response_meeting_code.presence || slot.reload.meeting_code
-      return render json: { errors: "Meeting could not be created. Please try again." }, status: :unprocessable_entity if response_meeting_code.blank?
-
       meeting_service = BxBlockAppointmentManagement::CreateMeeting.new
-      meeting_token = fresh_meeting_token.presence || meeting_service.token(room_id: response_meeting_code)
+      meeting_token = meeting_service.token(room_id: response_meeting_code)
       return render json: { errors: "Meeting token could not be created. Please try again." }, status: :unprocessable_entity if meeting_token.blank?
+
       logger.info(
-        "video_call FINAL slot_id=#{slot.id} response_meeting_code=#{response_meeting_code} " \
-        "db_meeting_code=#{slot.reload.meeting_code} codes_match=#{response_meeting_code == slot.meeting_code} " \
+        "video_call FINAL slot_id=#{slot.id} meeting_code=#{response_meeting_code} " \
         "token_present=#{meeting_token.present?} token_len=#{meeting_token.to_s.length} " \
-        "fresh_token_used=#{fresh_meeting_token.present?} user_id=#{current_user.id} is_coach=#{is_coach}"
+        "user_id=#{current_user.id} is_coach=#{is_coach}"
       )
       render json: { message: "Video call started", meeting_token: meeting_token, meeting_code: response_meeting_code }, status: :ok
     rescue StandardError => e
