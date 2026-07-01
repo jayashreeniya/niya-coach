@@ -1,8 +1,7 @@
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 
 # --- Dependencies ---
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
@@ -16,6 +15,10 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_APP_URL=https://practice.niya.app
 ENV NEXT_PUBLIC_NIYA_URL=https://niya.app
+ENV MYSQL_HOST=placeholder
+ENV MYSQL_USER=placeholder
+ENV MYSQL_PASSWORD=placeholder
+ENV MYSQL_DATABASE=niya_admin_db
 RUN npm run build
 
 # --- Runner ---
@@ -25,8 +28,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
