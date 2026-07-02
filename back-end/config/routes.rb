@@ -3,6 +3,15 @@ Rails.application.routes.draw do
   # mount Rswag::Ui::Engine => '/api-docs'
   # mount Rswag::Api::Engine => '/api-docs'
   get "/healthcheck", to: proc { [200, {}, ["Ok"]] }
+  get "/diag/videosdk", to: proc { |_env|
+    info = {
+      api_key_set: ENV["API_KEY"].present?,
+      videosdk_secret_set: (ENV["VIDEOSDK_SECRET_KEY"].present? || ENV["VIDEO_SDK_SECRET"].present?),
+      fallback_secret_set: (ENV["VIDEOSDK_FALLBACK_SECRET_KEY"].present? || ENV["VIDEO_SDK_FALLBACK_SECRET"].present?),
+      using_fallback: (ENV["API_KEY"].blank? || (ENV["VIDEOSDK_SECRET_KEY"].blank? && ENV["VIDEO_SDK_SECRET"].blank?))
+    }
+    [200, {"Content-Type" => "application/json"}, [info.to_json]]
+  }
   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
