@@ -171,11 +171,11 @@ module BxBlockAppointmentManagement
     end
 
     def videosdk_secret
-      ENV["VIDEOSDK_SECRET_KEY"].presence || ENV["VIDEO_SDK_SECRET"].presence
+      ENV["VIDEOSDK_SECRET_KEY"].presence || ENV["VIDEO_SDK_SECRET"].presence || ENV["SECRET_KEY"].presence
     end
 
     def videosdk_fallback_secret
-      ENV["VIDEOSDK_FALLBACK_SECRET_KEY"].presence || ENV["VIDEO_SDK_FALLBACK_SECRET"].presence
+      ENV["VIDEOSDK_FALLBACK_SECRET_KEY"].presence || ENV["VIDEO_SDK_FALLBACK_SECRET"].presence || ENV["SECRET_KEY"].presence
     end
 
     def token_exp
