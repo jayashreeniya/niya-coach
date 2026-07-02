@@ -6,10 +6,19 @@ Rails.application.routes.draw do
   get "/diag/videosdk", to: proc { |_env|
     info = {
       api_key_set: ENV["API_KEY"].present?,
-      videosdk_secret_set: (ENV["VIDEOSDK_SECRET_KEY"].present? || ENV["VIDEO_SDK_SECRET"].present?),
+      api_key_last4: ENV["API_KEY"].to_s[-4,4],
+      videosdk_secret_set: (ENV["VIDEOSDK_SECRET_KEY"].present? || ENV["VIDEO_SDK_SECRET"].present? || ENV["SECRET_KEY"].present?),
+      videosdk_secret_last4: (ENV["VIDEOSDK_SECRET_KEY"].presence || ENV["VIDEO_SDK_SECRET"].presence || ENV["SECRET_KEY"].presence).to_s[-4,4],
       fallback_secret_set: (ENV["VIDEOSDK_FALLBACK_SECRET_KEY"].present? || ENV["VIDEO_SDK_FALLBACK_SECRET"].present?),
-      using_fallback: (ENV["API_KEY"].blank? || (ENV["VIDEOSDK_SECRET_KEY"].blank? && ENV["VIDEO_SDK_SECRET"].blank?))
+      using_fallback: (ENV["API_KEY"].blank? || (ENV["VIDEOSDK_SECRET_KEY"].blank? && ENV["VIDEO_SDK_SECRET"].blank? && ENV["SECRET_KEY"].blank?))
     }
+    begin
+      svc = BxBlockAppointmentManagement::CreateMeeting.new
+      result = svc.call
+      info[:room_create_result] = { meetingId: result[:meetingId], token_len: result[:token].to_s.length }
+    rescue => e
+      info[:room_create_error] = "#{e.class}: #{e.message}"
+    end
     [200, {"Content-Type" => "application/json"}, [info.to_json]]
   }
   devise_for :admin_users, ActiveAdmin::Devise.config
