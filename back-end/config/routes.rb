@@ -20,6 +20,14 @@ Rails.application.routes.draw do
     rescue => e
       info[:token_error] = "#{e.class}: #{e.message}"
     end
+    begin
+      svc2 = BxBlockAppointmentManagement::TwilioVideoService.new
+      room_result = svc2.create_or_get_room("diag-test-room")
+      info[:room_created] = true
+      info[:room_name] = room_result
+    rescue => e
+      info[:room_error] = "#{e.class}: #{e.message}"
+    end
     [200, {"Content-Type" => "application/json"}, [info.to_json]]
   }
   devise_for :admin_users, ActiveAdmin::Devise.config
