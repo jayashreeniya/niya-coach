@@ -121,13 +121,8 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   }, [isVideoEnabled]);
 
   const onRoomDidConnect = useCallback(({ roomName, participants: roomParticipants }: any) => {
-    console.log("[TwilioVideo] connected to room:", roomName);
+    console.log("[TwilioVideo] connected to room:", roomName, "participants:", JSON.stringify(roomParticipants));
     setStatus("connected");
-
-    if (twilioRef.current) {
-      twilioRef.current.setLocalVideoEnabled(true).catch(() => {});
-      twilioRef.current.setLocalAudioEnabled(true).catch(() => {});
-    }
 
     const newParticipants = new Map<string, { videoTrackSid: string; identity: string }>();
     if (roomParticipants) {
