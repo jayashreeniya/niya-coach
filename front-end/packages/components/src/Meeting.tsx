@@ -1,23 +1,28 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
-import { Modal, View, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Platform, Alert } from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  MeetingProvider,
-  useMeeting,
-  useParticipant,
-  MediaStream,
-  RTCView,
-  switchAudioDevice
+  Modal,
+  View,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Image,
+  Platform,
+  Alert,
+} from "react-native";
+import {
+  TwilioVideoLocalView,
+  TwilioVideoParticipantView,
+  TwilioVideo,
   //@ts-ignore
-} from "@videosdk.live/react-native-sdk";
+} from "react-native-twilio-video-webrtc";
 import { requestMultiple, PERMISSIONS, RESULTS } from "react-native-permissions";
-import { AppContext } from "./context/AppContext";
 import { Colors, dimensions } from "./utils";
-import { call, mic as micOn, micOff, video as videoOn, videoOff } from "./images";
+import { call, mic as micOnIcon, micOff, video as videoOnIcon, videoOff } from "./images";
 import Typography from "./Typography";
 
 async function requestMediaPermissions(): Promise<boolean> {
   try {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       const statuses = await requestMultiple([
         PERMISSIONS.ANDROID.CAMERA,
         PERMISSIONS.ANDROID.RECORD_AUDIO,
@@ -27,8 +32,7 @@ async function requestMediaPermissions(): Promise<boolean> {
         statuses[PERMISSIONS.ANDROID.RECORD_AUDIO] === RESULTS.GRANTED
       );
     }
-
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       const statuses = await requestMultiple([
         PERMISSIONS.IOS.CAMERA,
         PERMISSIONS.IOS.MICROPHONE,
@@ -38,308 +42,10 @@ async function requestMediaPermissions(): Promise<boolean> {
         statuses[PERMISSIONS.IOS.MICROPHONE] === RESULTS.GRANTED
       );
     }
-
     return true;
   } catch (_e) {
     return false;
   }
-}
-
-type ControlsProps = {
-  join: () => void;
-  leave: () => void;
-  toggleWebcam: () => void;
-  toggleMic: () => void;
-  joined: boolean;
-  joinFailed?: boolean;
-  canJoin?: boolean;
-  mic: {
-    micOn: boolean;
-    setMicOn: (b: boolean) => void;
-  };
-  video: {
-    videoOn: boolean;
-    setVideoOn: (b: boolean) => void;
-  }
-}
-
-const Controls: React.FC<ControlsProps> = ({ join, leave, toggleWebcam, toggleMic, joined, joinFailed, canJoin, mic, video }) => {
-
-  const [pressed, setPressed] = useState<boolean>(false);
-
-  const onJoin = () => {
-    if (!canJoin) {
-      Alert.alert("Permissions Required", "Camera and microphone access are needed for video calls.");
-      return;
-    }
-    setPressed(true);
-    try {
-      // Do not call switchAudioDevice here — before onMeetingJoined it can crash native audio on some devices.
-      join();
-    } catch (_e) {
-      setPressed(false);
-      Alert.alert("Video Call", "Could not start the call. Please try again.");
-    }
-  }
-
-  React.useEffect(() => {
-    if (joinFailed) setPressed(false);
-  }, [joinFailed]);
-
-  const switchWebCam = () => {
-    video.setVideoOn(!video.videoOn);
-    toggleWebcam();
-  }
-  const switchMic = () => {
-    mic.setMicOn(!mic.micOn);
-    toggleMic();
-  }
-
-  const renderNotJoined = () => {
-    if (joinFailed) {
-      return (
-        <View style={{ alignItems: "center" }}>
-          <Typography color="white" size={14} style={{ marginBottom: 10 }}>Connection failed. Try again or go back.</Typography>
-          <View style={{ flexDirection: "row" }}>
-            <TouchableOpacity onPress={onJoin} style={[styles.leaveButton, styles.joinButton, { marginRight: 15 }]}>
-              <Image source={call} style={styles.controlIcon} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={leave} style={styles.leaveButton}>
-              <Image source={call} style={styles.controlIcon} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
-    }
-    return <Typography color="greyText" size={15}>Joining call...</Typography>;
-  };
-
-  return (
-    <View style={styles.controls}>
-      <View style={joined? styles.controlRowJoined: styles.controlRow}>
-        {joined && (
-          <TouchableOpacity onPress={switchMic} style={styles.leaveButton}>
-            <Image source={mic.micOn? micOn: micOff} style={styles.controlIcon} />
-          </TouchableOpacity>
-        )}
-        {joined? (
-          <TouchableOpacity onPress={leave} style={styles.leaveButton}>
-            <Image source={call} style={styles.controlIcon} />
-          </TouchableOpacity>
-        ): renderNotJoined()}
-        {joined && (
-          <TouchableOpacity onPress={switchWebCam} style={styles.leaveButton}>
-            <Image source={!video.videoOn? videoOn: videoOff} style={styles.controlIcon} />
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-}
-
-type ParticipantViewProps = {
-  participantId: string;
-  me: string;
-}
-
-const ParticipantView: React.FC<ParticipantViewProps> = ({ participantId, me }) => {
-
-  const { webcamStream, webcamOn, micStream, micOn, displayName, isLocal } = useParticipant(participantId);
-  const myView = participantId === me;
-  const track = webcamStream && (webcamStream as { track?: unknown }).track;
-  let streamURL: string | undefined;
-  if (webcamOn && webcamStream && track) {
-    try {
-      const ms = new MediaStream([track as any]);
-      streamURL = typeof ms?.toURL === "function" ? ms.toURL() : undefined;
-    } catch (_e) {
-      streamURL = undefined;
-    }
-  }
-
-  const debugInfo = `${displayName || participantId}\ncam:${webcamOn ? 'ON' : 'OFF'} mic:${micOn ? 'ON' : 'OFF'}\nstream:${webcamStream ? 'yes' : 'no'} track:${track ? 'yes' : 'no'}\nisLocal:${isLocal} url:${streamURL ? 'yes' : 'no'}`;
-
-  if (streamURL) {
-    return (
-      <View style={myView ? styles.myWindow : styles.guestWindow}>
-        <RTCView
-          streamURL={streamURL}
-          objectFit={"cover"}
-          mirror={myView}
-          style={{ flex: 1 }}
-        />
-        <Typography color="white" size={10} style={{ position: 'absolute', top: 4, left: 4, backgroundColor: 'rgba(0,0,0,0.6)', padding: 2 }}>{debugInfo}</Typography>
-      </View>
-    );
-  }
-
-  return (
-    <View style={myView ? styles.myWindow : [styles.guestWindow, styles.guestWindowEmpty]}>
-      <Typography color="white" size={12} align="center" style={{ padding: 10, backgroundColor: 'rgba(0,0,0,0.7)' }}>{debugInfo}</Typography>
-    </View>
-  );
-}
-
-type ParticipantListProps = {
-  participants: string[];
-  me: string;
-}
-
-const ParticipantList: React.FC<ParticipantListProps> = ({ participants, me }) => {
- return participants.length > 0 ? (
-    <>
-      {participants.map(item => {
-        return(
-          <ParticipantView
-            key={item}
-            participantId={item}
-            me={me}
-          />
-        );
-      })}
-    </>
-  ) : (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: "#F6F6FF",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <ActivityIndicator color={Colors.accent} size="large" />
-      <Typography size={15} style={{ marginTop: 10 }}>Connecting to call...</Typography>
-    </View>
-  );
-}
-
-type MeetingViewProps = {
-  onJoin: (s: boolean) => void;
-  joined: boolean;
-  valid: boolean;
-  goBack: () => void;
-  mic: {
-    micOn: boolean;
-    setMicOn: (b: boolean) => void;
-  };
-  video: {
-    videoOn: boolean;
-    setVideoOn: (b: boolean) => void;
-  }
-}
-
-function formatSdkReason(reason: unknown): string {
-  if (reason === null || reason === undefined) {
-    return 'unknown (SDK gave no reason — often invalid/expired VideoSDK token, wrong meeting id, or network)';
-  }
-  if (typeof reason === 'string') return reason;
-  if (typeof reason === 'object') {
-    const o = reason as Record<string, unknown>;
-    const msg = o.message ?? o.msg ?? o.errorMessage ?? o.reason;
-    if (typeof msg === 'string' && msg.length) return msg;
-    if (msg != null && typeof msg === 'object') {
-      try {
-        return JSON.stringify(msg);
-      } catch (_e) {
-        return String(msg);
-      }
-    }
-    try {
-      const s = JSON.stringify(reason);
-      return s.length > 2 ? s : 'unknown (empty object from SDK)';
-    } catch (_e) {
-      return String(reason);
-    }
-  }
-  return String(reason);
-}
-
-const MeetingView: React.FC<MeetingViewProps & { meetingIdForLog?: string }> = ({ onJoin, joined, valid, goBack, mic, video, meetingIdForLog }) => {
-
-  const hasJoinedRef = React.useRef(false);
-  const joinAttemptedRef = React.useRef(false);
-  const [joinFailed, setJoinFailed] = React.useState(false);
-
-  const { join, leave, toggleWebcam, toggleMic, participants, localParticipant } = useMeeting({
-    onMeetingJoined,
-    onMeetingLeft,
-    onError: onMeetingError,
-    onParticipantJoined: (participant: any) => {
-      console.log('[Meeting] participant joined:', participant?.id, participant?.displayName);
-    },
-    onParticipantLeft: (participant: any) => {
-      console.log('[Meeting] participant left:', participant?.id);
-    },
-  });
-
-  useEffect(() => {
-    if (valid && !hasJoinedRef.current && !joinAttemptedRef.current) {
-      joinAttemptedRef.current = true;
-      console.log('[Meeting] auto-joining meetingId=', meetingIdForLog);
-      try { join(); } catch (_e) { /* handled by onError */ }
-    }
-  }, [valid]);
-
-  function onMeetingJoined() {
-    hasJoinedRef.current = true;
-    setJoinFailed(false);
-    onJoin(true);
-    console.log('[Meeting] joined successfully, meetingId=', meetingIdForLog, 'participants=', [...participants.keys()].length);
-    setTimeout(() => {
-      try { switchAudioDevice("SPEAKER_PHONE"); } catch (_e) { /* ignore */ }
-    }, 1000);
-  }
-
-  function onMeetingLeft(reason: any) {
-    onJoin(false);
-    if (hasJoinedRef.current) {
-      goBack();
-    } else {
-      const reasonStr = formatSdkReason(reason);
-      if (__DEV__) {
-        console.warn('[Meeting] onMeetingLeft before join', { reason, meetingId: meetingIdForLog });
-      }
-      Alert.alert("Video Call", `Could not join.\n\n${reasonStr}`);
-      setJoinFailed(true);
-    }
-  }
-
-  function onMeetingError(error: any) {
-    const errMsg = formatSdkReason(error);
-    if (__DEV__) {
-      console.warn('[Meeting] onMeetingError', error, { meetingId: meetingIdForLog });
-    }
-    Alert.alert("Video Call Error", errMsg);
-    setJoinFailed(true);
-  }
-
-
-  const participantsArrId = [...participants.keys()];
-
-  return (
-    <View style={{ flex: 1 }}>
-      <View style={{ position: 'absolute', top: 40, left: 0, right: 0, zIndex: 999, alignItems: 'center' }}>
-        <Typography color="white" size={11} style={{ backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 }}>
-          {`Room: ${meetingIdForLog} | Participants: ${participantsArrId.length} | Me: ${localParticipant?.id || 'n/a'}`}
-        </Typography>
-      </View>
-      <ParticipantList
-        participants={participantsArrId}
-        me={localParticipant?.id}
-      />
-      <Controls
-        join={join}
-        leave={joined? leave: goBack}
-        toggleWebcam={toggleWebcam}
-        toggleMic={toggleMic}
-        joined={joined}
-        joinFailed={joinFailed}
-        canJoin={valid}
-        mic={mic}
-        video={video}
-      />
-    </View>
-  );
 }
 
 type MeetingProps = {
@@ -347,21 +53,16 @@ type MeetingProps = {
   onClose: () => void;
   meetingId: string;
   token: string;
-}
+};
 
 const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token }) => {
-
-  const [joined, setJoined] = useState<boolean>(false);
-  const [valid, setValid] = useState<boolean>(false);
-  const [permissionsGranted, setPermissionsGranted] = useState<boolean>(false);
-  const [permissionsResolved, setPermissionsResolved] = useState<boolean>(false);
-  const [micOn, setMicOn] = useState<boolean>(true);
-  const [videoOn, setVideoOn] = useState<boolean>(true);
-  const { state } = useContext(AppContext);
-
-  const onJoin = (status: boolean) => {
-    setJoined(status);
-  }
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
+  const [participants, setParticipants] = useState<Map<string, { videoTrackSid: string; identity: string }>>(new Map());
+  const [permissionsGranted, setPermissionsGranted] = useState(false);
+  const [permissionsResolved, setPermissionsResolved] = useState(false);
+  const twilioRef = useRef<any>(null);
 
   useEffect(() => {
     if (visible) {
@@ -370,175 +71,296 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
         setPermissionsGranted(granted);
         setPermissionsResolved(true);
         if (!granted) {
-          Alert.alert('Permissions Required', 'Camera and microphone access are needed for video calls.');
+          Alert.alert("Permissions Required", "Camera and microphone access are needed for video calls.");
         }
       });
     }
   }, [visible]);
 
   useEffect(() => {
-    if (!visible) {
-      setValid(false);
-      setPermissionsGranted(false);
-      setPermissionsResolved(false);
-      setJoined(false);
+    if (visible && permissionsGranted && token && meetingId && status === "disconnected") {
+      connectToRoom();
     }
-  }, [visible]);
-
-  useEffect(() => {
-    if(meetingId && token && permissionsGranted){
-      setValid(true);
+    if (!visible && status !== "disconnected") {
+      disconnect();
     }
-  }, [meetingId, token, permissionsGranted]);
+  }, [visible, permissionsGranted, token, meetingId]);
 
-  return(
-    <Modal
-      visible={visible}
-      animationType="fade"
-    >
-      {valid? (
-        <View style={styles.container}>
-          <MeetingProvider
-            config={{
-              meetingId: meetingId.trim(),
-              micEnabled: true,
-              webcamEnabled: true,
-              multistream: false,
-              defaultCamera: "front",
-              webcamResolution: "h480p_w640p",
-              debugMode: true,
-              name: (state.name && String(state.name).trim()) || "Participant",
-              notification: {
-                title: "Niya",
-                message: "Meet started",
-              },
-            }}
-            token={token.trim()}
-            joinWithoutUserInteraction={true}
-          >
-            <MeetingView
-              onJoin={onJoin}
-              joined={joined}
-              goBack={onClose}
-              valid={valid}
-              mic={{ micOn, setMicOn }}
-              video={{ videoOn, setVideoOn }}
-              meetingIdForLog={meetingId}
-            />
-          </MeetingProvider>
+  const connectToRoom = useCallback(() => {
+    if (!twilioRef.current) return;
+    setStatus("connecting");
+    twilioRef.current.connect({
+      roomName: meetingId,
+      accessToken: token,
+      enableVideo: true,
+      enableAudio: true,
+      dominantSpeakerEnabled: true,
+    });
+  }, [meetingId, token]);
+
+  const disconnect = useCallback(() => {
+    if (twilioRef.current) {
+      twilioRef.current.disconnect();
+    }
+  }, []);
+
+  const toggleAudio = useCallback(() => {
+    if (twilioRef.current) {
+      twilioRef.current.setLocalAudioEnabled(!isAudioEnabled).then((enabled: boolean) => {
+        setIsAudioEnabled(enabled);
+      });
+    }
+  }, [isAudioEnabled]);
+
+  const toggleVideo = useCallback(() => {
+    if (twilioRef.current) {
+      twilioRef.current.setLocalVideoEnabled(!isVideoEnabled).then((enabled: boolean) => {
+        setIsVideoEnabled(enabled);
+      });
+    }
+  }, [isVideoEnabled]);
+
+  const onRoomDidConnect = useCallback(({ roomName, participants: roomParticipants }: any) => {
+    console.log("[TwilioVideo] connected to room:", roomName);
+    setStatus("connected");
+    const newParticipants = new Map<string, { videoTrackSid: string; identity: string }>();
+    if (roomParticipants) {
+      roomParticipants.forEach((p: any) => {
+        if (p.videoTrackSid) {
+          newParticipants.set(p.participantSid, { videoTrackSid: p.videoTrackSid, identity: p.identity });
+        }
+      });
+    }
+    setParticipants(newParticipants);
+  }, []);
+
+  const onRoomDidDisconnect = useCallback(({ error }: any) => {
+    console.log("[TwilioVideo] disconnected", error);
+    setStatus("disconnected");
+    setParticipants(new Map());
+    if (visible) {
+      onClose();
+    }
+  }, [visible, onClose]);
+
+  const onRoomDidFailToConnect = useCallback(({ error }: any) => {
+    console.log("[TwilioVideo] failed to connect:", error);
+    setStatus("disconnected");
+    Alert.alert("Video Call", `Could not connect: ${error?.message || "Unknown error"}`);
+  }, []);
+
+  const onParticipantAddedVideoTrack = useCallback(({ participant, track }: any) => {
+    console.log("[TwilioVideo] participant added video:", participant.identity);
+    setParticipants((prev) => {
+      const next = new Map(prev);
+      next.set(participant.participantSid, {
+        videoTrackSid: track.trackSid,
+        identity: participant.identity,
+      });
+      return next;
+    });
+  }, []);
+
+  const onParticipantRemovedVideoTrack = useCallback(({ participant }: any) => {
+    console.log("[TwilioVideo] participant removed video:", participant.identity);
+    setParticipants((prev) => {
+      const next = new Map(prev);
+      next.delete(participant.participantSid);
+      return next;
+    });
+  }, []);
+
+  const onParticipantDisconnected = useCallback(({ participant }: any) => {
+    console.log("[TwilioVideo] participant left:", participant.identity);
+    setParticipants((prev) => {
+      const next = new Map(prev);
+      next.delete(participant.participantSid);
+      return next;
+    });
+  }, []);
+
+  const renderRemoteParticipants = () => {
+    const entries = Array.from(participants.entries());
+    if (entries.length === 0) {
+      return (
+        <View style={styles.waitingContainer}>
+          <Typography color="white" size={14} align="center">
+            Waiting for the other person to join...
+          </Typography>
         </View>
-      ):(
-        <View style={[styles.container, styles.loaderContainer]}>
-          {!permissionsResolved ? (
-            <>
-              <ActivityIndicator color={Colors.accent} size="large" />
-              <Typography color="white" size={14} style={{ marginTop: 12 }}>
-                Preparing video call...
-              </Typography>
-            </>
-          ) : !permissionsGranted ? (
-            <>
-              <Typography color="white" size={14} align="center" style={{ marginBottom: 12, paddingHorizontal: 20 }}>
-                Camera and microphone permission is required to join this call.
-              </Typography>
-              <TouchableOpacity onPress={onClose} style={[styles.leaveButton, { backgroundColor: Colors.accent }]}>
-                <Typography color="white" size={13}>Back</Typography>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <Typography color="white" size={14} align="center" style={{ marginBottom: 12, paddingHorizontal: 20 }}>
-                Missing meeting details. Please close and try Connect now again.
-              </Typography>
-              <TouchableOpacity onPress={onClose} style={[styles.leaveButton, { backgroundColor: Colors.accent }]}>
-                <Typography color="white" size={13}>Back</Typography>
-              </TouchableOpacity>
-            </>
-          )}
+      );
+    }
+    return entries.map(([sid, { videoTrackSid, identity }]) => (
+      <View key={sid} style={styles.remoteVideo}>
+        <TwilioVideoParticipantView
+          style={{ flex: 1 }}
+          key={videoTrackSid}
+          trackIdentifier={{ participantSid: sid, videoTrackSid }}
+        />
+        <View style={styles.participantLabel}>
+          <Typography color="white" size={11}>{identity}</Typography>
         </View>
-      )}
+      </View>
+    ));
+  };
+
+  const renderContent = () => {
+    if (!permissionsResolved) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator color={Colors.accent} size="large" />
+          <Typography color="white" size={14} style={{ marginTop: 12 }}>
+            Preparing video call...
+          </Typography>
+        </View>
+      );
+    }
+
+    if (!permissionsGranted) {
+      return (
+        <View style={styles.centerContainer}>
+          <Typography color="white" size={14} align="center" style={{ marginBottom: 12, paddingHorizontal: 20 }}>
+            Camera and microphone permission is required.
+          </Typography>
+          <TouchableOpacity onPress={onClose} style={[styles.controlButton, { backgroundColor: Colors.accent }]}>
+            <Typography color="white" size={13}>Back</Typography>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={{ flex: 1 }}>
+        {status === "connecting" && (
+          <View style={styles.connectingOverlay}>
+            <ActivityIndicator color="white" size="small" />
+            <Typography color="white" size={12} style={{ marginLeft: 8 }}>Connecting...</Typography>
+          </View>
+        )}
+
+        <View style={styles.remoteContainer}>
+          {renderRemoteParticipants()}
+        </View>
+
+        <View style={styles.localVideo}>
+          <TwilioVideoLocalView enabled={true} style={{ flex: 1 }} />
+        </View>
+
+        <View style={styles.controls}>
+          <TouchableOpacity onPress={toggleAudio} style={styles.controlButton}>
+            <Image source={isAudioEnabled ? micOnIcon : micOff} style={styles.controlIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => { disconnect(); onClose(); }} style={[styles.controlButton, styles.endCallButton]}>
+            <Image source={call} style={styles.controlIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={toggleVideo} style={styles.controlButton}>
+            <Image source={isVideoEnabled ? videoOnIcon : videoOff} style={styles.controlIcon} />
+          </TouchableOpacity>
+        </View>
+
+        <TwilioVideo
+          ref={twilioRef}
+          onRoomDidConnect={onRoomDidConnect}
+          onRoomDidDisconnect={onRoomDidDisconnect}
+          onRoomDidFailToConnect={onRoomDidFailToConnect}
+          onParticipantAddedVideoTrack={onParticipantAddedVideoTrack}
+          onParticipantRemovedVideoTrack={onParticipantRemovedVideoTrack}
+          onParticipantDisconnected={onParticipantDisconnected}
+        />
+      </View>
+    );
+  };
+
+  return (
+    <Modal visible={visible} animationType="fade">
+      <View style={styles.container}>
+        {renderContent()}
+      </View>
     </Modal>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.greyText
+    backgroundColor: "#1a1a2e",
   },
-  loaderContainer: {
+  centerContainer: {
+    flex: 1,
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+  },
+  remoteContainer: {
+    flex: 1,
+  },
+  remoteVideo: {
+    flex: 1,
+    backgroundColor: "#2d2d44",
+  },
+  waitingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2d2d44",
+  },
+  localVideo: {
+    position: "absolute",
+    bottom: dimensions.wp(25),
+    right: 12,
+    width: dimensions.wp(28),
+    height: dimensions.wp(38),
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.3)",
   },
   controls: {
     position: "absolute",
-    left: 0,
     bottom: 0,
-    width: "100%",
-    backgroundColor: "transparent"
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: dimensions.wp(5),
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   controlButton: {
-    width: "auto"
-  },
-  controlRow: {
-    flexDirection: "row",
-    backgroundColor: "#2E2E2E",
-    paddingHorizontal: dimensions.wp(4),
-    height: dimensions.wp(30),
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  controlRowJoined: {
-    flexDirection: "row",
-    backgroundColor: "#2E2E2E",
-    paddingHorizontal: dimensions.wp(4),
-    height: dimensions.wp(30),
-    width: dimensions.wp(80),
-    justifyContent: "center",
+    height: dimensions.hp(6),
+    width: dimensions.hp(6),
+    borderRadius: dimensions.hp(3),
+    backgroundColor: "rgba(255,255,255,0.2)",
     alignItems: "center",
-   
+    justifyContent: "center",
+    marginHorizontal: dimensions.wp(3),
   },
-  leaveButton: {
-    height: dimensions.hp(5),
-    width: dimensions.hp(5),
-    borderRadius: dimensions.hp(2.5),
+  endCallButton: {
     backgroundColor: Colors.red,
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: dimensions.wp(2)
   },
   controlIcon: {
     height: dimensions.hp(3),
     width: dimensions.hp(3),
-    tintColor: Colors.white
+    tintColor: Colors.white,
   },
-  joinButton: {
-    backgroundColor: Colors.green
-  },
-  guestWindow: {
-    height: Platform.OS=="android"? (dimensions.hp(92) - dimensions.wp(30)) : dimensions.hp(87),
-    zIndex: 1
-  },
-  guestWindowEmpty: {
-    backgroundColor: "grey",
-    justifyContent: "center",
-    alignItems: "center",
-    height: dimensions.hp(92) - dimensions.wp(30),
-    zIndex: 1
-  },
-  myWindow: {
-    height: dimensions.wp(30),
-    width: dimensions.wp(20),
-    backgroundColor: "#2e2e2e",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
+  connectingOverlay: {
     position: "absolute",
-    bottom: 0,
+    top: 50,
+    left: 0,
     right: 0,
-    zIndex: 0,
-    
-  }
+    zIndex: 999,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  participantLabel: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
 });
 
 export default Meeting;

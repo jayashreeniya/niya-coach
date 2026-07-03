@@ -41,7 +41,7 @@ allprojects {
     repositories {
         mavenCentral()
         mavenLocal()
-        flatDir { dirs "$rootDir/../../../node_modules/@videosdk.live/react-native-webrtc/android/libs" }
+        maven { url "https://repo.twilio.com/public" }
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
             url("$rootDir/../../../node_modules/react-native/android")

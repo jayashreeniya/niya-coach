@@ -3,8 +3,6 @@ import SplashScreen from 'react-native-splash-screen';
 import styles from './AppStyles'
 import {  LogBox, View, Image, Text, TouchableOpacity, SafeAreaView, Platform } from 'react-native'
 import * as ReactNavigation from "react-navigation";
-import { register } from "@videosdk.live/react-native-sdk";
-register().catch((e: any) => console.log("VideoSDK register failed:", e));
 import * as RootNavigation from '../framework/src/RootNavigation';
 import { AppProvider, useAppState } from '../components/src/context/AppContext';
 import UserList from "../blocks/ChatBackuprestore/src/UserList";

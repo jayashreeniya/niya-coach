@@ -16,10 +16,7 @@ module.exports = {
     'react-native-geolocation-service': {
       platforms: { android: null },
     },
-    '@videosdk.live/react-native-incallmanager': {
-      platforms: { android: null },
-    },
-    '@videosdk.live/react-native-webrtc': {
+    'react-native-twilio-video-webrtc': {
       platforms: { android: null },
     },
     'react-native-webview': {

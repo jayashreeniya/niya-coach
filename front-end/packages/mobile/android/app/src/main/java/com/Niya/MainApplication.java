@@ -29,8 +29,7 @@ import com.agontuk.RNFusedLocation.RNFusedLocationPackage;
 import com.facebook.FacebookSdk;
 import com.facebook.reactnative.androidsdk.FBSDKPackage;
 
-import live.videosdk.rnincallmanager.InCallManagerPackage;
-import live.videosdk.rnwebrtc.WebRTCModulePackage;
+import com.twiliorn.library.TwilioPackage;
 import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
 import net.no_mad.tts.TextToSpeechPackage;
 import com.reactnativecommunity.webview.RNCWebViewPackage;
@@ -57,8 +56,7 @@ public class MainApplication extends MultiDexApplication implements ReactApplica
           List<ReactPackage> packages = new PackageList(this).getPackages();
           // Only add packages that are NOT autolinked
           packages.add(new RNFusedLocationPackage());
-          packages.add(new InCallManagerPackage());
-          packages.add(new WebRTCModulePackage());
+          packages.add(new TwilioPackage());
           packages.add(new ReactNativePushNotificationPackage());
           packages.add(new TextToSpeechPackage());
           packages.add(new RNCWebViewPackage());
