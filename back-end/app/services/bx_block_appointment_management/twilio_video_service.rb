@@ -16,32 +16,32 @@ module BxBlockAppointmentManagement
 
     def create_or_get_room(room_name)
       client = Twilio::REST::Client.new(self.class.api_key_sid, self.class.api_key_secret, self.class.account_sid)
+
       begin
         room = client.video.v1.rooms(room_name).fetch
-        Rails.logger.info("twilio_video: reusing room=#{room.sid} name=#{room_name} status=#{room.status}")
+        Rails.logger.info("twilio_video: found room=#{room.sid} name=#{room_name} status=#{room.status}")
         return room_name if room.status == "in-progress"
+      rescue Twilio::REST::RestError => e
+        raise unless e.code == 20404
+      end
 
-        new_room = client.video.v1.rooms.create(
-          unique_name: "#{room_name}-#{Time.now.to_i}",
+      begin
+        client.video.v1.rooms.create(
+          unique_name: room_name,
           type: "peer-to-peer",
           max_participants: 2
         )
-        Rails.logger.info("twilio_video: created new room=#{new_room.sid} name=#{new_room.unique_name}")
-        new_room.unique_name
+        Rails.logger.info("twilio_video: created room name=#{room_name}")
       rescue Twilio::REST::RestError => e
-        if e.code == 20404
-          new_room = client.video.v1.rooms.create(
-            unique_name: room_name,
-            type: "peer-to-peer",
-            max_participants: 2
-          )
-          Rails.logger.info("twilio_video: created room=#{new_room.sid} name=#{room_name}")
-          room_name
+        if e.code == 53113
+          Rails.logger.info("twilio_video: room already exists (53113), using name=#{room_name}")
         else
-          Rails.logger.error("twilio_video: room error #{e.code} - #{e.message}")
+          Rails.logger.error("twilio_video: create failed #{e.code} - #{e.message}")
           raise
         end
       end
+
+      room_name
     end
 
     def generate_token(identity:, room_name:)

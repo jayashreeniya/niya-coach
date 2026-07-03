@@ -333,7 +333,7 @@ module BxBlockCalendar
       coach_role = BxBlockRolesPermissions::Role.find_by_name(:coach)
       is_coach = coach_role && current_user.role_id == coach_role.id
 
-      room_name = "niya-slot-#{slot.id}"
+      room_name = "niya-slot-#{slot.id}-#{Date.today.strftime('%Y%m%d')}"
 
       if slot.meeting_code.blank? || slot.meeting_code != room_name
         slot.update_column(:meeting_code, room_name)
@@ -352,8 +352,9 @@ module BxBlockCalendar
       end
 
       twilio_service = BxBlockAppointmentManagement::TwilioVideoService.new
+      actual_room = twilio_service.create_or_get_room(room_name)
       identity = current_user.email.presence || current_user.full_name.presence || "user-#{current_user.id}"
-      meeting_token = twilio_service.generate_token(identity: identity, room_name: room_name)
+      meeting_token = twilio_service.generate_token(identity: identity, room_name: actual_room)
 
       logger.info(
         "video_call FINAL slot_id=#{slot.id} room=#{room_name} " \
