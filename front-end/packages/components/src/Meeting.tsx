@@ -123,6 +123,12 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const onRoomDidConnect = useCallback(({ roomName, participants: roomParticipants }: any) => {
     console.log("[TwilioVideo] connected to room:", roomName);
     setStatus("connected");
+
+    if (twilioRef.current) {
+      twilioRef.current.setLocalVideoEnabled(true).catch(() => {});
+      twilioRef.current.setLocalAudioEnabled(true).catch(() => {});
+    }
+
     const newParticipants = new Map<string, { videoTrackSid: string; identity: string }>();
     if (roomParticipants) {
       roomParticipants.forEach((p: any) => {

@@ -352,9 +352,8 @@ module BxBlockCalendar
       end
 
       twilio_service = BxBlockAppointmentManagement::TwilioVideoService.new
-      actual_room = twilio_service.create_or_get_room(room_name)
       identity = current_user.email.presence || current_user.full_name.presence || "user-#{current_user.id}"
-      meeting_token = twilio_service.generate_token(identity: identity, room_name: actual_room)
+      meeting_token = twilio_service.generate_token(identity: identity, room_name: room_name)
 
       logger.info(
         "video_call FINAL slot_id=#{slot.id} room=#{room_name} " \
