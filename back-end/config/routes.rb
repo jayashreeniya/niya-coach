@@ -3,21 +3,22 @@ Rails.application.routes.draw do
   # mount Rswag::Ui::Engine => '/api-docs'
   # mount Rswag::Api::Engine => '/api-docs'
   get "/healthcheck", to: proc { [200, {}, ["Ok"]] }
-  get "/diag/videosdk", to: proc { |_env|
+  get "/diag/twilio", to: proc { |_env|
     info = {
-      api_key_set: ENV["API_KEY"].present?,
-      api_key_last4: ENV["API_KEY"].to_s[-4,4],
-      videosdk_secret_set: (ENV["VIDEOSDK_SECRET_KEY"].present? || ENV["VIDEO_SDK_SECRET"].present? || ENV["SECRET_KEY"].present?),
-      videosdk_secret_last4: (ENV["VIDEOSDK_SECRET_KEY"].presence || ENV["VIDEO_SDK_SECRET"].presence || ENV["SECRET_KEY"].presence).to_s[-4,4],
-      fallback_secret_set: (ENV["VIDEOSDK_FALLBACK_SECRET_KEY"].present? || ENV["VIDEO_SDK_FALLBACK_SECRET"].present?),
-      using_fallback: (ENV["API_KEY"].blank? || (ENV["VIDEOSDK_SECRET_KEY"].blank? && ENV["VIDEO_SDK_SECRET"].blank? && ENV["SECRET_KEY"].blank?))
+      account_sid_set: (ENV["TWILIO_ACCOUNT_SID"].present? || ENV["ACCOUNT_SID"].present?),
+      account_sid_last4: (ENV["TWILIO_ACCOUNT_SID"].presence || ENV["ACCOUNT_SID"].presence).to_s[-4,4],
+      api_key_sid_set: (ENV["TWILIO_API_KEY_SID"].present? || ENV["CHAT_API_KEY"].present?),
+      api_key_sid_last4: (ENV["TWILIO_API_KEY_SID"].presence || ENV["CHAT_API_KEY"].presence).to_s[-4,4],
+      api_key_secret_set: (ENV["TWILIO_API_KEY_SECRET"].present? || ENV["CHAT_API_SECRET"].present?),
+      api_key_secret_last4: (ENV["TWILIO_API_KEY_SECRET"].presence || ENV["CHAT_API_SECRET"].presence).to_s[-4,4]
     }
     begin
-      svc = BxBlockAppointmentManagement::CreateMeeting.new
-      result = svc.call
-      info[:room_create_result] = { meetingId: result[:meetingId], token_len: result[:token].to_s.length }
+      svc = BxBlockAppointmentManagement::TwilioVideoService.new
+      token = svc.generate_token(identity: "diag-test", room_name: "diag-room")
+      info[:token_generated] = true
+      info[:token_len] = token.to_s.length
     rescue => e
-      info[:room_create_error] = "#{e.class}: #{e.message}"
+      info[:token_error] = "#{e.class}: #{e.message}"
     end
     [200, {"Content-Type" => "application/json"}, [info.to_json]]
   }

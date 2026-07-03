@@ -47,18 +47,18 @@ module BxBlockAppointmentManagement
     def generate_token(identity:, room_name:)
       identity = identity.to_s.strip.presence || "participant-#{SecureRandom.hex(4)}"
 
+      sid = self.class.account_sid
+      key = self.class.api_key_sid
+      secret = self.class.api_key_secret
+
+      raise "Missing ACCOUNT_SID / TWILIO_ACCOUNT_SID env var" if sid.blank?
+      raise "Missing CHAT_API_KEY / TWILIO_API_KEY_SID env var" if key.blank?
+      raise "Missing CHAT_API_SECRET / TWILIO_API_KEY_SECRET env var" if secret.blank?
+
       grant = Twilio::JWT::AccessToken::VideoGrant.new
       grant.room = room_name
 
-      token = Twilio::JWT::AccessToken.new(
-        self.class.account_sid,
-        self.class.api_key_sid,
-        self.class.api_key_secret,
-        [grant],
-        identity: identity,
-        ttl: 14400
-      )
-
+      token = Twilio::JWT::AccessToken.new(sid, key, secret, [grant], identity: identity, ttl: 14400)
       token.to_jwt
     end
   end
