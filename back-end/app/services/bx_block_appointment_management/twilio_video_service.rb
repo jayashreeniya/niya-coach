@@ -28,8 +28,7 @@ module BxBlockAppointmentManagement
       begin
         client.video.v1.rooms.create(
           unique_name: room_name,
-          type: "go",
-          max_participants: 2
+          type: "group"
         )
         Rails.logger.info("twilio_video: created room name=#{room_name}")
       rescue Twilio::REST::RestError => e
