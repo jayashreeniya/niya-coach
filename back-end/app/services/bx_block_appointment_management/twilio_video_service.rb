@@ -28,7 +28,7 @@ module BxBlockAppointmentManagement
       begin
         client.video.v1.rooms.create(
           unique_name: room_name,
-          type: "peer-to-peer",
+          type: "go",
           max_participants: 2
         )
         Rails.logger.info("twilio_video: created room name=#{room_name}")
