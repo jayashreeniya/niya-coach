@@ -90,11 +90,11 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     if (!twilioRef.current) return;
     setStatus("connecting");
     twilioRef.current.connect({
-      roomName: meetingId,
       accessToken: token,
+      roomName: meetingId,
       enableVideo: true,
       enableAudio: true,
-      dominantSpeakerEnabled: true,
+      cameraType: "front",
     });
   }, [meetingId, token]);
 
@@ -196,6 +196,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
         <TwilioVideoParticipantView
           style={{ flex: 1 }}
           key={videoTrackSid}
+          applyZOrder={true}
           trackIdentifier={{ videoTrackSid }}
         />
         <View style={styles.participantLabel}>
@@ -239,12 +240,23 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
           </View>
         )}
 
+        <TwilioVideo
+          ref={twilioRef}
+          onRoomDidConnect={onRoomDidConnect}
+          onRoomDidDisconnect={onRoomDidDisconnect}
+          onRoomDidFailToConnect={onRoomDidFailToConnect}
+          onRoomParticipantDidConnect={onRoomParticipantDidConnect}
+          onRoomParticipantDidDisconnect={onRoomParticipantDidDisconnect}
+          onParticipantAddedVideoTrack={onParticipantAddedVideoTrack}
+          onParticipantRemovedVideoTrack={onParticipantRemovedVideoTrack}
+        />
+
         <View style={styles.remoteContainer}>
           {renderRemoteParticipants()}
         </View>
 
         <View style={styles.localVideo}>
-          <TwilioVideoLocalView enabled={true} style={{ flex: 1 }} />
+          <TwilioVideoLocalView enabled={true} applyZOrder={true} style={{ flex: 1 }} />
         </View>
 
         <View style={styles.controls}>
@@ -258,17 +270,6 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
             <Image source={isVideoEnabled ? videoOnIcon : videoOff} style={styles.controlIcon} />
           </TouchableOpacity>
         </View>
-
-        <TwilioVideo
-          ref={twilioRef}
-          onRoomDidConnect={onRoomDidConnect}
-          onRoomDidDisconnect={onRoomDidDisconnect}
-          onRoomDidFailToConnect={onRoomDidFailToConnect}
-          onRoomParticipantDidConnect={onRoomParticipantDidConnect}
-          onRoomParticipantDidDisconnect={onRoomParticipantDidDisconnect}
-          onParticipantAddedVideoTrack={onParticipantAddedVideoTrack}
-          onParticipantRemovedVideoTrack={onParticipantRemovedVideoTrack}
-        />
       </View>
     );
   };
