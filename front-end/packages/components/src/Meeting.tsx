@@ -120,15 +120,15 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     }
   }, [isVideoEnabled]);
 
-  const onRoomDidConnect = useCallback(({ roomName, participants: roomParticipants }: any) => {
-    console.log("[TwilioVideo] connected to room:", roomName, "participants:", JSON.stringify(roomParticipants));
+  const onRoomDidConnect = useCallback(({ roomName, roomSid, participants: roomParticipants }: any) => {
+    console.log("[TwilioVideo] connected to room:", roomName, "sid:", roomSid, "participants:", JSON.stringify(roomParticipants));
     setStatus("connected");
 
     const newParticipants = new Map<string, { videoTrackSid: string; identity: string }>();
-    if (roomParticipants) {
+    if (roomParticipants && Array.isArray(roomParticipants)) {
       roomParticipants.forEach((p: any) => {
         if (p.videoTrackSid) {
-          newParticipants.set(p.participantSid, { videoTrackSid: p.videoTrackSid, identity: p.identity });
+          newParticipants.set(p.sid, { videoTrackSid: p.videoTrackSid, identity: p.identity || "Participant" });
         }
       });
     }
@@ -150,34 +150,34 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     Alert.alert("Video Call", `Could not connect: ${error?.message || "Unknown error"}`);
   }, []);
 
+  const onRoomParticipantDidConnect = useCallback(({ participant }: any) => {
+    console.log("[TwilioVideo] participant joined:", participant?.identity, "sid:", participant?.sid);
+  }, []);
+
   const onParticipantAddedVideoTrack = useCallback(({ participant, track }: any) => {
-    console.log("[TwilioVideo] participant added video:", participant.identity);
+    console.log("[TwilioVideo] video track added:", participant?.identity, "trackSid:", track?.trackSid, "participantSid:", participant?.sid);
     setParticipants((prev) => {
       const next = new Map(prev);
-      next.set(participant.participantSid, {
+      next.set(track.trackSid, {
         videoTrackSid: track.trackSid,
-        identity: participant.identity,
+        identity: participant.identity || "Participant",
       });
       return next;
     });
   }, []);
 
-  const onParticipantRemovedVideoTrack = useCallback(({ participant }: any) => {
-    console.log("[TwilioVideo] participant removed video:", participant.identity);
+  const onParticipantRemovedVideoTrack = useCallback(({ participant, track }: any) => {
+    console.log("[TwilioVideo] video track removed:", participant?.identity);
     setParticipants((prev) => {
       const next = new Map(prev);
-      next.delete(participant.participantSid);
+      next.delete(track.trackSid);
       return next;
     });
   }, []);
 
-  const onParticipantDisconnected = useCallback(({ participant }: any) => {
-    console.log("[TwilioVideo] participant left:", participant.identity);
-    setParticipants((prev) => {
-      const next = new Map(prev);
-      next.delete(participant.participantSid);
-      return next;
-    });
+  const onRoomParticipantDidDisconnect = useCallback(({ participant }: any) => {
+    console.log("[TwilioVideo] participant left:", participant?.identity, "sid:", participant?.sid);
+    setParticipants(new Map());
   }, []);
 
   const renderRemoteParticipants = () => {
@@ -191,12 +191,12 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
         </View>
       );
     }
-    return entries.map(([sid, { videoTrackSid, identity }]) => (
-      <View key={sid} style={styles.remoteVideo}>
+    return entries.map(([trackSid, { videoTrackSid, identity }]) => (
+      <View key={trackSid} style={styles.remoteVideo}>
         <TwilioVideoParticipantView
           style={{ flex: 1 }}
           key={videoTrackSid}
-          trackIdentifier={{ participantSid: sid, videoTrackSid }}
+          trackIdentifier={{ videoTrackSid }}
         />
         <View style={styles.participantLabel}>
           <Typography color="white" size={11}>{identity}</Typography>
@@ -264,9 +264,10 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
           onRoomDidConnect={onRoomDidConnect}
           onRoomDidDisconnect={onRoomDidDisconnect}
           onRoomDidFailToConnect={onRoomDidFailToConnect}
+          onRoomParticipantDidConnect={onRoomParticipantDidConnect}
+          onRoomParticipantDidDisconnect={onRoomParticipantDidDisconnect}
           onParticipantAddedVideoTrack={onParticipantAddedVideoTrack}
           onParticipantRemovedVideoTrack={onParticipantRemovedVideoTrack}
-          onParticipantDisconnected={onParticipantDisconnected}
         />
       </View>
     );
