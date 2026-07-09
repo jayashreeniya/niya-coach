@@ -352,6 +352,11 @@ module BxBlockCalendar
       end
 
       twilio_service = BxBlockAppointmentManagement::TwilioVideoService.new
+      begin
+        twilio_service.create_or_get_room(room_name)
+      rescue => e
+        logger.warn("video_call room creation skipped: #{e.class} - #{e.message}")
+      end
       identity = current_user.email.presence || current_user.full_name.presence || "user-#{current_user.id}"
       meeting_token = twilio_service.generate_token(identity: identity, room_name: room_name)
 
