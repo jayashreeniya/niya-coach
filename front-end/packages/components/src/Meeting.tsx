@@ -59,7 +59,8 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
-  const [participants, setParticipants] = useState<Map<string, { videoTrackSid: string; identity: string }>>(new Map());
+  const [participants, setParticipants] = useState<Map<string, { participantSid: string; videoTrackSid: string; identity: string }>>(new Map());
+  const [debugInfo, setDebugInfo] = useState("");
   const [permissionsGranted, setPermissionsGranted] = useState(false);
   const [permissionsResolved, setPermissionsResolved] = useState(false);
   const twilioRef = useRef<any>(null);
@@ -123,16 +124,9 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const onRoomDidConnect = useCallback(({ roomName, roomSid, participants: roomParticipants }: any) => {
     console.log("[TwilioVideo] connected to room:", roomName, "sid:", roomSid, "participants:", JSON.stringify(roomParticipants));
     setStatus("connected");
-
-    const newParticipants = new Map<string, { videoTrackSid: string; identity: string }>();
-    if (roomParticipants && Array.isArray(roomParticipants)) {
-      roomParticipants.forEach((p: any) => {
-        if (p.videoTrackSid) {
-          newParticipants.set(p.sid, { videoTrackSid: p.videoTrackSid, identity: p.identity || "Participant" });
-        }
-      });
-    }
-    setParticipants(newParticipants);
+    const pCount = Array.isArray(roomParticipants) ? roomParticipants.length : 0;
+    setDebugInfo(`Room: ${roomName}\nRemote: ${pCount > 1 ? pCount - 1 : 0}`);
+    setParticipants(new Map());
   }, []);
 
   const onRoomDidDisconnect = useCallback(({ error }: any) => {
@@ -147,18 +141,22 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const onRoomDidFailToConnect = useCallback(({ error }: any) => {
     console.log("[TwilioVideo] failed to connect:", error);
     setStatus("disconnected");
-    Alert.alert("Video Call", `Could not connect: ${error?.message || "Unknown error"}`);
+    setDebugInfo(`FAIL: ${error || "unknown"}`);
+    Alert.alert("Video Call", `Could not connect: ${error || "Unknown error"}`);
   }, []);
 
   const onRoomParticipantDidConnect = useCallback(({ participant }: any) => {
     console.log("[TwilioVideo] participant joined:", participant?.identity, "sid:", participant?.sid);
+    setDebugInfo((prev) => prev + `\nJoined: ${participant?.identity || participant?.sid}`);
   }, []);
 
   const onParticipantAddedVideoTrack = useCallback(({ participant, track }: any) => {
     console.log("[TwilioVideo] video track added:", participant?.identity, "trackSid:", track?.trackSid, "participantSid:", participant?.sid);
+    setDebugInfo((prev) => prev + `\nVideo: ${participant?.identity}`);
     setParticipants((prev) => {
       const next = new Map(prev);
       next.set(track.trackSid, {
+        participantSid: participant.sid,
         videoTrackSid: track.trackSid,
         identity: participant.identity || "Participant",
       });
@@ -191,13 +189,13 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
         </View>
       );
     }
-    return entries.map(([trackSid, { videoTrackSid, identity }]) => (
+    return entries.map(([trackSid, { participantSid, videoTrackSid, identity }]) => (
       <View key={trackSid} style={styles.remoteVideo}>
         <TwilioVideoParticipantView
           style={{ flex: 1 }}
           key={videoTrackSid}
           applyZOrder={true}
-          trackIdentifier={{ videoTrackSid }}
+          trackIdentifier={{ participantSid, videoTrackSid }}
         />
         <View style={styles.participantLabel}>
           <Typography color="white" size={11}>{identity}</Typography>
@@ -239,6 +237,12 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
             <Typography color="white" size={12} style={{ marginLeft: 8 }}>Connecting...</Typography>
           </View>
         )}
+
+        {debugInfo ? (
+          <View style={{ position: "absolute", top: 40, left: 10, zIndex: 999, backgroundColor: "rgba(0,0,0,0.7)", padding: 6, borderRadius: 4 }}>
+            <Typography color="#0f0" size={9}>{debugInfo}</Typography>
+          </View>
+        ) : null}
 
         <TwilioVideo
           ref={twilioRef}
