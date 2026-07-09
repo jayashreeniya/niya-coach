@@ -7,11 +7,11 @@ module BxBlockAppointmentManagement
     end
 
     def self.api_key_sid
-      ENV["TWILIO_API_KEY_SID"].presence || ENV["CHAT_API_KEY"].presence
+      ENV["TWILIO_API_KEY_SID"].presence || ENV["TWILIO_VIDEO_API_KEY"].presence || ENV["CHAT_API_KEY"].presence
     end
 
     def self.api_key_secret
-      ENV["TWILIO_API_KEY_SECRET"].presence || ENV["CHAT_API_SECRET"].presence
+      ENV["TWILIO_API_KEY_SECRET"].presence || ENV["TWILIO_VIDEO_API_SECRET"].presence || ENV["CHAT_API_SECRET"].presence
     end
 
     def create_or_get_room(room_name)
