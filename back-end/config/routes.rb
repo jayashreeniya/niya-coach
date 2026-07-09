@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   get "/healthcheck", to: proc { [200, {}, ["Ok"]] }
   get "/diag/twilio", to: proc { |_env|
     info = {
-      version: "v6-room-go",
+      version: "v7-group-diag",
       account_sid_set: (ENV["TWILIO_ACCOUNT_SID"].present? || ENV["ACCOUNT_SID"].present?),
       account_sid_last4: (ENV["TWILIO_ACCOUNT_SID"].presence || ENV["ACCOUNT_SID"].presence).to_s[-4,4],
       api_key_sid_set: (ENV["TWILIO_API_KEY_SID"].present? || ENV["CHAT_API_KEY"].present?),
@@ -15,7 +15,7 @@ Rails.application.routes.draw do
     }
     begin
       svc = BxBlockAppointmentManagement::TwilioVideoService.new
-      token = svc.generate_token(identity: "diag-test", room_name: "diag-room-v4")
+      token = svc.generate_token(identity: "diag-test", room_name: "diag-room-v7")
       info[:token_generated] = true
       info[:token_len] = token.to_s.length
     rescue => e
@@ -23,11 +23,21 @@ Rails.application.routes.draw do
     end
     begin
       svc2 = BxBlockAppointmentManagement::TwilioVideoService.new
-      room_result = svc2.create_or_get_room("diag-room-v6")
+      room_result = svc2.create_or_get_room("diag-room-v7")
       info[:room_created] = true
       info[:room_name] = room_result
     rescue => e
       info[:room_error] = "#{e.class}: #{e.message}"
+    end
+    begin
+      sid = ENV["TWILIO_ACCOUNT_SID"].presence || ENV["ACCOUNT_SID"]
+      key = ENV["TWILIO_API_KEY_SID"].presence || ENV["CHAT_API_KEY"]
+      secret = ENV["TWILIO_API_KEY_SECRET"].presence || ENV["CHAT_API_SECRET"]
+      client = Twilio::REST::Client.new(key, secret, sid)
+      rooms = client.video.v1.rooms.list(status: "in-progress", limit: 5)
+      info[:active_rooms] = rooms.map { |r| { name: r.unique_name, sid: r.sid, participants: r.max_participants, type: r.type } }
+    rescue => e
+      info[:rooms_error] = "#{e.class}: #{e.message}"
     end
     [200, {"Content-Type" => "application/json"}, [info.to_json]]
   }
