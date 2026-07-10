@@ -66,13 +66,19 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const twilioRef = useRef<any>(null);
   const retryTimer = useRef<any>(null);
   const connectAttempt = useRef(0);
+  const [twilioKey, setTwilioKey] = useState(0);
+  const [wasConnected, setWasConnected] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setPermissionsResolved(false);
       setStatus("disconnected");
       setParticipants(new Map());
+      setDebugInfo("");
+      setWasConnected(false);
       connectAttempt.current = 0;
+      // Force fresh native TwilioVideo component each time modal opens
+      setTwilioKey((k) => k + 1);
       requestMediaPermissions().then((granted) => {
         setPermissionsGranted(granted);
         setPermissionsResolved(true);
@@ -160,7 +166,11 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const handleReconnect = useCallback(() => {
     setParticipants(new Map());
     setDebugInfo("");
-    setStatus("disconnected");
+    // Force fresh native component to clear stale camera/audio state
+    setTwilioKey((k) => k + 1);
+    connectAttempt.current = 0;
+    // Small delay then set disconnected to trigger reconnect
+    setTimeout(() => setStatus("disconnected"), 300);
   }, []);
 
   const toggleAudio = useCallback(() => {
@@ -183,6 +193,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     console.log("[TwilioVideo] connected to room:", roomName, "sid:", roomSid);
     clearTimeout(retryTimer.current);
     setStatus("connected");
+    setWasConnected(true);
     setDebugInfo(`Room: ${roomName}`);
     setParticipants(new Map());
   }, []);
@@ -255,15 +266,26 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
           </View>
         );
       }
-      // status === "disconnected" - show reconnect
+      // status === "disconnected"
       return (
         <View style={styles.waitingContainer}>
-          <Typography color="white" size={14} align="center" style={{ marginBottom: 16 }}>
-            Disconnected from call
-          </Typography>
-          <TouchableOpacity onPress={handleReconnect} style={[styles.controlButton, { backgroundColor: Colors.accent, paddingHorizontal: 20, borderRadius: 25, width: "auto" }]}>
-            <Typography color="white" size={14}>Reconnect</Typography>
-          </TouchableOpacity>
+          {wasConnected ? (
+            <>
+              <Typography color="white" size={14} align="center" style={{ marginBottom: 16 }}>
+                Disconnected from call
+              </Typography>
+              <TouchableOpacity onPress={handleReconnect} style={{ backgroundColor: Colors.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 25 }}>
+                <Typography color="white" size={14}>Reconnect</Typography>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <ActivityIndicator color="white" size="large" />
+              <Typography color="white" size={14} style={{ marginTop: 12 }}>
+                Starting call...
+              </Typography>
+            </>
+          )}
         </View>
       );
     }
@@ -343,8 +365,9 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   return (
     <Modal visible={visible} animationType="fade">
       <View style={styles.container}>
-        {/* TwilioVideo always mounted so ref is available immediately */}
+        {/* key forces fresh native view on each call/reconnect */}
         <TwilioVideo
+          key={`twilio-${twilioKey}`}
           ref={twilioRef}
           onRoomDidConnect={onRoomDidConnect}
           onRoomDidDisconnect={onRoomDidDisconnect}
