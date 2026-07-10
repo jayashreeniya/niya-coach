@@ -60,14 +60,18 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
   const [participants, setParticipants] = useState<Map<string, { participantSid: string; videoTrackSid: string; identity: string }>>(new Map());
-  const [debugInfo, setDebugInfo] = useState("");
   const [permissionsGranted, setPermissionsGranted] = useState(false);
   const [permissionsResolved, setPermissionsResolved] = useState(false);
   const twilioRef = useRef<any>(null);
+  const retryTimer = useRef<any>(null);
+  const connectAttempt = useRef(0);
 
   useEffect(() => {
     if (visible) {
       setPermissionsResolved(false);
+      setStatus("disconnected");
+      setParticipants(new Map());
+      connectAttempt.current = 0;
       requestMediaPermissions().then((granted) => {
         setPermissionsGranted(granted);
         setPermissionsResolved(true);
@@ -75,34 +79,87 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
           Alert.alert("Permissions Required", "Camera and microphone access are needed for video calls.");
         }
       });
+    } else {
+      clearTimeout(retryTimer.current);
+      connectAttempt.current = 0;
     }
+    return () => clearTimeout(retryTimer.current);
   }, [visible]);
 
   useEffect(() => {
     if (visible && permissionsGranted && token && meetingId && status === "disconnected") {
-      connectToRoom();
+      // Delay to let native TwilioVideo component fully initialize
+      clearTimeout(retryTimer.current);
+      retryTimer.current = setTimeout(() => {
+        doConnect();
+      }, 800);
     }
     if (!visible && status !== "disconnected") {
-      disconnect();
+      doDisconnect();
     }
-  }, [visible, permissionsGranted, token, meetingId]);
+  }, [visible, permissionsGranted, token, meetingId, status]);
 
-  const connectToRoom = useCallback(() => {
-    if (!twilioRef.current) return;
+  const doConnect = useCallback(() => {
+    if (!twilioRef.current) {
+      // Native view not ready, retry after short delay
+      connectAttempt.current += 1;
+      if (connectAttempt.current < 10) {
+        retryTimer.current = setTimeout(() => doConnect(), 500);
+      }
+      return;
+    }
+    connectAttempt.current = 0;
     setStatus("connecting");
     twilioRef.current.connect({
       accessToken: token,
       roomName: meetingId,
       enableVideo: true,
       enableAudio: true,
+      enableRemoteAudio: true,
       cameraType: "front",
     });
+    // Auto-retry if not connected within 8 seconds
+    retryTimer.current = setTimeout(() => {
+      setStatus((cur) => {
+        if (cur === "connecting") {
+          // Still connecting after timeout - retry
+          try { twilioRef.current?.disconnect(); } catch (_e) {}
+          setTimeout(() => {
+            if (twilioRef.current && connectAttempt.current < 5) {
+              connectAttempt.current += 1;
+              twilioRef.current.connect({
+                accessToken: token,
+                roomName: meetingId,
+                enableVideo: true,
+                enableAudio: true,
+                enableRemoteAudio: true,
+                cameraType: "front",
+              });
+            }
+          }, 1000);
+        }
+        return cur;
+      });
+    }, 8000);
   }, [meetingId, token]);
 
-  const disconnect = useCallback(() => {
+  const doDisconnect = useCallback(() => {
+    clearTimeout(retryTimer.current);
     if (twilioRef.current) {
       twilioRef.current.disconnect();
     }
+  }, []);
+
+  const handleEndCall = useCallback(() => {
+    clearTimeout(retryTimer.current);
+    doDisconnect();
+    onClose();
+  }, [doDisconnect, onClose]);
+
+  const handleReconnect = useCallback(() => {
+    setParticipants(new Map());
+    setStatus("disconnected");
+    // This triggers the useEffect which will call doConnect after delay
   }, []);
 
   const toggleAudio = useCallback(() => {
@@ -122,10 +179,9 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   }, [isVideoEnabled]);
 
   const onRoomDidConnect = useCallback(({ roomName, roomSid, participants: roomParticipants }: any) => {
-    console.log("[TwilioVideo] connected to room:", roomName, "sid:", roomSid, "participants:", JSON.stringify(roomParticipants));
+    console.log("[TwilioVideo] connected to room:", roomName, "sid:", roomSid);
+    clearTimeout(retryTimer.current);
     setStatus("connected");
-    const pCount = Array.isArray(roomParticipants) ? roomParticipants.length : 0;
-    setDebugInfo(`Room: ${roomName}\nRemote: ${pCount > 1 ? pCount - 1 : 0}`);
     setParticipants(new Map());
   }, []);
 
@@ -133,26 +189,21 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     console.log("[TwilioVideo] disconnected", error);
     setStatus("disconnected");
     setParticipants(new Map());
-    if (visible) {
-      onClose();
-    }
-  }, [visible, onClose]);
+    // Don't auto-close - let user reconnect or end manually
+  }, []);
 
   const onRoomDidFailToConnect = useCallback(({ error }: any) => {
     console.log("[TwilioVideo] failed to connect:", error);
     setStatus("disconnected");
-    setDebugInfo(`FAIL: ${error || "unknown"}`);
-    Alert.alert("Video Call", `Could not connect: ${error || "Unknown error"}`);
+    // Will auto-retry via the useEffect since status goes back to "disconnected"
   }, []);
 
   const onRoomParticipantDidConnect = useCallback(({ participant }: any) => {
-    console.log("[TwilioVideo] participant joined:", participant?.identity, "sid:", participant?.sid);
-    setDebugInfo((prev) => prev + `\nJoined: ${participant?.identity || participant?.sid}`);
+    console.log("[TwilioVideo] participant joined:", participant?.identity);
   }, []);
 
   const onParticipantAddedVideoTrack = useCallback(({ participant, track }: any) => {
-    console.log("[TwilioVideo] video track added:", participant?.identity, "trackSid:", track?.trackSid, "participantSid:", participant?.sid);
-    setDebugInfo((prev) => prev + `\nVideo: ${participant?.identity}`);
+    console.log("[TwilioVideo] video track added:", participant?.identity, track?.trackSid);
     setParticipants((prev) => {
       const next = new Map(prev);
       next.set(track.trackSid, {
@@ -174,18 +225,41 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   }, []);
 
   const onRoomParticipantDidDisconnect = useCallback(({ participant }: any) => {
-    console.log("[TwilioVideo] participant left:", participant?.identity, "sid:", participant?.sid);
+    console.log("[TwilioVideo] participant left:", participant?.identity);
     setParticipants(new Map());
   }, []);
 
   const renderRemoteParticipants = () => {
     const entries = Array.from(participants.entries());
     if (entries.length === 0) {
+      if (status === "connected") {
+        return (
+          <View style={styles.waitingContainer}>
+            <Typography color="white" size={14} align="center">
+              Waiting for the other person to join...
+            </Typography>
+          </View>
+        );
+      }
+      if (status === "connecting") {
+        return (
+          <View style={styles.waitingContainer}>
+            <ActivityIndicator color="white" size="large" />
+            <Typography color="white" size={14} style={{ marginTop: 12 }}>
+              Connecting to call...
+            </Typography>
+          </View>
+        );
+      }
+      // status === "disconnected" - show reconnect
       return (
         <View style={styles.waitingContainer}>
-          <Typography color="white" size={14} align="center">
-            Waiting for the other person to join...
+          <Typography color="white" size={14} align="center" style={{ marginBottom: 16 }}>
+            Disconnected from call
           </Typography>
+          <TouchableOpacity onPress={handleReconnect} style={[styles.controlButton, { backgroundColor: Colors.accent, paddingHorizontal: 20, borderRadius: 25, width: "auto" }]}>
+            <Typography color="white" size={14}>Reconnect</Typography>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -231,43 +305,21 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
 
     return (
       <View style={{ flex: 1 }}>
-        {status === "connecting" && (
-          <View style={styles.connectingOverlay}>
-            <ActivityIndicator color="white" size="small" />
-            <Typography color="white" size={12} style={{ marginLeft: 8 }}>Connecting...</Typography>
-          </View>
-        )}
-
-        {debugInfo ? (
-          <View style={{ position: "absolute", top: 40, left: 10, zIndex: 999, backgroundColor: "rgba(0,0,0,0.7)", padding: 6, borderRadius: 4 }}>
-            <Typography color="#0f0" size={9}>{debugInfo}</Typography>
-          </View>
-        ) : null}
-
-        <TwilioVideo
-          ref={twilioRef}
-          onRoomDidConnect={onRoomDidConnect}
-          onRoomDidDisconnect={onRoomDidDisconnect}
-          onRoomDidFailToConnect={onRoomDidFailToConnect}
-          onRoomParticipantDidConnect={onRoomParticipantDidConnect}
-          onRoomParticipantDidDisconnect={onRoomParticipantDidDisconnect}
-          onParticipantAddedVideoTrack={onParticipantAddedVideoTrack}
-          onParticipantRemovedVideoTrack={onParticipantRemovedVideoTrack}
-        />
-
         <View style={styles.remoteContainer}>
           {renderRemoteParticipants()}
         </View>
 
-        <View style={styles.localVideo}>
-          <TwilioVideoLocalView enabled={true} applyZOrder={true} style={{ flex: 1 }} />
-        </View>
+        {status === "connected" && (
+          <View style={styles.localVideo}>
+            <TwilioVideoLocalView enabled={true} applyZOrder={true} style={{ flex: 1 }} />
+          </View>
+        )}
 
         <View style={styles.controls}>
           <TouchableOpacity onPress={toggleAudio} style={styles.controlButton}>
             <Image source={isAudioEnabled ? micOnIcon : micOff} style={styles.controlIcon} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => { disconnect(); onClose(); }} style={[styles.controlButton, styles.endCallButton]}>
+          <TouchableOpacity onPress={handleEndCall} style={[styles.controlButton, styles.endCallButton]}>
             <Image source={call} style={styles.controlIcon} />
           </TouchableOpacity>
           <TouchableOpacity onPress={toggleVideo} style={styles.controlButton}>
@@ -281,6 +333,17 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   return (
     <Modal visible={visible} animationType="fade">
       <View style={styles.container}>
+        {/* TwilioVideo always mounted so ref is available immediately */}
+        <TwilioVideo
+          ref={twilioRef}
+          onRoomDidConnect={onRoomDidConnect}
+          onRoomDidDisconnect={onRoomDidDisconnect}
+          onRoomDidFailToConnect={onRoomDidFailToConnect}
+          onRoomParticipantDidConnect={onRoomParticipantDidConnect}
+          onRoomParticipantDidDisconnect={onRoomParticipantDidDisconnect}
+          onParticipantAddedVideoTrack={onParticipantAddedVideoTrack}
+          onParticipantRemovedVideoTrack={onParticipantRemovedVideoTrack}
+        />
         {renderContent()}
       </View>
     </Modal>
