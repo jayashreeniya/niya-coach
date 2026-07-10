@@ -176,12 +176,16 @@ export default class Dashboard extends CoachDashboardController {
                 <Button
                   mode="contained"
                   onPress={() => {
-                    if(disabled) return;
+                    if(disabled || this.state.meetingLoading) return;
                     this.startMeeting(meeting_code, item?.attributes?.id)
                   }}
-                  style={[styles.button, { backgroundColor: disabled? `${Colors.green}44`: Colors.green }]}
+                  style={[styles.button, { backgroundColor: (disabled || this.state.meetingLoading) ? `${Colors.green}44`: Colors.green }]}
                 >
-                  <Typography font="MED" color="white" size={14}>Make a call</Typography>
+                  {this.state.meetingLoading ? (
+                    <ActivityIndicator color="white" size="small" />
+                  ) : (
+                    <Typography font="MED" color="white" size={14}>Make a call</Typography>
+                  )}
                 </Button>
               </View>
             </TouchableOpacity>

@@ -68,6 +68,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const connectAttempt = useRef(0);
   const [twilioKey, setTwilioKey] = useState(0);
   const [wasConnected, setWasConnected] = useState(false);
+  const connectRequested = useRef(false);
 
   useEffect(() => {
     if (visible) {
@@ -77,7 +78,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
       setDebugInfo("");
       setWasConnected(false);
       connectAttempt.current = 0;
-      // Force fresh native TwilioVideo component each time modal opens
+      connectRequested.current = true;
       setTwilioKey((k) => k + 1);
       requestMediaPermissions().then((granted) => {
         setPermissionsGranted(granted);
@@ -89,34 +90,38 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     } else {
       clearTimeout(retryTimer.current);
       connectAttempt.current = 0;
+      connectRequested.current = false;
     }
     return () => clearTimeout(retryTimer.current);
   }, [visible]);
 
   useEffect(() => {
-    if (visible && permissionsGranted && token && meetingId && status === "disconnected") {
-      // Delay to let native TwilioVideo component fully initialize
+    if (visible && permissionsGranted && token && meetingId && connectRequested.current) {
+      connectRequested.current = false;
       clearTimeout(retryTimer.current);
       retryTimer.current = setTimeout(() => {
         doConnect();
-      }, 800);
+      }, 1500);
     }
-    if (!visible && status !== "disconnected") {
+    if (!visible) {
       doDisconnect();
     }
-  }, [visible, permissionsGranted, token, meetingId, status]);
+  }, [visible, permissionsGranted, token, meetingId, permissionsResolved]);
 
   const doConnect = useCallback(() => {
     if (!twilioRef.current) {
-      // Native view not ready, retry after short delay
       connectAttempt.current += 1;
-      if (connectAttempt.current < 10) {
+      setDebugInfo((prev) => prev + `\nWaiting for native... (${connectAttempt.current})`);
+      if (connectAttempt.current < 20) {
         retryTimer.current = setTimeout(() => doConnect(), 500);
+      } else {
+        setDebugInfo((prev) => prev + `\nNative component failed to init`);
       }
       return;
     }
     connectAttempt.current = 0;
     setStatus("connecting");
+    setDebugInfo((prev) => prev + `\nConnecting...`);
     twilioRef.current.connect({
       accessToken: token,
       roomName: meetingId,
@@ -125,11 +130,10 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
       enableRemoteAudio: true,
       cameraType: "front",
     });
-    // Auto-retry if not connected within 8 seconds
     retryTimer.current = setTimeout(() => {
       setStatus((cur) => {
         if (cur === "connecting") {
-          // Still connecting after timeout - retry
+          setDebugInfo((prev) => prev + `\nTimeout, retrying...`);
           try { twilioRef.current?.disconnect(); } catch (_e) {}
           setTimeout(() => {
             if (twilioRef.current && connectAttempt.current < 5) {
@@ -147,31 +151,33 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
         }
         return cur;
       });
-    }, 8000);
+    }, 10000);
   }, [meetingId, token]);
 
   const doDisconnect = useCallback(() => {
     clearTimeout(retryTimer.current);
-    if (twilioRef.current) {
-      twilioRef.current.disconnect();
-    }
+    try { twilioRef.current?.disconnect(); } catch (_e) {}
   }, []);
 
   const handleEndCall = useCallback(() => {
     clearTimeout(retryTimer.current);
+    connectRequested.current = false;
     doDisconnect();
     onClose();
   }, [doDisconnect, onClose]);
 
   const handleReconnect = useCallback(() => {
     setParticipants(new Map());
-    setDebugInfo("");
-    // Force fresh native component to clear stale camera/audio state
+    setStatus("disconnected");
+    setDebugInfo("Reconnecting...");
     setTwilioKey((k) => k + 1);
     connectAttempt.current = 0;
-    // Small delay then set disconnected to trigger reconnect
-    setTimeout(() => setStatus("disconnected"), 300);
-  }, []);
+    connectRequested.current = true;
+    clearTimeout(retryTimer.current);
+    retryTimer.current = setTimeout(() => {
+      doConnect();
+    }, 1500);
+  }, [doConnect]);
 
   const toggleAudio = useCallback(() => {
     if (twilioRef.current) {
@@ -239,8 +245,14 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     });
   }, []);
 
+  const onParticipantAddedAudioTrack = useCallback(({ participant, track }: any) => {
+    console.log("[TwilioVideo] audio track added:", participant?.identity, track?.trackSid);
+    setDebugInfo((prev) => prev + `\nAudio: ${participant?.identity}`);
+  }, []);
+
   const onRoomParticipantDidDisconnect = useCallback(({ participant }: any) => {
     console.log("[TwilioVideo] participant left:", participant?.identity);
+    setDebugInfo((prev) => prev + `\nLeft: ${participant?.identity}`);
     setParticipants(new Map());
   }, []);
 
@@ -375,6 +387,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
           onRoomParticipantDidConnect={onRoomParticipantDidConnect}
           onRoomParticipantDidDisconnect={onRoomParticipantDidDisconnect}
           onParticipantAddedVideoTrack={onParticipantAddedVideoTrack}
+          onParticipantAddedAudioTrack={onParticipantAddedAudioTrack}
           onParticipantRemovedVideoTrack={onParticipantRemovedVideoTrack}
         />
         {renderContent()}

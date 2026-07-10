@@ -36,6 +36,7 @@ interface S {
   showMeetingModal: boolean;
   meetingId: string;
   meetingToken: string;
+  meetingLoading: boolean;
   // Customizable Area End
 }
 interface SS {
@@ -78,7 +79,8 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
       profile: {},
       showMeetingModal: false,
       meetingId: "",
-      meetingToken: ""
+      meetingToken: "",
+      meetingLoading: false
     };
     // Customizable Area End
     runEngine.attachBuildingBlock(this as IBlock, this.subScribedMessages);
@@ -257,6 +259,9 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
   }
 
   startMeeting = async (_id: string, start_id: any) => {
+    if (this.state.meetingLoading) return;
+    this.setState({ meetingLoading: true });
+
     let meetingId = "";
     let videosdkToken = "";
 
@@ -269,17 +274,20 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const errMsg = data?.errors ?? data?.message ?? data?.error ?? `Video call failed (${res.status})`;
+        this.setState({ meetingLoading: false });
         this.showAlert("Alert", String(errMsg));
         return;
       }
       meetingId = String(data?.meeting_code || "").trim();
       videosdkToken = String(data?.meeting_token || "").trim();
     } catch (_e) {
+      this.setState({ meetingLoading: false });
       this.showAlert("Alert", "Could not reach server for video call. Please check internet and try again.");
       return;
     }
 
     if (!meetingId || !videosdkToken) {
+      this.setState({ meetingLoading: false });
       this.showAlert("Alert", "Could not start video call. Missing meeting credentials. Please try again.");
       return;
     }
@@ -287,6 +295,7 @@ export default class CoachDashboardController extends BlockComponent<Props, S, S
       meetingId,
       meetingToken: videosdkToken,
       showMeetingModal: true,
+      meetingLoading: false,
     });
   }
 

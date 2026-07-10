@@ -15,7 +15,8 @@ import {
   TextInput,
   RefreshControl,
   Platform,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
   // Customizable Area End
 } from "react-native";
 // Customizable Area Start
@@ -226,12 +227,16 @@ export default class HomePage extends HomePageController{
         </TouchableOpacity>
       </View>
       <View 
-      style={{ height: Scale(35), marginTop: 0, width: width > 360 ? Scale(90) : Scale(85), marginLeft: Scale(15), marginRight: 5, backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: disabled ? '#a2a2a2' : '#3682FF', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 10 }}>
+      style={{ height: Scale(35), marginTop: 0, width: width > 360 ? Scale(90) : Scale(85), marginLeft: Scale(15), marginRight: 5, backgroundColor: '#FFFFFF', borderRadius: 10, borderWidth: 1, borderColor: (disabled || this.state.meetingLoading) ? '#a2a2a2' : '#3682FF', alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 10 }}>
         <TouchableOpacity
-          disabled={disabled}
+          disabled={disabled || this.state.meetingLoading}
           onPress={() => this.onMeetingPress(disabled, item)}
         >
-          <Text style={{ color: disabled ? '#a2a2a2' : '#3682FF', fontSize: 10, fontWeight: '500', alignSelf: 'center' }}>{"Connect now"}</Text>
+          {this.state.meetingLoading ? (
+            <ActivityIndicator color="#3682FF" size="small" />
+          ) : (
+            <Text style={{ color: disabled ? '#a2a2a2' : '#3682FF', fontSize: 10, fontWeight: '500', alignSelf: 'center' }}>{"Connect now"}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

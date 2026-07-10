@@ -105,6 +105,7 @@ interface S {
     id: string;
     token: string;
   };
+  meetingLoading: boolean;
   videoModal: boolean;
   videoUrl: string;
   isShow: boolean;
@@ -230,6 +231,7 @@ export default class HomePageController extends BlockComponent<Props, S, SS> {
         id: "",
         token: ""
       },
+      meetingLoading: false,
       videoModal: false,
       videoUrl: "",
       isShow: false,
@@ -325,8 +327,10 @@ _handleAppStateChange = (nextAppState: any) => {
 }
 
   startMeeting = async (_id: string, book_id: any) => {
+    if (this.state.meetingLoading) return;
+    this.setState({ meetingLoading: true });
+
     let meetingId = "";
-    /** Must use fresh token from backend video_call. */
     let videosdkToken = "";
 
     try {
@@ -338,24 +342,28 @@ _handleAppStateChange = (nextAppState: any) => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const errMsg = data?.errors ?? data?.message ?? data?.error ?? `Video call failed (${res.status})`;
+        this.setState({ meetingLoading: false });
         this.showAlert("Alert", String(errMsg), "");
         return;
       }
       meetingId = String(data?.meeting_code || "").trim();
       videosdkToken = String(data?.meeting_token || "").trim();
     } catch (_e) {
+      this.setState({ meetingLoading: false });
       this.showAlert("Alert", "Could not reach server for video call. Please check internet and try again.", "");
       return;
     }
 
     if (!meetingId || !videosdkToken) {
+      this.setState({ meetingLoading: false });
       this.showAlert("Alert", "Could not start video call. Missing meeting credentials. Please try again.", "");
       return;
     }
     this.stopeAudioplay();
     this.setState({
       meeting: { id: meetingId, token: videosdkToken },
-      showMeetingModal: true
+      showMeetingModal: true,
+      meetingLoading: false,
     });
   }
    endMeeting = () => {
