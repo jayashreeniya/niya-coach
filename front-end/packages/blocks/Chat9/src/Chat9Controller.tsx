@@ -379,30 +379,16 @@ export default class Chat9Controller extends BlockComponent<
       });
       const documents = messages.messages.filter((m: any) => m.media !== null);
       
-      this.setState({ documents }, ()=>{
-        let result = []
-        documents.map(async(file, i)=> {
-          
-          const text = (file?.media?.[0]?.content_type?.split?.("/")?.[0] === "image")? "IMAGE": "PDF";
+      this.setState({ documents }, async () => {
+        const result = await Promise.all(documents.map(async (file: any) => {
+          const text = (file?.media?.[0]?.content_type?.split?.("/")?.[0] === "image") ? "IMAGE" : "PDF";
           const fromMe = file.author === this.state.sender;
           const date_created = file?.date_created;
-          const title= file?.media[0]?.filename;
-
-          result.push({
-            url: await this.getFile(file?.media?.[0]?.sid, text),
-            text: text,
-            fromMe: fromMe,
-            file: file,
-            title: title,
-            date_created: date_created
-          })
-
-          
-        })
-        
-        setTimeout(() => { 
-          this.setState({ result: result })
-        }, 500);
+          const title = file?.media[0]?.filename;
+          const url = await this.getFile(file?.media?.[0]?.sid, text);
+          return { url, text, fromMe, file, title, date_created };
+        }));
+        this.setState({ result });
       });
     } else {
       this.setState({ loading: false });
