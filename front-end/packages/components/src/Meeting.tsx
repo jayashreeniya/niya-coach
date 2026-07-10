@@ -60,6 +60,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
   const [participants, setParticipants] = useState<Map<string, { participantSid: string; videoTrackSid: string; identity: string }>>(new Map());
+  const [debugInfo, setDebugInfo] = useState("");
   const [permissionsGranted, setPermissionsGranted] = useState(false);
   const [permissionsResolved, setPermissionsResolved] = useState(false);
   const twilioRef = useRef<any>(null);
@@ -158,8 +159,8 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
 
   const handleReconnect = useCallback(() => {
     setParticipants(new Map());
+    setDebugInfo("");
     setStatus("disconnected");
-    // This triggers the useEffect which will call doConnect after delay
   }, []);
 
   const toggleAudio = useCallback(() => {
@@ -182,6 +183,7 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
     console.log("[TwilioVideo] connected to room:", roomName, "sid:", roomSid);
     clearTimeout(retryTimer.current);
     setStatus("connected");
+    setDebugInfo(`Room: ${roomName}`);
     setParticipants(new Map());
   }, []);
 
@@ -195,15 +197,17 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
   const onRoomDidFailToConnect = useCallback(({ error }: any) => {
     console.log("[TwilioVideo] failed to connect:", error);
     setStatus("disconnected");
-    // Will auto-retry via the useEffect since status goes back to "disconnected"
+    setDebugInfo((prev) => prev + `\nFAIL: ${error || "unknown"}`);
   }, []);
 
   const onRoomParticipantDidConnect = useCallback(({ participant }: any) => {
     console.log("[TwilioVideo] participant joined:", participant?.identity);
+    setDebugInfo((prev) => prev + `\nJoined: ${participant?.identity || participant?.sid}`);
   }, []);
 
   const onParticipantAddedVideoTrack = useCallback(({ participant, track }: any) => {
     console.log("[TwilioVideo] video track added:", participant?.identity, track?.trackSid);
+    setDebugInfo((prev) => prev + `\nVideo: ${participant?.identity}`);
     setParticipants((prev) => {
       const next = new Map(prev);
       next.set(track.trackSid, {
@@ -305,6 +309,12 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
 
     return (
       <View style={{ flex: 1 }}>
+        {debugInfo ? (
+          <View style={{ position: "absolute", top: 40, left: 10, zIndex: 999, backgroundColor: "rgba(0,0,0,0.7)", padding: 6, borderRadius: 4 }}>
+            <Typography color="#0f0" size={9}>{debugInfo}</Typography>
+          </View>
+        ) : null}
+
         <View style={styles.remoteContainer}>
           {renderRemoteParticipants()}
         </View>
