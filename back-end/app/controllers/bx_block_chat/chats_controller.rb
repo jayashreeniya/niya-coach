@@ -9,11 +9,10 @@ module BxBlockChat
     def conversation
       account_sid = ENV['ACCOUNT_SID']
       auth_token = ENV["AUTH_TOKEN"]
-      api_key = ENV["CHAT_API_KEY"]
-      api_secret = ENV["CHAT_API_SECRET"]
-      
+      api_key = ENV["TWILIO_VIDEO_API_KEY"].presence || ENV["TWILIO_API_KEY_SID"].presence || ENV["CHAT_API_KEY"]
+      api_secret = ENV["TWILIO_VIDEO_API_SECRET"].presence || ENV["TWILIO_API_KEY_SECRET"].presence || ENV["CHAT_API_SECRET"]
 
-      @client = Twilio::REST::Client.new(account_sid, auth_token)
+      @client = Twilio::REST::Client.new(api_key, api_secret, account_sid)
       service = @client.conversations.v1.services.create(friendly_name: 'friendly_name')
       conversation1 = BxBlockChat::UserConversation.where(current_user: current_user.id).where(service_provider: params[:service_id])&.last
       conversation = conversation1 if conversation1.present?

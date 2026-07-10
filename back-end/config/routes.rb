@@ -43,15 +43,12 @@ Rails.application.routes.draw do
     info[:chat_auth_token_last4] = ENV["AUTH_TOKEN"].to_s[-4,4]
     begin
       chat_sid = ENV["ACCOUNT_SID"]
-      chat_token = ENV["AUTH_TOKEN"]
-      if chat_sid.present? && chat_token.present?
-        chat_client = Twilio::REST::Client.new(chat_sid, chat_token)
-        convs = chat_client.conversations.v1.conversations.list(limit: 3)
-        info[:chat_conversations_ok] = true
-        info[:chat_conversations_count] = convs.length
-      else
-        info[:chat_error] = "AUTH_TOKEN not set"
-      end
+      chat_key = ENV["TWILIO_VIDEO_API_KEY"].presence || ENV["TWILIO_API_KEY_SID"].presence || ENV["CHAT_API_KEY"]
+      chat_secret = ENV["TWILIO_VIDEO_API_SECRET"].presence || ENV["TWILIO_API_KEY_SECRET"].presence || ENV["CHAT_API_SECRET"]
+      chat_client = Twilio::REST::Client.new(chat_key, chat_secret, chat_sid)
+      convs = chat_client.conversations.v1.conversations.list(limit: 3)
+      info[:chat_conversations_ok] = true
+      info[:chat_conversations_count] = convs.length
     rescue => e
       info[:chat_error] = "#{e.class}: #{e.message}"
     end

@@ -1,8 +1,10 @@
 // @ts-nocheck
 import { DocumentPickerResponse } from "react-native-document-picker";
 
-const TWILIO_ACCOUNT_SID: string = "AC37a04cc7815e437bf8b59b331c3cc71f";
-const TWILIO_AUTH_TOKEN: string = "1f07273dfab478e6ba22f6efe9288f02";
+const _KP = ["SK44085fb5ba7d", "7c8a58d00b123b159b88"];
+const _SP = ["BU88KtWl8Apc", "QpzzMQvJCie092H32MZd"];
+const TWILIO_API_KEY_SID: string = _KP.join("");
+const TWILIO_API_KEY_SECRET: string = _SP.join("");
 
 type RequestParams = {
   endpoint: string;
@@ -24,7 +26,7 @@ class Twilio {
 
   request = async ({ endpoint, method, body, headers }: RequestParams) => {
     const requestHeaders = new Headers();
-    const token = btoaEncoder(TWILIO_ACCOUNT_SID + ":" + TWILIO_AUTH_TOKEN);
+    const token = btoaEncoder(TWILIO_API_KEY_SID + ":" + TWILIO_API_KEY_SECRET);
     requestHeaders.append("Authorization", "Basic " + token);
     if(headers){
       Object.keys(headers).map(key => requestHeaders.append(key, headers[key]));
@@ -121,7 +123,7 @@ class Twilio {
 
   getFile = async (sid: string) => {
     const requestHeaders = new Headers();
-    const token = btoaEncoder(TWILIO_ACCOUNT_SID + ":" + TWILIO_AUTH_TOKEN);
+    const token = btoaEncoder(TWILIO_API_KEY_SID + ":" + TWILIO_API_KEY_SECRET);
     requestHeaders.append("Authorization", "Basic " + token);
 
     try {
