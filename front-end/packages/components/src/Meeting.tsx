@@ -58,6 +58,7 @@ type MeetingProps = {
 const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token }) => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [status, setStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
   const [participants, setParticipants] = useState<Map<string, { participantSid: string; videoTrackSid: string; identity: string }>>(new Map());
   const [debugInfo, setDebugInfo] = useState("");
@@ -194,6 +195,14 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
       });
     }
   }, [isVideoEnabled]);
+
+  const toggleSpeaker = useCallback(() => {
+    if (twilioRef.current) {
+      const newState = !isSpeakerOn;
+      twilioRef.current.toggleSoundSetup(newState);
+      setIsSpeakerOn(newState);
+    }
+  }, [isSpeakerOn]);
 
   const onRoomDidConnect = useCallback(({ roomName, roomSid, participants: roomParticipants }: any) => {
     console.log("[TwilioVideo] connected to room:", roomName, "sid:", roomSid);
@@ -360,6 +369,9 @@ const Meeting: React.FC<MeetingProps> = ({ visible, onClose, meetingId, token })
         )}
 
         <View style={styles.controls}>
+          <TouchableOpacity onPress={toggleSpeaker} style={[styles.controlButton, !isSpeakerOn && { backgroundColor: "rgba(255,255,255,0.5)" }]}>
+            <Typography color="white" size={18}>{isSpeakerOn ? "\u{1F50A}" : "\u{1F507}"}</Typography>
+          </TouchableOpacity>
           <TouchableOpacity onPress={toggleAudio} style={styles.controlButton}>
             <Image source={isAudioEnabled ? micOnIcon : micOff} style={styles.controlIcon} />
           </TouchableOpacity>

@@ -39,6 +39,22 @@ Rails.application.routes.draw do
     rescue => e
       info[:rooms_error] = "#{e.class}: #{e.message}"
     end
+    info[:chat_auth_token_set] = ENV["AUTH_TOKEN"].present?
+    info[:chat_auth_token_last4] = ENV["AUTH_TOKEN"].to_s[-4,4]
+    begin
+      chat_sid = ENV["ACCOUNT_SID"]
+      chat_token = ENV["AUTH_TOKEN"]
+      if chat_sid.present? && chat_token.present?
+        chat_client = Twilio::REST::Client.new(chat_sid, chat_token)
+        convs = chat_client.conversations.v1.conversations.list(limit: 3)
+        info[:chat_conversations_ok] = true
+        info[:chat_conversations_count] = convs.length
+      else
+        info[:chat_error] = "AUTH_TOKEN not set"
+      end
+    rescue => e
+      info[:chat_error] = "#{e.class}: #{e.message}"
+    end
     [200, {"Content-Type" => "application/json"}, [info.to_json]]
   }
   devise_for :admin_users, ActiveAdmin::Devise.config
