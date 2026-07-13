@@ -390,6 +390,7 @@ _handleAppStateChange = (nextAppState: any) => {
        this.setState({paused:true,nowPlaying:"",token:this.context.state.token,goalCompetionTime:moment("10:00", "hh:mm A"),from:this.props.navigation.state?.params?.from ? this.props.navigation.state.params.from : '' },()=>{
            this.getInsights();
            this.getSuggestions();
+           this.getActions();
           // this.getDataDataList();
           // if(this.props.navigation.state?.params?.from=="booking"){
           //  this.getUpcomingAppointmentsData();
