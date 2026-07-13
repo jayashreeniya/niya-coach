@@ -85,7 +85,8 @@ module BxBlockAssessmenttest
 		@actions = @current_user&.action_items.where("is_complete = ? OR is_complete IS NULL", false).order(created_at: 'desc')
 		if @actions.any?
 			pagy, @actions = pagy(@actions, page: params[:page_no], items: params[:per_page])
-			render json: BxBlockAddress::ActionItemSerializer.new(@actions, params: {current_user_id: @current_user.id}, meta: pagy_metadata(pagy)).serializable_hash, status: :ok
+			meta = { page: pagy.page, items: pagy.items, count: pagy.count, pages: pagy.pages }
+			render json: BxBlockAddress::ActionItemSerializer.new(@actions, params: {current_user_id: @current_user.id}, meta: meta).serializable_hash, status: :ok
 		else
 			render json: { data: [] }, status: :ok
 		end
