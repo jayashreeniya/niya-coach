@@ -1282,11 +1282,11 @@ _handleAppStateChange = (nextAppState: any) => {
     }
   }
   getActionsApiCallIdRes=(responseJson:any)=>{
-    console.log("ttttt ", responseJson )
-    if (responseJson?.message) {
+    console.log("getActions response: ", responseJson )
+    if (responseJson?.data) {
+      this.setState({ actionLoader: false, actionData: responseJson.data });
+    } else {
       this.setState({ actionLoader: false });
-    } else if (responseJson?.data) {
-      this.setState({ actionLoader: false, actionData: responseJson?.data });
     }
   }
   getDelAccApiCallIdRes=(responseJson: any)=>{
@@ -1355,9 +1355,9 @@ _handleAppStateChange = (nextAppState: any) => {
       }
 
       else if (apiRequestCallId === this.createActionApiCallId) {
-        this.setState({ actionLoader: false,action_time:""  });
-        if (!responseJson || !responseJson.data || responseJson?.error || responseJson?.errors) {
-          const errorMsg = responseJson?.error || responseJson?.errors?.[0]?.message || responseJson?.errors?.[0] || "Failed to create action item";
+        this.setState({ actionLoader: false, action_time: "" });
+        if (responseJson?.error || responseJson?.errors) {
+          const errorMsg = responseJson.error || responseJson.errors?.[0]?.message || responseJson.errors?.[0] || "Failed to create action item";
           Alert.alert("Error", typeof errorMsg === 'string' ? errorMsg : "Failed to create action item");
         } else {
           this.toggleActionModal();
