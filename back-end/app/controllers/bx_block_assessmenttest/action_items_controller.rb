@@ -6,48 +6,90 @@ module BxBlockAssessmenttest
 		before_action :validate_json_web_token
    	    before_action :track_login, only: [:start_game]
 		before_action :account_user
-		def create
-			@action = BxBlockAssessmenttest::ActionItem.new(create_params.merge(account_id: @current_user.id))
-			# change the action length 25 to 50
-			return render json: {error: "Action item should not be more than 50 letter"},status: :unprocessable_entity if @action.action_item.length >= 50
-			utc_datetime = DateTime.parse(@action.date.to_s).change(hour: Time.parse(@action.time_slot).hour, min: Time.parse(@action.time_slot).min).in_time_zone('UTC').to_datetime
-			@action.date = utc_datetime.utc.to_s
-			if @action.save
-				@action.update(is_complete: false)
-				render json: BxBlockAddress::ActionItemSerializer.new(@action).serializable_hash, status: :created
-			else
-				render json: {errors: [message: "Action item not created"]},status: :unprocessable_entity
+	def create
+		@action = BxBlockAssessmenttest::ActionItem.new(create_params.merge(account_id: @current_user.id))
+		return render json: {error: "Action item should not be more than 50 letter"},status: :unprocessable_entity if @action.action_item.length >= 50
+
+		begin
+			parsed_date = Date.strptime(params[:date], '%d/%m/%Y')
+		rescue ArgumentError, TypeError
+			begin
+				parsed_date = Date.parse(params[:date])
+			rescue
+				return render json: {error: "Invalid date format. Use DD/MM/YYYY"}, status: :unprocessable_entity
 			end
 		end
 
+		if params[:time_slot].present?
+			begin
+				parsed_time = Time.parse(params[:time_slot])
+				ist_datetime = parsed_date.to_datetime.change(hour: parsed_time.hour, min: parsed_time.min)
+				utc_datetime = ist_datetime - Rational(5, 24) - Rational(30, 1440)
+			rescue
+				utc_datetime = parsed_date.to_datetime
+			end
+		else
+			utc_datetime = parsed_date.to_datetime
+		end
+
+		@action.date = utc_datetime.utc.to_s
+		@action.is_complete = false
+		if @action.save
+			render json: BxBlockAddress::ActionItemSerializer.new(@action).serializable_hash, status: :created
+		else
+			render json: {errors: [message: "Action item not created"]},status: :unprocessable_entity
+		end
+	end
+
 		def update
-			return render json: {error: "Action item should not be more than 50 letter"},status: :unprocessable_entity if update_params[:action_item].length >= 50
+			return render json: {error: "Action item should not be more than 50 letter"},status: :unprocessable_entity if update_params[:action_item].present? && update_params[:action_item].length >= 50
 			@action = BxBlockAssessmenttest::ActionItem.find_by(id: params[:id])
 			if @action.present?
-				@action.update(update_params)
+				attrs = update_params.to_h
+
+				if attrs['date'].present?
+					begin
+						parsed_date = Date.strptime(attrs['date'], '%d/%m/%Y')
+					rescue ArgumentError, TypeError
+						begin
+							parsed_date = Date.parse(attrs['date'])
+						rescue
+							return render json: {error: "Invalid date format"}, status: :unprocessable_entity
+						end
+					end
+
+					if attrs['time_slot'].present?
+						begin
+							parsed_time = Time.parse(attrs['time_slot'])
+							ist_datetime = parsed_date.to_datetime.change(hour: parsed_time.hour, min: parsed_time.min)
+							attrs['date'] = (ist_datetime - Rational(5, 24) - Rational(30, 1440)).utc.to_s
+						rescue
+							attrs['date'] = parsed_date.to_datetime.utc.to_s
+						end
+					else
+						attrs['date'] = parsed_date.to_datetime.utc.to_s
+					end
+				end
+
+				@action.update(attrs)
 				render json: BxBlockAddress::ActionItemSerializer.new(@action, meta:{message: "updated successfully"}).serializable_hash, status: :ok
 			else
 				render json: {errors: [message: "Action item not found/updated"]}, status: :unprocessable_entity
 			end
 		end
 
-		def current_actions
-			@actions = @current_user&.action_items.where(is_complete: false).order(created_at: 'desc')
-			# goals = @current_user.goals
-			@actions.map do|obj|
-				if obj.date.present? && (Time.now.utc + 5*60*60 +30*60) >= obj.date.utc 
-						obj.update(is_complete: true)
-				end
-			end
-		
-			if @actions.present? 
-				pagy, @actions = pagy(@actions, page: params[:page_no], items: params[:per_page])
-        render json: BxBlockAddress::ActionItemSerializer.new(@actions, params: {current_user_id: @current_user.id}, meta: pagy_metadata(pagy)).serializable_hash, status: :ok
-			else
-				# render json: {errors: [message: "Action not found"]}, status: :unprocessable_entity
-				  render json: { data: [] }, status: :ok
-			end
+	def current_actions
+		expired = @current_user&.action_items.where("is_complete = ? OR is_complete IS NULL", false).where("date IS NOT NULL AND date <= ?", Time.now.utc)
+		expired.update_all(is_complete: true) if expired.any?
+
+		@actions = @current_user&.action_items.where("is_complete = ? OR is_complete IS NULL", false).order(created_at: 'desc')
+		if @actions.any?
+			pagy, @actions = pagy(@actions, page: params[:page_no], items: params[:per_page])
+			render json: BxBlockAddress::ActionItemSerializer.new(@actions, params: {current_user_id: @current_user.id}, meta: pagy_metadata(pagy)).serializable_hash, status: :ok
+		else
+			render json: { data: [] }, status: :ok
 		end
+	end
 
 		def destroy
 			@action = BxBlockAssessmenttest::ActionItem.find_by(id: params[:id])

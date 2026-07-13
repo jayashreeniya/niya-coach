@@ -311,8 +311,23 @@ module BxBlockCalendar
 
     def user_action_item
       if current_user
-        account=AccountBlock::Account.find(params[:service_user_id])
-        action_item = account.action_items.create(action_item: params[:action_item], date: params[:date])
+        account = AccountBlock::Account.find(params[:service_user_id])
+
+        begin
+          parsed_date = Date.strptime(params[:date], '%d/%m/%Y')
+        rescue ArgumentError, TypeError
+          begin
+            parsed_date = Date.parse(params[:date])
+          rescue
+            return render json: {error: "Invalid date format"}, status: :unprocessable_entity
+          end
+        end
+
+        action_item = account.action_items.create(
+          action_item: params[:action_item],
+          date: parsed_date.to_datetime.utc.to_s,
+          is_complete: false
+        )
         render json: action_item
       end
     end

@@ -54,6 +54,20 @@ Rails.application.routes.draw do
     end
     [200, {"Content-Type" => "application/json"}, [info.to_json]]
   }
+  get "/diag/action_items", to: proc { |_env|
+    begin
+      info = { version: "v1-action-diag" }
+      info[:total_count] = BxBlockAssessmenttest::ActionItem.count
+      info[:incomplete_count] = BxBlockAssessmenttest::ActionItem.where("is_complete = ? OR is_complete IS NULL", false).count
+      recent = BxBlockAssessmenttest::ActionItem.order(created_at: :desc).limit(5)
+      info[:recent] = recent.map { |a| { id: a.id, action_item: a.action_item, date: a.date, time_slot: a.time_slot, is_complete: a.is_complete, account_id: a.account_id, created_at: a.created_at } }
+      test_date = "13/07/2026"
+      info[:date_parse_test] = Date.strptime(test_date, '%d/%m/%Y').to_s
+    rescue => e
+      info[:error] = "#{e.class}: #{e.message}"
+    end
+    [200, {"Content-Type" => "application/json"}, [info.to_json]]
+  }
   devise_for :admin_users, ActiveAdmin::Devise.config
   ActiveAdmin.routes(self)
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html

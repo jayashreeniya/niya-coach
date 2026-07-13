@@ -1356,9 +1356,9 @@ _handleAppStateChange = (nextAppState: any) => {
 
       else if (apiRequestCallId === this.createActionApiCallId) {
         this.setState({ actionLoader: false,action_time:""  });
-        if (responseJson?.error || responseJson?.errors) {
-          const errorMsg = responseJson.error || responseJson.errors?.[0]?.message || responseJson.errors?.[0] || "Failed to create action item";
-          Alert.alert("Error", errorMsg);
+        if (!responseJson || !responseJson.data || responseJson?.error || responseJson?.errors) {
+          const errorMsg = responseJson?.error || responseJson?.errors?.[0]?.message || responseJson?.errors?.[0] || "Failed to create action item";
+          Alert.alert("Error", typeof errorMsg === 'string' ? errorMsg : "Failed to create action item");
         } else {
           this.toggleActionModal();
           this.getActions();
