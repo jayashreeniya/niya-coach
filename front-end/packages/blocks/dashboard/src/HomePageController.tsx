@@ -265,15 +265,7 @@ export default class HomePageController extends BlockComponent<Props, S, SS> {
     Orientation.lockToPortrait();
     super.componentDidMount();
     this.setState({token:this.context.state.token},()=>{
-
-    // this.getUpcomingAppointmentsData();
-    // this.getDataDataList();
-   
-    // this.getGoalBoard(); 
-    // this.getSuggestions();
-    // this.getActions();
-    // this.getMoodList();
-   
+    this.getActions();
   });
   AsyncStorage.removeItem("nameEdited");
   AsyncStorage.removeItem("wellBeing");
