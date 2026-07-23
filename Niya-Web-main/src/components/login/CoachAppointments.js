@@ -31,7 +31,9 @@ function parseSlotWindow(viewableSlot) {
 function isWithinWindow(viewableSlot, now = new Date()) {
   const window = parseSlotWindow(viewableSlot);
   if (!window) return false;
-  return now >= window.start && now <= window.end;
+  // Match app behavior: allow connect until 5 minutes after end time
+  const graceEnd = new Date(window.end.getTime() + 5 * 60 * 1000);
+  return now >= window.start && now <= graceEnd;
 }
 
 const CoachAppointments = () => {

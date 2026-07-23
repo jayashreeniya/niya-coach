@@ -279,10 +279,11 @@ export default class HomePage extends HomePageController{
     const now = moment();
     const startMoment = moment(start, ["DD/MM/YYYY HH:mm", "YYYY-MM-DD HH:mm", moment.ISO_8601], true);
     const endMoment = moment(end, ["DD/MM/YYYY HH:mm", "YYYY-MM-DD HH:mm", moment.ISO_8601], true);
+    const connectUntil = endMoment.clone().add(5, "minutes");
     const canConnect =
       startMoment.isValid() &&
       endMoment.isValid() &&
-      now.isBetween(startMoment, endMoment, undefined, "[]");
+      now.isBetween(startMoment, connectUntil, undefined, "[]");
     const disabled = !canConnect;
     const isAfterEndtime = now.isAfter(startMoment)
 
