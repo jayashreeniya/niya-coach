@@ -208,7 +208,12 @@ const MyAppointments = () => {
                   <h3>{coach.full_name || "Coach"}</h3>
                   <p className="slot-time">{attrs.viewable_slot || `${attrs.start_time} - ${attrs.end_time}`}</p>
                   {Array.isArray(coach.expertise) && coach.expertise.length > 0 && (
-                    <p className="slot-meta">{coach.expertise.join(", ")}</p>
+                    <p className="slot-meta">
+                      {coach.expertise
+                        .map((e) => (typeof e === "string" ? e : e?.specialization || e?.expertise || ""))
+                        .filter(Boolean)
+                        .join(", ")}
+                    </p>
                   )}
                 </div>
                 <button
