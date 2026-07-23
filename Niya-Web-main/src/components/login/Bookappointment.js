@@ -53,7 +53,7 @@ const Bookappointment = () => {
      setSetdate(date);
      
      // Send booking_date and start_time as separate parameters
-     var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/view_coach_availability?booking_date="+date+"&start_time="+selectedHour+":00"
+     var apiBaseUrl3 = "https://niya-backend-oiut.onrender.com/bx_block_calendar/booked_slots/view_coach_availability?booking_date="+date+"&start_time="+selectedHour+":00"
       const payload3 = {
            method: "GET",
               headers: {
@@ -106,7 +106,7 @@ const Bookappointment = () => {
      var date = dateFormat(value, "dd/mm/yyyy");
      console.log("Date selected: " + date + " (Time will be: " + selectvalue1 + ":" + selectvalue2 + ")");
      setSetdate(date);
-     var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/view_coach_availability?booking_date="+date+""
+     var apiBaseUrl3 = "https://niya-backend-oiut.onrender.com/bx_block_calendar/booked_slots/view_coach_availability?booking_date="+date+""
       const payload3 = {
            method: "GET",
               headers: {
@@ -225,7 +225,7 @@ const Bookappointment = () => {
          
          // Call backend to confirm payment and send emails
          if(bookingId && bookingId > 0) {
-           var confirmPaymentUrl = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/confirm_payment";
+           var confirmPaymentUrl = "https://niya-backend-oiut.onrender.com/bx_block_calendar/booked_slots/confirm_payment";
            
            fetch(confirmPaymentUrl, {
              method: "POST",
@@ -284,7 +284,7 @@ const Bookappointment = () => {
 
             try {
               const response = axios.post(
-                  "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/cancel_booking",
+                  "https://niya-backend-oiut.onrender.com/bx_block_calendar/booked_slots/cancel_booking",
                   formData,
                   {
                       headers: {
@@ -303,7 +303,7 @@ const Bookappointment = () => {
 
 
 
-            var apiBaseUrl33 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_calendar/booked_slots/cancel_booking"
+            var apiBaseUrl33 = "https://niya-backend-oiut.onrender.com/bx_block_calendar/booked_slots/cancel_booking"
             const payload33 = {
                  method: "POST",
                     headers: {
@@ -363,7 +363,7 @@ const Bookappointment = () => {
         if(apiloaded === false){
         
             console.log("entered in")
-        var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_assessmenttest/focus_areas"
+        var apiBaseUrl3 = "https://niya-backend-oiut.onrender.com/bx_block_assessmenttest/focus_areas"
         const payload3 = {
              method: "POST",
                 headers: {
@@ -443,6 +443,7 @@ const Bookappointment = () => {
 
       const popupCloseHandler = () => {
         setVisibility(false);
+        navigate("/appointments");
       };
 
       const bookcoack = async (coachid,coachname) => { 
@@ -480,7 +481,7 @@ const Bookappointment = () => {
        console.log("🚀 Storing booking details and redirecting to payment...");
        console.log("Coach:", coachid, coachname, "Date:", selecteddate, "Time:", starttime, "-", endtime);
 
-        // Store ALL booking details in localStorage for payment success page
+        // Store ALL booking details in localStorage + sessionStorage for payment success page
         // DON'T create booking in database yet - only after payment succeeds!
         localStorage.setItem("coachid", coachid);
         localStorage.setItem("coachname", coachname);
@@ -488,6 +489,20 @@ const Bookappointment = () => {
         localStorage.setItem("starttime", starttime);
         localStorage.setItem("endtime", endtime);
         localStorage.setItem("payment_redirect", "true");
+        sessionStorage.setItem("coachid", coachid);
+        sessionStorage.setItem("coachname", coachname);
+        sessionStorage.setItem("selecteddate", selecteddate);
+        sessionStorage.setItem("starttime", starttime);
+        sessionStorage.setItem("endtime", endtime);
+        if (token) {
+          sessionStorage.setItem("accessToken", token);
+          localStorage.setItem("accessToken", token);
+          localStorage.setItem("authenticated", "true");
+        }
+        const role = localStorage.getItem("userRole");
+        const userId = localStorage.getItem("userId");
+        if (role) sessionStorage.setItem("userRole", role);
+        if (userId) sessionStorage.setItem("userId", userId);
         
         console.log("✅ Booking details stored in localStorage");
         console.log("➡️ Redirecting to Razorpay...");
@@ -512,7 +527,7 @@ const Bookappointment = () => {
             <span id="resmsg">{localStorage.getItem("coachname")}</span><br></br>
             
             <span>Please note : To reschedule your session, you need to cancel the booked session and book the new session. Booked session can only be cancelled 24 hours prior to the scheduled time.</span><br></br>
-            <span>For the session with the expert please join the zoom link <a href="https://us06web.zoom.us/j/9774013865" target="_blank" rel="noopener noreferrer" style={{"color":"#0066cc","textDecoration":"underline"}}>https://us06web.zoom.us/j/9774013865</a> at your booked time.</span><br></br>
+            <span>At your booked time, open My Appointments at https://book-appointment.niya.app/appointments and tap Connect Now to join the video session with your coach.</span><br></br>
             <span id="">Thank you.</span><br></br>
             <div class="centBtn">
             

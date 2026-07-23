@@ -78,7 +78,7 @@ const Login = (props) => {
     console.log(isUserLoggedIn+" "+authenticated);
    
     
-    var apiBaseUrl = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_login/logins"
+    var apiBaseUrl = "https://niya-backend-oiut.onrender.com/bx_block_login/logins"
     const payload = {
         method: "POST",
         headers: {
@@ -114,9 +114,19 @@ const Login = (props) => {
              
               setauthenticated(true);
               localStorage.setItem("authenticated", true);
-              navigate("/wellbeingquestions");
+              localStorage.setItem("accessToken", accestToken);
+              if (data.meta.id) localStorage.setItem("userId", String(data.meta.id));
+              const role = (data.meta.role || "").toLowerCase();
+              localStorage.setItem("userRole", role);
+              sessionStorage.setItem("accessToken", accestToken);
+              if (data.meta.id) sessionStorage.setItem("userId", String(data.meta.id));
+              if (role) sessionStorage.setItem("userRole", role);
               setLoading(false);
-                localStorage.setItem("accessToken", accestToken);
+              if (role === "coach") {
+                navigate("/coach-appointments");
+              } else {
+                navigate("/appointments");
+              }
                 
                 if (authenticated === true) {
                     console.log(this.props)
@@ -200,7 +210,7 @@ const Login = (props) => {
 
 
 
-      var apiBaseUrl2 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/account_block/accounts"
+      var apiBaseUrl2 = "https://niya-backend-oiut.onrender.com/account_block/accounts"
     const payload2 = {
         method: "POST",
         headers: {
@@ -287,7 +297,7 @@ const Login = (props) => {
        return false;
       }
 
-      var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_forgot_password/otps"
+      var apiBaseUrl3 = "https://niya-backend-oiut.onrender.com/bx_block_forgot_password/otps"
       const payload3 = {
           method: "POST",
           headers: {
@@ -357,7 +367,7 @@ const Login = (props) => {
     let otptoken = localStorage.getItem('otptoken');
 
 
-    var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_forgot_password/otp_confirmations"
+    var apiBaseUrl3 = "https://niya-backend-oiut.onrender.com/bx_block_forgot_password/otp_confirmations"
     const payload3 = {
         method: "POST",
         headers: {
@@ -419,7 +429,7 @@ const Login = (props) => {
   let otptoken = localStorage.getItem('otptoken');
 
 
-  var apiBaseUrl3 = "https://niya-admin-app-india.blueisland-fcf21982.centralindia.azurecontainerapps.io/bx_block_forgot_password/forgot_password"
+  var apiBaseUrl3 = "https://niya-backend-oiut.onrender.com/bx_block_forgot_password/forgot_password"
   const payload3 = {
       method: "POST",
       headers: {

@@ -1,0 +1,158 @@
+.wb-page {
+  min-height: 100vh;
+  background: linear-gradient(165deg, #f8f5ff 0%, #eef7f6 55%, #f7fafc 100%);
+  color: #1f2937;
+  padding: 24px 16px 48px;
+}
+
+.wb-shell {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.wb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.wb-header img {
+  height: 44px;
+}
+
+.wb-skip {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wb-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 16px 40px rgba(31, 41, 55, 0.08);
+}
+
+.wb-progress {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.wb-dot {
+  height: 6px;
+  flex: 1;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.wb-dot.active {
+  background: #6c4ab6;
+}
+
+.wb-dot.done {
+  background: #a78bfa;
+}
+
+.wb-eyebrow {
+  color: #6c4ab6;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.wb-title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  line-height: 1.25;
+}
+
+.wb-subtitle {
+  margin: 0 0 24px;
+  color: #6b7280;
+}
+
+.wb-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wb-option {
+  width: 100%;
+  text-align: left;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #111827;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wb-option:hover {
+  border-color: #c4b5fd;
+  background: #faf8ff;
+}
+
+.wb-option.selected {
+  border-color: #6c4ab6;
+  background: #f5f0ff;
+  box-shadow: 0 0 0 3px rgba(108, 74, 182, 0.12);
+  font-weight: 600;
+}
+
+.wb-hint {
+  margin: 16px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.wb-actions {
+  margin-top: 22px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.wb-primary,
+.wb-secondary {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wb-primary {
+  background: #6c4ab6;
+  color: #fff;
+}
+
+.wb-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wb-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.wb-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+@media (max-width: 640px) {
+  .wb-title {
+    font-size: 22px;
+  }
+}
