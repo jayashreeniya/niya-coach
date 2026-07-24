@@ -71,13 +71,23 @@ module BxBlockWellbeing
         elsif wellbeing_test.nil?
           wellbeing_test = WellbeingTest.create(category_id: category_id, account_id: current_user.id) # status
         end
-        useranswer = UserQuestionAnswer.where(wellbeing_test_id: wellbeing_test.id, question_id: params[:question_id],
-                                              answer_id: params[:answer_id], account_id: current_user.id).last
+        # Upsert by question (not answer_id) so changing an answer does not create duplicates
+        useranswer = UserQuestionAnswer.where(
+          wellbeing_test_id: wellbeing_test.id,
+          question_id: params[:question_id],
+          account_id: current_user.id
+        ).last
         if useranswer.nil?
-          useranswer = UserQuestionAnswer.create(wellbeing_test_id: wellbeing_test.id, question_id: params[:question_id],
-                                                 answer_id: params[:answer_id], account_id: current_user.id)
+          useranswer = UserQuestionAnswer.create(
+            wellbeing_test_id: wellbeing_test.id,
+            question_id: params[:question_id],
+            answer_id: params[:answer_id],
+            account_id: current_user.id
+          )
+        else
+          useranswer.update(answer_id: params[:answer_id])
         end
-        last_question = QuestionWellBeing.where(category_id: category_id).order('updated_at desc')&.first&.id == params[:question_id]
+        last_question = QuestionWellBeing.where(category_id: category_id).order('updated_at desc')&.first&.id == params[:question_id].to_i
         render json: { useranswer: useranswer, last_question: last_question }
       # end
     end
@@ -99,6 +109,28 @@ module BxBlockWellbeing
     def delete_answers
       UserQuestionAnswer.destroy_all
       render json: { message: 'All Answers deleted succesfully' }
+    end
+
+    # Clears prior answers for one category so the assessment can start at question 1.
+    def restart_assessment
+      unless current_user
+        render json: { error: "Unauthorized" }, status: :unauthorized
+        return
+      end
+
+      category_id = params[:category_id]
+      unless category_id.present?
+        render json: { error: "Category ID not provided" }, status: :bad_request
+        return
+      end
+
+      question_ids = QuestionWellBeing.where(category_id: category_id).pluck(:id)
+      tests = WellbeingTest.where(category_id: category_id, account_id: current_user.id)
+      UserQuestionAnswer.where(wellbeing_test_id: tests.pluck(:id)).delete_all
+      UserQuestionAnswer.where(account_id: current_user.id, question_id: question_ids).delete_all
+      tests.update_all(status: false)
+
+      render json: { message: "Assessment restarted" }, status: :ok
     end
 
     def insights_data

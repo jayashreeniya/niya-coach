@@ -145,6 +145,7 @@ Rails.application.routes.draw do
     get 'insights_data',to: 'well_beings#insights_data'
 
     delete 'delete_answers', to: 'well_beings#delete_answers'
+    post 'restart_assessment', to: 'well_beings#restart_assessment'
   end
 
   namespace :bx_block_login do
