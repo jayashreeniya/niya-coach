@@ -87,7 +87,14 @@ module BxBlockWellbeing
         else
           useranswer.update(answer_id: params[:answer_id])
         end
-        last_question = QuestionWellBeing.where(category_id: category_id).order('updated_at desc')&.first&.id == params[:question_id].to_i
+        answered_count = UserQuestionAnswer.where(
+          wellbeing_test_id: wellbeing_test.id,
+          account_id: current_user.id,
+          question_id: QuestionWellBeing.where(category_id: category_id).select(:id)
+        ).count
+        total_count = QuestionWellBeing.where(category_id: category_id).count
+        # Open results only when every question in the category has been answered.
+        last_question = total_count.positive? && answered_count >= total_count
         render json: { useranswer: useranswer, last_question: last_question }
       # end
     end
@@ -149,11 +156,20 @@ module BxBlockWellbeing
     end
 
     def get_result
-      # if current_user
+      unless current_user
+        render json: { error: "Unauthorized" }, status: :unauthorized
+        return
+      end
+
+      begin
         get_result_notification(params[:value], current_user)
         value = params[:value]
         render json: AccountBlock::GetResultSerializer.new(current_user, params: { value: value }), status: :ok
-      # end
+      rescue StandardError => e
+        Rails.logger.error("get_result failed for account #{current_user.id}: #{e.class} #{e.message}")
+        Rails.logger.error(e.backtrace.first(15).join("\n"))
+        render json: { errors: ["Failed to load wellbeing results: #{e.message}"] }, status: :internal_server_error
+      end
     end
 
     def get_result_notification(value, current_user)

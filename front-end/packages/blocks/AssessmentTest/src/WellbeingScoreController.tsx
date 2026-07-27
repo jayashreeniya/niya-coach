@@ -117,22 +117,26 @@ export default class WellbeingScoreController extends BlockComponent<
         this.setState({loading:false})
         return;
       }
-      else if(responseJson?.errors || responseJson?.message)
-      {             
-        return false;
+      else if(responseJson?.errors)
+      {
+        // Always clear spinner on API error (previously left loading=true forever)
+        this.setState({loading:false, questionResponse: []});
+        return;
       }
       if (responseJson) {       
-        this.setState({loading:false});             
         if(apiRequestCallId === this.getScoresApiCallId)
         {
+          const results = responseJson?.data?.attributes?.results;
           this.setState({
-            loading:false
-          });
-          this.setState({
-            questionResponse: responseJson?.data?.attributes?.results
+            loading: false,
+            questionResponse: Array.isArray(results) ? results : []
           });                      
-        }          
-      } 
+        } else {
+          this.setState({loading:false});
+        }
+      } else {
+        this.setState({loading:false});
+      }
     }
     // Customizable Area End
   }

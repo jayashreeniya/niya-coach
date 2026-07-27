@@ -18,8 +18,11 @@ module AccountBlock
         well_test.update(status: true) if well_test.present?
         only_category_questions=QuestionWellBeing.where(category_id: cate.id).pluck(:id)
         userquestionanswer=UserQuestionAnswer.where(question_id: only_category_questions).where(account_id: object.id)
+        next if only_category_questions.blank?
         if only_category_questions.count == userquestionanswer.count
-          last_question_date=UserQuestionAnswer.where(question_id: only_category_questions).where(account_id: object.id)&.last&.updated_at.to_s
+          last_answer = UserQuestionAnswer.where(question_id: only_category_questions).where(account_id: object.id).order(updated_at: :desc).first
+          next unless last_answer&.updated_at
+          last_question_date = last_answer.updated_at.to_date
       
           category_scores=AnswerWellBeing.where(id: userquestionanswer.pluck(:answer_id)).pluck(:score)
       
@@ -51,7 +54,7 @@ module AccountBlock
               end
             end
 
-            maincatg={category_name: cate.category_name, score: category_final_score, question_count: cat_count, percentage: category_percentage, advice: user_uar, submitted_at: Date.parse(last_question_date), score_level: cat_score_level}
+            maincatg={category_name: cate.category_name, score: category_final_score, question_count: cat_count, percentage: category_percentage, advice: user_uar, submitted_at: last_question_date, score_level: cat_score_level}
           end
 
           sub_maincatg = {}
