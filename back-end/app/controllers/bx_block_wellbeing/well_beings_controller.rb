@@ -226,20 +226,11 @@ module BxBlockWellbeing
 
     def current_user
       return @current_user if @current_user
-      
-      token = request.headers[:token] || request.headers['token'] || params[:token]
-      return nil unless token
-      
-      begin
-        # Use ENV['SECRET_KEY'] which is what BuilderJsonWebToken uses for encoding
-        secret_key = ENV['SECRET_KEY'] || Rails.application.secrets.secret_key_base || Rails.application.credentials.secret_key_base
-        decoded = JWT.decode(token, secret_key, true, { algorithm: 'HS512' })
-        user_id = decoded[0]['id']
-        @current_user = AccountBlock::Account.find_by(id: user_id)
-      rescue JWT::DecodeError, JWT::ExpiredSignature => e
-        Rails.logger.error("JWT decode error: #{e.message}")
-        nil
-      end
+      return nil unless defined?(@token) && @token&.id
+
+      # Use the same authenticated token as the rest of the app
+      # (BuilderJsonWebToken::JsonWebTokenValidation sets @token).
+      @current_user = AccountBlock::Account.find_by(id: @token.id)
     end
 
     def access_token_method
