@@ -158,7 +158,9 @@ module AccountBlock
               end 
             end
           end
-            type = profile_type.uniq
+            type = profile_type.compact.uniq
+            normalize = ->(arr) { Array(arr).compact.map { |v| v.to_s.downcase }.sort }
+            type_key = normalize.call(type)
             advices1 = "High Efficacy"
             advices2 = "Low to Moderate Exhaustion"
             advices3 = "Low to Moderate Cynicism"
@@ -201,21 +203,21 @@ module AccountBlock
             type27 = [advices2, advices9, advices7]  # Low to Moderate Exhaustion, Low Cynicism, Low to Moderate Efficacy
             type28 = [advices2, advices3, advices7]  # Low to Moderate Exhaustion, Low to Moderate Cynicism , Low to Moderate Efficacy  
             
-            profile = if type.map(&:downcase).sort ==  type13.map(&:downcase).sort || type.map(&:downcase).sort == type23.map(&:downcase).sort || type.map(&:downcase).sort == type20.map(&:downcase).sort || type.map(&:downcase).sort == type24.map(&:downcase).sort
+            profile = if [type13, type23, type20, type24].any? { |t| type_key == normalize.call(t) }
                     "You seem to be Engaged at work"
-                  elsif type.map(&:downcase).sort ==  type14.map(&:downcase).sort || type.map(&:downcase).sort == type15.map(&:downcase).sort || type.map(&:downcase).sort == type21.map(&:downcase).sort || type.map(&:downcase).sort == type25.map(&:downcase).sort || type.map(&:downcase).sort == type26.map(&:downcase).sort || type.map(&:downcase).sort == type27.map(&:downcase).sort || type.map(&:downcase).sort == type22.map(&:downcase).sort || type.map(&:downcase).sort == type28.map(&:downcase).sort 
+                  elsif [type14, type15, type21, type25, type26, type27, type22, type28].any? { |t| type_key == normalize.call(t) }
                     "You seem to be Ineffective at work"
-                  elsif type.map(&:downcase).sort ==  type5.map(&:downcase).sort || type.map(&:downcase).sort == type6.map(&:downcase).sort || type.map(&:downcase).sort == type8.map(&:downcase).sort || type.map(&:downcase).sort == type9.map(&:downcase).sort
+                  elsif [type5, type6, type8, type9].any? { |t| type_key == normalize.call(t) }
                     "You seem to be Overextended at work"
-                  elsif type.map(&:downcase).sort ==  type11.map(&:downcase).sort || type.map(&:downcase).sort == type12.map(&:downcase).sort || type.map(&:downcase).sort == type18.map(&:downcase).sort || type.map(&:downcase).sort == type19.map(&:downcase).sort 
+                  elsif [type11, type12, type18, type19].any? { |t| type_key == normalize.call(t) }
                     "You seem to be Disengaged at work"
-                  elsif type.map(&:downcase).sort ==  type2.map(&:downcase).sort || type.map(&:downcase).sort ==  type3.map(&:downcase).sort
+                  elsif [type2, type3].any? { |t| type_key == normalize.call(t) }
                     "You seem to be Burnt Out"
-                  elsif type.map(&:downcase).sort == type1.map(&:downcase).sort  
+                  elsif type_key == normalize.call(type1)
                     "You have high risk of getting Burnt Out"
-                  elsif type.map(&:downcase).sort ==  type7.map(&:downcase).sort || type.map(&:downcase).sort == type4.map(&:downcase).sort 
+                  elsif [type7, type4].any? { |t| type_key == normalize.call(t) }
                     "You have high chances of getting Overextended at work"
-                  elsif type.map(&:downcase).sort ==  type10.map(&:downcase).sort || type.map(&:downcase).sort == type17.map(&:downcase).sort
+                  elsif [type10, type17].any? { |t| type_key == normalize.call(t) }
                     "You have high chances of getting Disengaged at work"
                   end
 
