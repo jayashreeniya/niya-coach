@@ -223,7 +223,9 @@ export default class WellbeingScore extends WellbeingScoreController {
 
             <View>
               {this.state.loading ? (<View style={styles.loadingCont}>
-                <ActivityIndicator style={styles.loadingContent} size="large" /></View>
+                <ActivityIndicator style={styles.loadingContent} size="large" />
+                <Typography font="REG" size={14} style={styles.loadingText}>Loading results...</Typography>
+              </View>
               ) : <>
                 <View style={[styles.container, styles.mainContainer]}>
 
@@ -407,13 +409,15 @@ const styles = StyleSheet.create({
   loadingCont:{
     flex: 1, 
     justifyContent: 'center', 
-    alignItems: 'center'
+    alignItems: 'center',
+    paddingVertical: Scale(40),
   },
   loadingContent:{
-    flex: 1, 
-    opacity: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center'
+    marginBottom: Scale(12),
+  },
+  loadingText:{
+    color: '#555555',
+    textAlign: 'center',
   },
   mainContainer:{
     marginTop: Scale(10),
