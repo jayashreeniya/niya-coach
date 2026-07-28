@@ -11,9 +11,9 @@ module AccountBlock
     attributes :results do |object , params|
       result =[]
       final_score=nil
-      profile_type = []
       WellBeingCategory.all.each do |cate|
         catg=[]
+        profile_type = []
         well_test = WellbeingTest.where(account_id: object.id ,category_id: cate.id).last
         well_test.update(status: true) if well_test.present?
         only_category_questions=QuestionWellBeing.where(category_id: cate.id).pluck(:id)
@@ -105,13 +105,11 @@ module AccountBlock
               if obj[:top_strength].nil?
                 obj[:top_strength] = "NA"
               end
-              if obj[:sub_category] == "Exhaustion"
-                profile_type << obj[:advice]
-              elsif obj[:sub_category] == "Cynicism"
-                profile_type << obj[:advice]
-              elsif obj[:sub_category]&.downcase == "professional efficacy"
-                profile_type << obj[:advice]
-              end
+              # Map to matrix labels via score_level (advice text in DB is prose, not the hardcoded labels)
+              label = AccountBlock::GetResultSerializer.occupational_matrix_label(
+                obj[:sub_category], obj[:score_level], obj[:advice]
+              )
+              profile_type << label if label.present?
               percentage = obj[:percentage]
               # Query with string conversion for MySQL compatibility
               well_being_focus_area = BxBlockAssessmenttest::WellBeingFocusArea.where(well_being_sub_categoryid: sub_cate&.id.to_s)
@@ -235,7 +233,63 @@ module AccountBlock
 
 
     class << self
+      # Convert subcategory score_level / advice into the exact labels used by the
+      # Engaged / Ineffective / Overextended / Disengaged / Burnout matrix.
+      # Exhaustion & Cynicism use inverted score_level in UserAnswerResult
+      # (high level = low symptom). Efficacy uses normal wellbeing levels.
+      def occupational_matrix_label(sub_category, score_level, advice = nil)
+        name = sub_category.to_s.strip.downcase
+        return nil unless ["exhaustion", "cynicism", "professional efficacy"].include?(name)
+
+        advice_text = advice.to_s.strip
+        known = [
+          "High Efficacy", "Low to Moderate Exhaustion", "Low to Moderate Cynicism",
+          "High Exhaustion", "High Cynicism", "Low Exhaustion",
+          "Low to Moderate Efficacy", "Low Professional Efficacy", "Low Cynicism"
+        ]
+        known_match = known.find { |k| k.casecmp(advice_text).zero? }
+        return known_match if known_match
+
+        level = score_level.to_s.strip.downcase
+        case name
+        when "exhaustion"
+          return "Low Exhaustion" if level == "high"
+          return "Low to Moderate Exhaustion" if level == "medium"
+          return "High Exhaustion" if level == "low"
+          infer_symptom_label(advice_text, "Exhaustion")
+        when "cynicism"
+          return "Low Cynicism" if level == "high"
+          return "Low to Moderate Cynicism" if level == "medium"
+          return "High Cynicism" if level == "low"
+          infer_symptom_label(advice_text, "Cynicism")
+        when "professional efficacy"
+          return "High Efficacy" if level == "high"
+          return "Low to Moderate Efficacy" if level == "medium"
+          return "Low Professional Efficacy" if level == "low"
+          infer_efficacy_label(advice_text)
+        end
+      end
+
       private
+
+      def infer_symptom_label(advice_text, dimension)
+        text = advice_text.to_s.downcase
+        return nil if text.empty?
+        return "High #{dimension}" if text.match?(/high\s+(levels?\s+of\s+)?#{Regexp.escape(dimension.downcase)}/)
+        return "Low to Moderate #{dimension}" if text.match?(/medium|moderate/)
+        return "Low #{dimension}" if text.match?(/low\s+(levels?\s+of\s+)?#{Regexp.escape(dimension.downcase)}/)
+        nil
+      end
+
+      def infer_efficacy_label(advice_text)
+        text = advice_text.to_s.downcase
+        return nil if text.empty?
+        return "High Efficacy" if text.match?(/high\s+(professional\s+)?efficac/)
+        return "Low to Moderate Efficacy" if text.match?(/medium|moderate|low to moderate/)
+        return "Low Professional Efficacy" if text.match?(/low\s+(professional\s+)?efficac/)
+        nil
+      end
+
       def get_wellbeing_report(result , object, params)
     
         result.map do|obj|

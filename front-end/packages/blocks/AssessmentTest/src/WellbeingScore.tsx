@@ -172,11 +172,9 @@ export default class WellbeingScore extends WellbeingScoreController {
                 </View>
                 </View>
             </View>
-           {advice && <View style={styles.adviceCont}>
-                <Typography font="REG" size={12} >{advice}</Typography>
+           {(advice || (category_name=="Occupational Wellbeing" && profile_type)) && <View style={styles.adviceCont}>
+                {advice ? <Typography font="REG" size={12} >{advice}</Typography> : null}
                 {category_name=="Occupational Wellbeing"&&profile_type &&  <Typography font="REG" size={12} >{profile_type}</Typography>}
-            
-          
             </View>
             }
             {item?.item?.sub_category_result.length>0 && item?.item?.sub_category_result.map((subcat:any,index: number)=>{
