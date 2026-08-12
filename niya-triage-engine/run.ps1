@@ -3,6 +3,8 @@
 #   .\run.ps1 setup     create .venv and install dependencies (once, ~10 min)
 #   .\run.ps1 app       THE DEPLOYABLE APP       -> http://localhost:8080
 #   .\run.ps1 admin     create an administrator login for the admin portal
+#   .\run.ps1 smoke     check a running instance works, across all three roles
+#   .\run.ps1 roster    print the counsellor roster as it is in the database
 #   .\run.ps1 reset     delete the local database and rebuild it from scratch
 #   .\run.ps1 preview   render every page to webapp\preview\ for layout review
 #   .\run.ps1 ui        internal review dashboard -> http://localhost:8501
@@ -65,6 +67,16 @@ switch ($Command.ToLower()) {
         }
         & $VenvPython scripts\create_admin.py @args
     }
+    "smoke" {
+        # Against the real HTTP surface, so it catches what the test suite
+        # cannot: a missing static file, a proxy rewriting a redirect.
+        Require-Venv
+        & $VenvPython scripts\smoke.py @args
+    }
+    "roster" {
+        Require-Venv
+        & $VenvPython scripts\show_roster.py
+    }
     "reset" {
         # `create_all` adds missing tables but never alters existing ones, so a
         # local database from before a schema change has to be rebuilt rather
@@ -124,6 +136,8 @@ The deployable app - accounts, triage, booking, payment, joining:
 
   .\run.ps1 app       -> http://localhost:8080
   .\run.ps1 admin     create an administrator login for the admin portal
+  .\run.ps1 smoke     check a running instance works, across all three roles
+  .\run.ps1 roster    print the counsellor roster as it is in the database
   .\run.ps1 reset     delete the local database and rebuild it from scratch
   .\run.ps1 preview   render every page to webapp\preview\ for layout review
 
