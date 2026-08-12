@@ -1,0 +1,22 @@
+.env
+audit/
+# Bookings hold contact details and the notification outbox. Never commit them.
+bookings/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.log
+
+# Generated artefacts - reproducible from scripts/build_data.py and eval/evaluate.py
+data/test_cases.jsonl
+eval/report.md
+eval/results.json
+
+# Local database for the web app. Contains real accounts and bookings.
+webapp_data/
+*.db
+
+# Rendered page previews - reproducible from scripts/render_preview.py
+webapp/preview/

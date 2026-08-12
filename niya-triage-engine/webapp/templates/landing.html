@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}NIYA Triage - find the right support{% endblock %}
+
+{% block content %}
+<h1>Tell us what is going on, in your own words.</h1>
+<p class="lede">
+  We read what you write, work out what kind of support fits, and show you the
+  counsellors best placed to help - usually in under a minute.
+</p>
+
+<div class="card">
+  <h3>How it works</h3>
+  <ol class="stack small" style="padding-left:20px;margin:0">
+    <li>Write freely. No forms full of dropdowns, no diagnosis to pick from.</li>
+    <li>We match you to counsellors by what you need, the language you want to
+        speak, and who is actually free when you are.</li>
+    <li>Book a time in your own timezone and pay. You will get a reminder before
+        it starts.</li>
+  </ol>
+</div>
+
+<a class="btn" href="/signup">Create an account</a>
+<a class="btn secondary" href="/login">I already have one</a>
+
+<div class="notice warn" style="margin-top:24px">
+  <strong>If you are in immediate danger, this is not the right place.</strong>
+  Please contact your local emergency number or a crisis line now. This service
+  is not monitored around the clock.
+</div>
+
+<h2>What we do with what you write</h2>
+<p class="small muted">
+  Your words are used to route you to the right person and are then discarded.
+  We keep only a version with phone numbers, email addresses and locations
+  removed, so a coordinator reviewing an urgent case has context. We never sell
+  data, and we do not share it with your university or employer.
+</p>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set active = 'appointments' %}
+{% block title %}Your session - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>You are in</h1>
+
+<div class="notice ok">
+  Connected to your session with <strong>{{ booking.counsellor_name }}</strong>.
+</div>
+
+<div class="card">
+  {# The video layer is not built. Rather than fake a call surface, the page is
+     honest about what exists: the room and an authorised token, ready for a
+     provider to be dropped in. See docs/DEPLOYMENT_RENDER.md. #}
+  <h3 style="margin-top:0">Video is not connected yet</h3>
+  <p class="small">
+    Everything around the call works — the window is open, you are authorised,
+    and the room is reserved. The video provider itself has not been wired in,
+    so there is nothing to see or hear here yet.
+  </p>
+  <p class="small muted" style="margin-bottom:0">
+    Room <code>{{ booking.room_id }}</code>
+  </p>
+</div>
+
+<div class="card tight">
+  <div class="row between">
+    <span class="small">Session ends</span>
+    <strong>{{ booking.end|zone(booking.client_timezone)|clock }}</strong>
+  </div>
+  <div class="row between" style="margin-top:6px">
+    <span class="small">You can rejoin until</span>
+    <strong>{{ connect.closes_at_local|clock }}</strong>
+  </div>
+</div>
+
+<form method="post" action="/session/{{ booking.booking_ref }}/leave">
+  <button class="btn secondary" type="submit">Leave the session</button>
+</form>
+
+<p class="tiny muted" style="margin-top:14px">
+  Leaving does not end the session. You can come back from your appointments
+  page any time before {{ connect.closes_at_local|clock }}.
+</p>
+{% endblock %}

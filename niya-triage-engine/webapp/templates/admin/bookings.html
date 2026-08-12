@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% set active = 'admin_bookings' %}
+{% block title %}Sessions - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Sessions</h1>
+<p class="small muted">
+  The hundred most recent. Amounts are what was charged at the time of booking,
+  not what the counsellor costs today.
+</p>
+
+{% for row in rows %}
+  {% set booking = row.booking %}
+  {% set payment = row.payment %}
+  <div class="card tight">
+    <div class="row between">
+      <span class="status {{ booking.status }}">{{ booking.status|title }}</span>
+      <span class="tiny muted">{{ booking.booking_ref }}</span>
+    </div>
+
+    <h3 style="margin:10px 0 2px">{{ booking.counsellor_name }}</h3>
+    {# Times in UTC here rather than anyone's local zone: this screen is for
+       reconciliation, where one unambiguous clock beats a friendly one. #}
+    <div class="tiny muted">
+      {{ booking.start|day_label }} {{ booking.start|clock }} UTC ·
+      {{ booking.primary_category.replace('_', ' ')|title or 'No category' }}
+    </div>
+
+    <div class="moneyline">
+      <div>
+        <span class="tiny muted">Charged</span>
+        <strong>{{ payment.amount_minor|money(payment.currency) }}</strong>
+      </div>
+      <div>
+        <span class="tiny muted">To counsellor</span>
+        <strong>{{ payment.counsellor_fee_minor|money(payment.currency) }}</strong>
+      </div>
+      <div>
+        <span class="tiny muted">Margin</span>
+        <strong>{{ payment.platform_fee_minor|money(payment.currency) }}</strong>
+      </div>
+    </div>
+
+    <p class="tiny muted" style="margin:8px 0 0">
+      Payment {{ payment.status }}
+      {%- if payment.status == 'refund_due' %} — needs refunding manually{% endif %}
+      {%- if payment.provider_reference %} · {{ payment.provider_reference }}{% endif %}
+    </p>
+  </div>
+{% else %}
+  <div class="card"><p>No sessions have been booked yet.</p></div>
+{% endfor %}
+{% endblock %}

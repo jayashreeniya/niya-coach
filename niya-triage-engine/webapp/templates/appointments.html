@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% set active = 'appointments' %}
+{% block title %}Your appointments - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Your appointments</h1>
+
+{% if just %}
+  <div class="notice ok">
+    <strong>Booked.</strong> We have sent a confirmation to {{ account.email }}{% if account.phone %}
+    and your phone{% endif %}. Reference {{ just }}.
+  </div>
+{% endif %}
+
+{# Scoped to this account by the query itself, not by a filter in the template.
+   That is what stops one person seeing another's sessions. #}
+{% if not bookings %}
+  <div class="card">
+    <p>You have no sessions booked.</p>
+    <a class="btn" href="/intake">Find support</a>
+  </div>
+{% endif %}
+
+{% for item in bookings %}
+  {% set booking = item.booking %}
+  {% set connect = item.connect %}
+  <div class="card appt">
+    <div class="row between">
+      <span class="status {{ booking.status }}">
+        {% if booking.status == 'confirmed' %}Confirmed{% elif booking.status == 'held' %}Awaiting payment{% else %}{{ booking.status|title }}{% endif %}
+      </span>
+      <span class="tiny muted">{{ booking.booking_ref }}</span>
+    </div>
+
+    <h3 style="margin:10px 0 4px">{{ booking.counsellor_name }}</h3>
+
+    <div class="when">
+      {{ booking.start|zone(booking.client_timezone)|day_label }},
+      {{ booking.start|zone(booking.client_timezone)|clock }}–{{ booking.end|zone(booking.client_timezone)|clock }}
+    </div>
+    <div class="their">
+      {{ booking.client_timezone }} · that is
+      {{ booking.start|zone(booking.counsellor_timezone)|clock }} where they are
+      ({{ booking.counsellor_timezone }})
+    </div>
+
+    {% if booking.status == 'held' %}
+      <a class="btn" style="margin-top:14px" href="/checkout/{{ booking.booking_ref }}">Finish paying</a>
+
+    {% elif booking.status == 'confirmed' %}
+      <div class="window">
+        {% if connect.can_connect %}
+          <a class="btn" href="/session/{{ booking.booking_ref }}">Connect now</a>
+          <p class="tiny muted" style="margin:10px 0 0">
+            Open until {{ connect.closes_at_local|clock }}. You can leave and
+            rejoin as often as you need.
+          </p>
+        {% elif connect.reason == 'too_early' %}
+          <button class="btn" disabled aria-disabled="true">Connect now</button>
+          <p class="tiny muted" style="margin:10px 0 0">
+            Opens at <strong>{{ connect.opens_at_local|clock }}</strong>, five
+            minutes before the start — in
+            <span class="countdown" data-opens-in="{{ connect.seconds_until_open }}">{{ connect.seconds_until_open|duration }}</span>.
+          </p>
+        {% elif connect.reason == 'too_late' %}
+          <button class="btn" disabled aria-disabled="true">Connect now</button>
+          <p class="tiny muted" style="margin:10px 0 0">
+            This session has ended. If you did not manage to connect, please
+            get in touch and we will sort it out.
+          </p>
+        {% endif %}
+      </div>
+
+      {% if not connect.can_connect and connect.reason == 'too_early' %}
+      <form method="post" action="/appointments/{{ booking.booking_ref }}/cancel"
+            onsubmit="return confirm('Cancel this session?')" style="margin-top:10px">
+        <button class="btn quiet" type="submit">Cancel this session</button>
+      </form>
+      {% endif %}
+    {% endif %}
+
+    {% if booking.notifications %}
+    <details>
+      <summary>What we will send you</summary>
+      <ul class="timeline">
+        {% for note in booking.notifications|sort(attribute='send_at') %}
+          <li>
+            <strong>{{ note.kind|title }}</strong> by {{ note.channel }}
+            to {{ note.recipient_masked }}
+            <span class="muted">— {{ note.send_at|zone(booking.client_timezone)|day_label }}
+            {{ note.send_at|zone(booking.client_timezone)|clock }}</span>
+            {% if note.status == 'sent' %}<span style="color:var(--ok)">sent</span>
+            {% elif note.status == 'failed' %}<span style="color:var(--danger)">failed</span>
+            {% elif note.status == 'cancelled' %}<span class="muted">cancelled</span>
+            {% else %}<span class="muted">queued</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </div>
+{% endfor %}
+
+{% if bookings %}
+  <a class="btn secondary" href="/intake">Book something else</a>
+{% endif %}
+
+<script src="/static/connect.js" defer></script>
+{% endblock %}

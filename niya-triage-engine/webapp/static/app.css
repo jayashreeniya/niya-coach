@@ -1,0 +1,501 @@
+/* Mobile-first. Every rule below is the phone layout; the only media query
+   widens things for larger screens.
+
+   The audience is often on a phone abroad on an unreliable connection, so this
+   is one small stylesheet with no framework, no webfont and no icon set. It
+   loads in a single request and renders without JavaScript. */
+
+:root {
+  --purple: #6c4ab6;
+  --purple-dark: #57399a;
+  --purple-pale: #f2edfb;
+  --sage: #b9c5a2;
+  --ink: #2d3745;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --bg: #fbfaff;
+  --white: #ffffff;
+  --ok: #11a528;
+  --warn: #c28818;
+  --danger: #d80f06;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(45, 55, 69, 0.08), 0 4px 16px rgba(45, 55, 69, 0.06);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 17px;              /* comfortable on a phone without zooming */
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- layout ---------- */
+
+.wrap {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px 96px;         /* bottom room for the fixed nav */
+}
+
+header.top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+  padding: 4px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Header controls get vertical padding rather than a height, so the tappable
+   area reaches 44px without making the bar itself taller. */
+header.top a,
+header.top button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.brand {
+  font-weight: 700;
+  color: var(--purple);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.brand span { color: var(--ink); font-weight: 500; }
+
+/* Bottom tab bar on phones - thumb-reachable, which a top nav is not. */
+nav.tabs {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  background: var(--white);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+nav.tabs a {
+  flex: 1;
+  text-align: center;
+  padding: 12px 4px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  border-top: 3px solid transparent;
+}
+
+nav.tabs a.active {
+  color: var(--purple);
+  font-weight: 600;
+  border-top-color: var(--purple);
+  background: var(--purple-pale);
+}
+
+/* ---------- typography ---------- */
+
+h1 { font-size: 26px; line-height: 1.25; margin: 24px 0 8px; letter-spacing: -0.02em; }
+h2 { font-size: 21px; margin: 28px 0 8px; letter-spacing: -0.01em; }
+h3 { font-size: 18px; margin: 20px 0 6px; }
+p  { margin: 0 0 14px; }
+
+.lede { font-size: 18px; color: var(--muted); }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.tiny  { font-size: 13px; }
+
+a { color: var(--purple); }
+
+/* ---------- cards ---------- */
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin: 0 0 16px;
+}
+
+.card.flat { box-shadow: none; }
+.card.tight { padding: 14px; }
+
+.card h3:first-child, .card h2:first-child { margin-top: 0; }
+
+/* ---------- forms ---------- */
+
+label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+input[type="text"], input[type="email"], input[type="tel"],
+input[type="password"], input[type="number"], select, textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  /* 16px minimum, or iOS Safari zooms the whole page on focus. */
+  font-size: 16px;
+  font-family: inherit;
+  margin: 0 0 16px;
+}
+
+textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
+
+input:focus, select:focus, textarea:focus {
+  outline: 3px solid rgba(108, 74, 182, 0.25);
+  border-color: var(--purple);
+}
+
+.field { margin-bottom: 4px; }
+.hint { font-size: 13px; color: var(--muted); margin: -12px 0 16px; }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--purple);
+  color: var(--white);
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  /* Comfortably above the 44px minimum touch target. */
+  min-height: 50px;
+}
+
+.btn:hover { background: var(--purple-dark); }
+.btn:disabled, .btn[aria-disabled="true"] {
+  background: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.btn.secondary {
+  background: var(--white);
+  color: var(--purple);
+  border: 1.5px solid var(--purple);
+}
+
+.btn.quiet {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  font-weight: 500;
+}
+
+.btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--line); }
+
+.btn + .btn { margin-top: 10px; }
+
+/* ---------- choice lists (counsellor, day, time) ---------- */
+
+.choices { display: grid; gap: 10px; margin: 0 0 18px; }
+
+.choice {
+  display: block;
+  position: relative;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--white);
+  cursor: pointer;
+}
+
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+
+.choice:has(input:checked) {
+  border-color: var(--purple);
+  background: var(--purple-pale);
+  box-shadow: 0 0 0 1px var(--purple);
+}
+
+.choice:has(input:focus-visible) { outline: 3px solid rgba(108, 74, 182, 0.35); }
+
+.choice .name { font-weight: 600; }
+.choice .meta { font-size: 14px; color: var(--muted); }
+
+/* Times sit in a grid - more slots visible without scrolling on a phone. */
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.slots .choice { padding: 12px 10px; text-align: center; }
+.slots .choice .name { font-size: 16px; }
+.slots .choice .meta { font-size: 12px; }
+
+/* Bookable, but flagged: this time is the middle of the night where the person
+   booking lives. */
+.slots .choice.odd-hour { border-style: dashed; background: #fffdf6; }
+.slots .choice.odd-hour .name { color: var(--warn); }
+.slots .choice .meta.odd { display: block; color: var(--warn); font-weight: 600; }
+
+/* Days scroll horizontally, like a calendar strip. */
+.daystrip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.daystrip::-webkit-scrollbar { display: none; }
+
+.daystrip a {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  text-decoration: none;
+  color: var(--ink);
+  text-align: center;
+  min-width: 76px;
+}
+
+.daystrip a.active {
+  border-color: var(--purple);
+  background: var(--purple);
+  color: var(--white);
+}
+
+.daystrip .dow { display: block; font-size: 12px; opacity: 0.75; }
+.daystrip .dom { display: block; font-size: 18px; font-weight: 700; }
+
+/* ---------- messages ---------- */
+
+.notice {
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 0 0 16px;
+  font-size: 15px;
+  border: 1px solid;
+}
+
+.notice.info    { background: var(--purple-pale); border-color: #d9cdf3; }
+.notice.ok      { background: #eefbf0; border-color: #bfe8c6; }
+.notice.warn    { background: #fff8e8; border-color: #f0dcae; }
+.notice.error   { background: #ffedee; border-color: #f5c2c0; color: #8c1410; }
+
+.notice.crisis {
+  background: #ffedee;
+  border: 2px solid var(--danger);
+  border-left-width: 6px;
+}
+
+.field-error { color: var(--danger); font-size: 14px; margin: -12px 0 14px; }
+
+/* ---------- pills and badges ---------- */
+
+.pill {
+  display: inline-block;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.pill.low      { background: #eef7ee; color: #2f6b34; }
+.pill.moderate { background: #fff5e2; color: #8a6100; }
+.pill.high     { background: #ffeee6; color: #b1440a; }
+.pill.critical { background: #ffedee; color: var(--danger); }
+.pill.tag      { background: var(--purple-pale); color: var(--purple); text-transform: none; letter-spacing: 0; font-weight: 600; }
+
+.status { font-weight: 600; font-size: 14px; }
+.status.confirmed { color: var(--ok); }
+.status.held      { color: var(--warn); }
+.status.cancelled { color: var(--muted); }
+
+/* ---------- appointment card ---------- */
+
+.appt .when { font-size: 19px; font-weight: 600; margin: 2px 0 2px; }
+.appt .their { font-size: 14px; color: var(--muted); }
+
+.window {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.countdown {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--purple);
+}
+
+details { margin-top: 12px; }
+details summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--purple);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.timeline { list-style: none; padding: 0; margin: 8px 0 0; font-size: 14px; }
+.timeline li { padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.timeline li:last-child { border-bottom: 0; }
+
+/* ---------- misc ---------- */
+
+.row { display: flex; gap: 10px; align-items: center; }
+.row.between { justify-content: space-between; }
+.stack > * + * { margin-top: 10px; }
+
+hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
+
+/* Standalone navigation links, as opposed to links inside a sentence. Given a
+   real tap area rather than the 19px an inline link gets. */
+.backlink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.footnote {
+  font-size: 13px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  margin-top: 28px;
+  padding-top: 16px;
+}
+
+/* ---------- prices ---------- */
+
+/* Counsellors set their own rates, so a price sits on every shortlist card
+   rather than appearing once at checkout. Right-aligned so a column of them
+   stays comparable at a glance. */
+.price { text-align: right; white-space: nowrap; padding-left: 12px; }
+.price strong { display: block; font-size: 17px; }
+
+/* ---------- admin and expert ---------- */
+
+.moneyline {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.moneyline > div { flex: 1; min-width: 0; }
+.moneyline span { display: block; }
+.moneyline strong { font-size: 15px; }
+
+.card.dimmed { opacity: 0.6; }
+
+.credentials {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  /* One-time passwords get copied by hand or by touch, so let them wrap
+     rather than overflow the card on a phone. */
+  word-break: break-all;
+}
+
+/* Checkbox grids: two columns on a phone, which keeps a 20-item taxonomy
+   scannable without becoming a wall of text. */
+.checkgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+  margin: 0 0 16px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  font-size: 14px;
+  /* 44px so a tick is a comfortable tap target rather than a precision task. */
+  min-height: 44px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.check input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--purple);
+}
+
+.check span { min-width: 0; }
+.check.block { font-size: 16px; font-weight: 600; }
+
+@media (min-width: 720px) {
+  .checkgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---------- larger screens ---------- */
+
+@media (min-width: 720px) {
+  body { font-size: 17px; }
+  .wrap { padding-bottom: 48px; }
+
+  nav.tabs {
+    position: static;
+    border-top: 0;
+    border-bottom: 1px solid var(--line);
+    max-width: 720px;
+    margin: 0 auto;
+    background: transparent;
+  }
+
+  nav.tabs a {
+    flex: 0 0 auto;
+    padding: 14px 18px;
+    font-size: 15px;
+    border-top: 0;
+    border-bottom: 3px solid transparent;
+  }
+
+  nav.tabs a.active { background: transparent; border-bottom-color: var(--purple); }
+
+  h1 { font-size: 32px; }
+  .btn { display: inline-block; width: auto; min-width: 220px; }
+  .btn + .btn { margin-top: 0; margin-left: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

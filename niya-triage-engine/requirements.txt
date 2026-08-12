@@ -1,0 +1,42 @@
+# The triage engine core (niya_triage/) runs on the Python standard library alone.
+# Nothing below is needed to classify, assess safety, or match counsellors.
+# That is deliberate: the safety layer must not be able to fail because a
+# dependency failed to install.
+#
+#   python -c "from niya_triage import triage, IntakeRequest; print(triage(IntakeRequest(text='I cannot sleep')).to_api_payload())"
+#
+# ...works on a clean Python 3.9+ with none of these installed.
+
+# --- API layer -------------------------------------------------------------
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.27,<1.0
+pydantic>=2.0,<3.0
+
+# --- Web prototype (internal coordinator tool) -----------------------------
+# Streamlit is fine for the review dashboard. It is NOT the production user
+# frontend: it keeps per-user state in server memory, so it does not survive a
+# restart or more than one replica. See webapp/ for the deployable app.
+streamlit>=1.32,<2.0
+
+# --- Production web app (webapp/) ------------------------------------------
+sqlalchemy>=2.0,<3.0
+jinja2>=3.1,<4.0
+python-multipart>=0.0.9        # form posts
+itsdangerous>=2.1,<3.0         # signed session cookies
+bcrypt>=4.1,<5.0               # password hashing
+# MySQL driver, for the `niyatriage` database on TiDB Cloud (MySQL
+# wire-compatible). SQLite needs no driver, so local development works without
+# this installed.
+PyMySQL>=1.1,<2.0
+cryptography>=42.0             # required by PyMySQL for TiDB's mandatory TLS
+# The IANA timezone database. Not optional: without it, zoneinfo falls back to
+# fixed offsets and every booking is an hour out for half the year in any zone
+# that observes daylight saving.
+tzdata>=2024.1
+
+# --- Optional second-opinion classifier ------------------------------------
+# Without this (or without OPENAI_API_KEY) the engine runs rules-only and says so.
+openai>=1.14,<2.0
+
+# --- Tests and evaluation --------------------------------------------------
+pytest>=8.0,<9.0

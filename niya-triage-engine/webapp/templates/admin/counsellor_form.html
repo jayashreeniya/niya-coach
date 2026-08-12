@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% set active = 'onboard' if not profile else 'roster' %}
+{% set editing = profile is not none and not created %}
+{% block title %}{{ 'Edit' if editing else 'Onboard' }} a counsellor - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>{{ 'Edit ' + profile.display_name if editing else 'Onboard a counsellor' }}</h1>
+
+{% if created %}
+  {# Shown once and never stored in readable form. If the admin loses it, the
+     counsellor has to be issued a new one rather than shown the old. #}
+  <div class="notice ok">
+    <h3 style="margin-top:0">{{ created.ref }} is on the roster.</h3>
+    {% if created.password %}
+      <p class="small" style="margin-bottom:6px">
+        Pass these sign-in details to them directly. This password is shown
+        <strong>once</strong> and cannot be retrieved later.
+      </p>
+      <p class="credentials">
+        {{ created.email }}<br>
+        <strong>{{ created.password }}</strong>
+      </p>
+      <p class="tiny muted" style="margin-bottom:0">
+        Ask them to change it under Password when they first sign in.
+      </p>
+    {% else %}
+      <p class="small" style="margin-bottom:0">
+        No email address was given, so they have no sign-in yet and cannot see
+        their own sessions. Add one on their record when you have it.
+      </p>
+    {% endif %}
+  </div>
+  <a class="btn" href="/admin">Back to the roster</a>
+  <a class="btn secondary" href="/admin/counsellors/new">Onboard another</a>
+
+{% else %}
+
+{% if errors %}
+  <div class="notice error small">
+    Please fix the highlighted fields below.
+  </div>
+{% endif %}
+
+<form method="post" action="{{ '/admin/counsellors/' + profile.ref if editing else '/admin/counsellors/new' }}">
+
+  <div class="card">
+    <h3 style="margin-top:0">Who they are</h3>
+
+    <div class="field">
+      <label for="display_name">Name shown to clients</label>
+      <input type="text" id="display_name" name="display_name" required
+             value="{{ form.display_name or '' }}" placeholder="Dr. Ananya Rao">
+      {% if errors.display_name %}<p class="field-error">{{ errors.display_name }}</p>{% endif %}
+    </div>
+
+    <div class="field">
+      <label for="credentials">Credentials</label>
+      <input type="text" id="credentials" name="credentials"
+             value="{{ form.credentials or '' }}"
+             placeholder="MSc Counselling Psychology; licensed in India">
+    </div>
+
+    {% if editing %}
+      <div class="field">
+        <label>Sign-in</label>
+        <input type="email" value="{{ form.email or 'No sign-in yet' }}" disabled>
+        <p class="hint">
+          {% if form.email %}
+            They sign in with this address and manage their own password.
+          {% else %}
+            This counsellor has no login. Creating one after the fact is not
+            wired up yet — see the note in docs/ADMIN_AND_EXPERTS.md.
+          {% endif %}
+        </p>
+      </div>
+    {% else %}
+      <div class="field">
+        <label for="email">Their email address</label>
+        <input type="email" id="email" name="email" value="{{ form.email or '' }}"
+               placeholder="ananya@example.com">
+        <p class="hint">
+          Creates their sign-in. We will show you a one-time password to pass on.
+          Leave blank if you are only adding them to the roster for now.
+        </p>
+        {% if errors.email %}<p class="field-error">{{ errors.email }}</p>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="phone">Their mobile number</label>
+        <input type="tel" id="phone" name="phone" inputmode="tel"
+               value="{{ form.phone or '' }}" placeholder="+91 98765 43210">
+      </div>
+    {% endif %}
+
+    <div class="field">
+      <label for="years_experience">Years of experience</label>
+      <input type="number" id="years_experience" name="years_experience" min="0" max="60"
+             step="0.5" inputmode="decimal" value="{{ form.years_experience or '0' }}">
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Money</h3>
+    <p class="small muted" style="margin-top:0">
+      Both figures are per 60 minute session, in {{ currency }}. NIYA keeps the
+      difference. The client only ever sees the price they pay.
+    </p>
+
+    <div class="field">
+      <label for="counsellor_fee">What the counsellor is paid</label>
+      <input type="text" id="counsellor_fee" name="counsellor_fee" required
+             inputmode="decimal" value="{{ form.counsellor_fee or '' }}" placeholder="1050.00">
+      {% if errors.counsellor_fee %}<p class="field-error">{{ errors.counsellor_fee }}</p>{% endif %}
+    </div>
+
+    <div class="field">
+      <label for="client_price">What the client pays</label>
+      <input type="text" id="client_price" name="client_price" required
+             inputmode="decimal" value="{{ form.client_price or '' }}" placeholder="1500.00">
+      {% if errors.client_price %}<p class="field-error">{{ errors.client_price }}</p>{% endif %}
+    </div>
+
+    {% if editing %}
+      <p class="tiny muted" style="margin-bottom:0">
+        Currently {{ profile.margin_minor|money(profile.currency) }} margin
+        ({{ profile.margin_percent }}% on top of their fee). Changing these
+        affects new bookings only — sessions already paid for keep the price
+        they were sold at.
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">When they work</h3>
+
+    <div class="field">
+      <label for="timezone_name">Their timezone</label>
+      <select id="timezone_name" name="timezone_name" required>
+        {% for zone in zones %}
+          <option value="{{ zone }}" {{ 'selected' if form.timezone_name == zone }}>{{ zone|zone_label }}</option>
+        {% endfor %}
+      </select>
+      {% if errors.timezone_name %}<p class="field-error">{{ errors.timezone_name }}</p>{% endif %}
+    </div>
+
+    <div class="row" style="gap:12px">
+      <div class="field" style="flex:1">
+        <label for="working_hours_start">Day starts</label>
+        <input type="number" id="working_hours_start" name="working_hours_start"
+               min="0" max="23" step="0.5" inputmode="decimal"
+               value="{{ form.working_hours_start or '9' }}">
+      </div>
+      <div class="field" style="flex:1">
+        <label for="working_hours_end">Day ends</label>
+        <input type="number" id="working_hours_end" name="working_hours_end"
+               min="1" max="24" step="0.5" inputmode="decimal"
+               value="{{ form.working_hours_end or '18' }}">
+      </div>
+    </div>
+    {% if errors.working_hours %}<p class="field-error">{{ errors.working_hours }}</p>{% endif %}
+    <p class="hint">
+      In their own local time, as whole or half hours. They can change this
+      themselves once they sign in.
+    </p>
+
+    <div class="field">
+      <label for="max_cases">Maximum active clients</label>
+      <input type="number" id="max_cases" name="max_cases" min="1" max="200"
+             value="{{ form.max_cases or '20' }}">
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">What they work with</h3>
+    <p class="small muted" style="margin-top:0">
+      This drives matching. Ticking an area means the engine may route those
+      cases to them, so under-ticking is safer than over-ticking.
+    </p>
+
+    <div class="field">
+      <label>Areas</label>
+      <div class="checkgrid">
+        {% for category in categories %}
+          <label class="check">
+            <input type="checkbox" name="categories" value="{{ category.id }}"
+                   {{ 'checked' if category.id in (form.categories or []) }}>
+            <span>{{ category.label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Languages</label>
+      <div class="checkgrid">
+        {% for language in languages %}
+          <label class="check">
+            <input type="checkbox" name="languages" value="{{ language }}"
+                   {{ 'checked' if language in (form.languages or []) }}>
+            <span>{{ language|title }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      {% if errors.languages %}<p class="field-error">{{ errors.languages }}</p>{% endif %}
+    </div>
+
+    <div class="field">
+      <label>Countries they know well</label>
+      <div class="checkgrid">
+        {% for country in countries %}
+          <label class="check">
+            <input type="checkbox" name="country_context" value="{{ country }}"
+                   {{ 'checked' if country in (form.country_context or []) }}>
+            <span>{{ country|country_label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Who they see</label>
+      <div class="checkgrid">
+        {% for kind in client_types %}
+          <label class="check">
+            <input type="checkbox" name="client_types" value="{{ kind }}"
+                   {{ 'checked' if kind in (form.client_types or []) }}>
+            <span>{{ kind|title }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Specific capabilities</label>
+      <div class="checkgrid">
+        {% for capability in capabilities %}
+          <label class="check">
+            <input type="checkbox" name="capabilities" value="{{ capability }}"
+                   {{ 'checked' if capability in (form.capabilities or []) }}>
+            <span>{{ capability.replace('_', ' ')|title }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Risk and escalation</h3>
+    <p class="small muted" style="margin-top:0">
+      Only tick these against evidence. They decide who a flagged case can be
+      routed to.
+    </p>
+
+    <label class="check block">
+      <input type="checkbox" name="clinically_qualified" value="1"
+             {{ 'checked' if form.clinically_qualified }}>
+      <span>Clinically qualified and licensed</span>
+    </label>
+
+    <label class="check block">
+      <input type="checkbox" name="crisis_trained" value="1"
+             {{ 'checked' if form.crisis_trained }}>
+      <span>Trained in crisis intervention</span>
+    </label>
+
+    <label class="check block">
+      <input type="checkbox" name="escalation_capability" value="1"
+             {{ 'checked' if form.escalation_capability }}>
+      <span>Can hold a risk-flagged case</span>
+    </label>
+    <p class="hint">
+      Only takes effect alongside a clinical qualification. Without one it is
+      ignored, whatever is ticked here.
+    </p>
+
+    <div class="field" style="margin-top:14px">
+      <label for="max_complexity">Most complex case they can hold</label>
+      <select id="max_complexity" name="max_complexity">
+        {% for level in complexities %}
+          <option value="{{ level }}" {{ 'selected' if form.max_complexity == level }}>{{ level|title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="notes">Internal notes</label>
+      <textarea id="notes" name="notes" rows="3"
+                placeholder="Not shown to clients.">{{ form.notes or '' }}</textarea>
+    </div>
+  </div>
+
+  <button class="btn" type="submit">{{ 'Save changes' if editing else 'Add to roster' }}</button>
+</form>
+
+<p style="margin-top:12px">
+  <a class="backlink" href="/admin">Back to the roster</a>
+</p>
+
+{% endif %}
+{% endblock %}

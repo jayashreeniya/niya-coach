@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active = 'appointments' %}
+{% block title %}Not open yet - {{ app_name }}{% endblock %}
+
+{% block content %}
+{# Reached by going straight to the URL outside the window. The refusal happens
+   on the server, so knowing the address is not enough to get in. #}
+<h1>
+  {% if connect.reason == 'too_early' %}Not open yet
+  {% elif connect.reason == 'too_late' %}This session has ended
+  {% elif connect.reason == 'cancelled' %}This session was cancelled
+  {% else %}Not confirmed{% endif %}
+</h1>
+
+<div class="card">
+  {% if connect.reason == 'too_early' %}
+    <p>
+      Your session with {{ booking.counsellor_name }} opens at
+      <strong>{{ connect.opens_at_local|clock }}</strong>
+      ({{ booking.client_timezone }}), five minutes before it starts.
+    </p>
+    <p class="small muted">
+      That is in
+      <span class="countdown" data-opens-in="{{ connect.seconds_until_open }}">{{ connect.seconds_until_open|duration }}</span>.
+      This page will let you in as soon as it opens.
+    </p>
+    <script src="/static/connect.js" defer></script>
+  {% elif connect.reason == 'too_late' %}
+    <p>
+      The joining window closed at {{ connect.closes_at_local|clock }}.
+    </p>
+    <p class="small muted">
+      If you could not get in during the session, please contact us — we will
+      not charge you for a session you could not attend.
+    </p>
+  {% elif connect.reason == 'cancelled' %}
+    <p>This booking was cancelled, so there is nothing to join.</p>
+  {% else %}
+    <p>This booking has not been paid for yet, so it is not confirmed.</p>
+    <a class="btn" href="/checkout/{{ booking.booking_ref }}">Finish paying</a>
+  {% endif %}
+
+  <a class="btn secondary" href="/appointments">Back to your appointments</a>
+</div>
+{% endblock %}
