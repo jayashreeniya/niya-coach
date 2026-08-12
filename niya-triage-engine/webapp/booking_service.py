@@ -30,7 +30,7 @@ from niya_triage.availability import (
     to_zone,
     utc_now,
 )
-from niya_triage.counsellors import Counsellor, default_repository
+from niya_triage.counsellors import Counsellor
 
 from . import notify, payments, roster, settings
 from .models import (
