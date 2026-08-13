@@ -125,6 +125,30 @@ SMS_LIVE = bool(TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_FROM_NUMBER)
 
 
 # ---------------------------------------------------------------------------
+# Video
+#
+# Twilio Programmable Video, which is what NIYA's web app already uses. The API
+# key pair is separate from the auth token: an API key can be revoked on its own
+# without disturbing anything else on the account, which the auth token cannot.
+#
+# In NIYA's Rails app these are read from CHAT_API_KEY and CHAT_API_SECRET,
+# named after an earlier use. They are named for what they are here.
+#
+# Without them the session page stays a placeholder rather than failing, so the
+# rest of the booking journey can be run and tested without video credentials.
+# ---------------------------------------------------------------------------
+
+TWILIO_API_KEY_SID = os.environ.get("TWILIO_API_KEY_SID", "")
+TWILIO_API_KEY_SECRET = os.environ.get("TWILIO_API_KEY_SECRET", "")
+VIDEO_LIVE = bool(TWILIO_ACCOUNT_SID and TWILIO_API_KEY_SID and TWILIO_API_KEY_SECRET)
+
+#: Rooms are created when the first participant connects. Left off, Twilio uses
+#: the account default, which for a two-person counselling call should be `go`
+#: or `peer-to-peer` rather than `group`.
+TWILIO_ROOM_TYPE = os.environ.get("TWILIO_ROOM_TYPE", "go")
+
+
+# ---------------------------------------------------------------------------
 # Deployment
 # ---------------------------------------------------------------------------
 
@@ -181,4 +205,5 @@ def describe() -> dict:
         "payments": "razorpay" if PAYMENTS_LIVE else "simulated",
         "email": "sendgrid" if EMAIL_LIVE else "outbox only",
         "sms": "twilio" if SMS_LIVE else "outbox only",
+        "video": "twilio" if VIDEO_LIVE else "not connected",
     }

@@ -143,6 +143,14 @@ services:
         sync: false
       - key: TWILIO_FROM_NUMBER
         sync: false
+      # Twilio Programmable Video, the same product NIYA's web app uses. An API
+      # key pair rather than the auth token, so it can be revoked on its own.
+      # In the Rails app these are named CHAT_API_KEY and CHAT_API_SECRET.
+      # Absent until go-live, so the session page stays an honest placeholder.
+      - key: TWILIO_API_KEY_SID
+        sync: false
+      - key: TWILIO_API_KEY_SECRET
+        sync: false
 
   # Reminders. A cron job rather than a thread in the web service, because two
   # replicas would otherwise each send every reminder.

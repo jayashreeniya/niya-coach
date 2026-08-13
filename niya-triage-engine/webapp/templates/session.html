@@ -9,10 +9,45 @@
   Connected to your session with <strong>{{ booking.counsellor_name }}</strong>.
 </div>
 
+{% if connect.token %}
+<div class="card"
+     data-video-room="{{ connect.room_id }}"
+     data-video-token="{{ connect.token }}"
+     data-video-ends="{{ connect.closes_at|utc_stamp }}"
+     data-video-other="{{ booking.counsellor_name }}">
+
+  <button id="video-join" class="btn" type="button">
+    Turn on camera and microphone, and join
+  </button>
+
+  <p id="video-status" class="notice info" hidden></p>
+
+  <div id="video-stage" class="videostage" hidden>
+    <div id="video-remote" class="remote">
+      <p id="video-waiting" class="small muted">
+        Waiting for {{ booking.counsellor_name }} to join.
+      </p>
+    </div>
+    <div id="video-local" class="local"></div>
+  </div>
+
+  <div id="video-controls" class="videocontrols" hidden>
+    <button id="video-mic" class="btn secondary" type="button" aria-pressed="false">
+      Mute microphone
+    </button>
+    <button id="video-cam" class="btn secondary" type="button" aria-pressed="false">
+      Turn off camera
+    </button>
+  </div>
+
+  <p class="tiny muted" style="margin-bottom:0">
+    Your camera and microphone stay off until you press the button above.
+  </p>
+</div>
+{% else %}
 <div class="card">
-  {# The video layer is not built. Rather than fake a call surface, the page is
-     honest about what exists: the room and an authorised token, ready for a
-     provider to be dropped in. See docs/DEPLOYMENT_RENDER.md. #}
+  {# No credentials configured. Say so plainly rather than showing a call
+     surface that cannot connect. #}
   <h3 style="margin-top:0">Video is not connected yet</h3>
   <p class="small">
     Everything around the call works — the window is open, you are authorised,
@@ -20,9 +55,10 @@
     so there is nothing to see or hear here yet.
   </p>
   <p class="small muted" style="margin-bottom:0">
-    Room <code>{{ booking.room_id }}</code>
+    Room <code>{{ connect.room_id }}</code>
   </p>
 </div>
+{% endif %}
 
 <div class="card tight">
   <div class="row between">
@@ -43,4 +79,13 @@
   Leaving does not end the session. You can come back from your appointments
   page any time before {{ connect.closes_at_local|clock }}.
 </p>
+{% endblock %}
+
+{% block scripts %}
+{% if connect.token %}
+{# Served from our own origin, so script-src stays 'self'. Matches how NIYA's
+   web app ships the same SDK, as a bundled dependency rather than a CDN. #}
+<script src="/static/vendor/twilio-video-2.29.0.min.js"></script>
+<script src="/static/video.js"></script>
+{% endif %}
 {% endblock %}

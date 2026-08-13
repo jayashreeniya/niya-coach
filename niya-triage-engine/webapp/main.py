@@ -69,22 +69,56 @@ async def _redirect_handler(request: Request, exc: RedirectException) -> Redirec
     return RedirectResponse(exc.location, status_code=303)
 
 
+#: The Twilio Video SDK is served from our own origin, so `script-src` stays
+#: 'self'. Only the signalling channel needs a third-party origin: WebRTC
+#: negotiates over a WebSocket to Twilio before any media flows. The media
+#: itself is peer-to-peer SRTP and is not governed by CSP.
+#:
+#: `media-src blob:` is needed because the SDK attaches tracks through blob URLs
+#: in some browsers.
+VIDEO_CSP = {
+    "connect-src": " https://*.twilio.com wss://*.twilio.com",
+    "media-src": " blob:",
+}
+
+
+def _csp() -> str:
+    """The policy, widened only where video genuinely requires it.
+
+    Kept conditional so an instance without video credentials runs the same
+    strict policy as before: a capability nobody can use should not cost
+    anybody a weaker header.
+    """
+    connect = "'self'"
+    media = "'self'"
+    if settings.VIDEO_LIVE:
+        connect += VIDEO_CSP["connect-src"]
+        media += VIDEO_CSP["media-src"]
+
+    return (
+        "default-src 'self'; img-src 'self' data:; style-src 'self'; "
+        "script-src 'self'; form-action 'self'; frame-ancestors 'none'; "
+        f"base-uri 'self'; connect-src {connect}; media-src {media}"
+    )
+
+
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
     """Baseline headers.
 
-    The CSP is deliberately strict: no inline script and no third-party origins.
-    The app ships no JavaScript bundle and no CDN assets, so nothing legitimate
-    needs relaxing here.
+    The CSP is deliberately strict: no inline script and no third-party script
+    origins. The Twilio SDK is vendored rather than loaded from a CDN precisely
+    so that stays true.
     """
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Content-Security-Policy", _csp())
+    #: The call needs the camera and microphone on this origin, and nothing else
+    #: needs them at all.
     response.headers.setdefault(
-        "Content-Security-Policy",
-        "default-src 'self'; img-src 'self' data:; style-src 'self'; "
-        "script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'",
+        "Permissions-Policy", "camera=(self), microphone=(self), geolocation=()"
     )
     if settings.IS_PRODUCTION:
         response.headers.setdefault(

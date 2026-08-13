@@ -49,7 +49,8 @@ Read this before quoting anything from this repository.
 | Counsellor-facing portal: their sessions, connect now, their own hours | Implemented, tested |
 | Payment | Razorpay integration written; **simulated until keys are set.** No money moves. |
 | Email and SMS | SendGrid and Twilio integrations written; **queued, not sent, until keys are set.** |
-| Video call | **Not implemented.** The joining window and token authorisation are; the call itself is not. |
+| Video call | Twilio Programmable Video. Implemented, tested; **placeholder until the API key pair is set.** See `docs/VIDEO.md`. |
+| Session recording | **Not implemented**, deliberately. Consent and retention need answering first. |
 | Email verification | **Not implemented.** Anyone can sign up with an address they do not own. |
 | Password reset | **Not implemented.** Counsellors can change a password they know; losing it needs an admin. |
 | Refunds | **Recorded, not issued.** Cancelling marks `refund_due`; moving money is manual. |
@@ -58,7 +59,7 @@ Read this before quoting anything from this repository.
 | Category accuracy on the hard set | Measured: **68.2%** — **below the 80% target** |
 | Business-impact figures | Modelled, not observed |
 
-194 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
+221 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
 accuracy misses its target and is reported as it stands rather than rounded up.
 
 Worth knowing before you trust the suite: the first evaluation run scored 62.5%

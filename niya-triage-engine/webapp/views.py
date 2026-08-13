@@ -505,7 +505,9 @@ def join_session(
     if booking is None:
         return RedirectResponse("/appointments", status_code=303)
 
-    grant = booking_service.authorise_connection(session, booking, party="client")
+    grant = booking_service.authorise_connection(
+        session, booking, party="client", account=account
+    )
     if not grant["authorised"]:
         return _page(
             request, "session_closed.html", account,

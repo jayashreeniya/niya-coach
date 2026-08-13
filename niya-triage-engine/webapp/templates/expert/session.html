@@ -9,18 +9,53 @@
   Connected to your session. Reference {{ booking.booking_ref }}.
 </div>
 
+{% if connect.token %}
+<div class="card"
+     data-video-room="{{ connect.room_id }}"
+     data-video-token="{{ connect.token }}"
+     data-video-ends="{{ connect.closes_at|utc_stamp }}"
+     data-video-other="your client">
+
+  <button id="video-join" class="btn" type="button">
+    Turn on camera and microphone, and join
+  </button>
+
+  <p id="video-status" class="notice info" hidden></p>
+
+  <div id="video-stage" class="videostage" hidden>
+    <div id="video-remote" class="remote">
+      <p id="video-waiting" class="small muted">Waiting for your client to join.</p>
+    </div>
+    <div id="video-local" class="local"></div>
+  </div>
+
+  <div id="video-controls" class="videocontrols" hidden>
+    <button id="video-mic" class="btn secondary" type="button" aria-pressed="false">
+      Mute microphone
+    </button>
+    <button id="video-cam" class="btn secondary" type="button" aria-pressed="false">
+      Turn off camera
+    </button>
+  </div>
+
+  <p class="tiny muted" style="margin-bottom:0">
+    Your camera and microphone stay off until you press the button above.
+  </p>
+</div>
+{% else %}
 <div class="card">
-  {# Same honest placeholder as the client side, and the same room id, so when a
-     video provider is wired in both parties land in one place. #}
+  {# Same honest placeholder as the client side, and the same room id, so both
+     parties land in one place once credentials are configured. #}
   <h3 style="margin-top:0">Video is not connected yet</h3>
   <p class="small">
     The window is open and you are authorised. The video provider has not been
     wired in, so there is nothing to see or hear here yet.
   </p>
   <p class="small muted" style="margin-bottom:0">
-    Room <code>{{ booking.room_id }}</code>
+    Room <code>{{ connect.room_id }}</code>
   </p>
 </div>
+{% endif %}
 
 <div class="card tight">
   <div class="row between">
@@ -49,4 +84,11 @@
   Leaving does not end the session. You can rejoin from your sessions page until
   {{ connect.closes_at|zone(profile.timezone)|clock }}.
 </p>
+{% endblock %}
+
+{% block scripts %}
+{% if connect.token %}
+<script src="/static/vendor/twilio-video-2.29.0.min.js"></script>
+<script src="/static/video.js"></script>
+{% endif %}
 {% endblock %}

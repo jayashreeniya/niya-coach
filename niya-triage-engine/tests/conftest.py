@@ -24,6 +24,10 @@ os.environ["APP_SECRET_KEY"] = "test-secret-key-that-is-long-enough-to-pass-chec
 os.environ.pop("RAZORPAY_KEY_ID", None)
 os.environ.pop("SENDGRID_API_KEY", None)
 os.environ.pop("TWILIO_ACCOUNT_SID", None)
+# Video off by default too, so the session page renders its placeholder unless a
+# test asks for credentials.
+os.environ.pop("TWILIO_API_KEY_SID", None)
+os.environ.pop("TWILIO_API_KEY_SECRET", None)
 
 
 @pytest.fixture(scope="session")

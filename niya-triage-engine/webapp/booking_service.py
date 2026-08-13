@@ -32,7 +32,7 @@ from niya_triage.availability import (
 )
 from niya_triage.counsellors import Counsellor
 
-from . import notify, payments, roster, settings
+from . import notify, payments, roster, settings, video
 from .models import (
     CONNECT_CLOSES_MINUTES_AFTER,
     CONNECT_OPENS_MINUTES_BEFORE,
@@ -390,13 +390,20 @@ def connect_state(booking: Booking, now: Optional[datetime] = None) -> Dict[str,
 
 
 def authorise_connection(
-    session: Session, booking: Booking, party: str = "client", now: Optional[datetime] = None
+    session: Session,
+    booking: Booking,
+    party: str = "client",
+    now: Optional[datetime] = None,
+    account=None,
 ) -> Dict[str, object]:
     """Mint a room token, but only inside the window.
 
     Checked here rather than in the page, because a check that lives only in the
     frontend is decoration. NIYA's video endpoint issues a Twilio token to any
     authenticated caller with a booking id at any hour.
+
+    The token is scoped to this booking's room and expires when the window
+    closes, so it cannot be carried into another session or used after this one.
     """
     state = connect_state(booking, now=now)
     if not state["can_connect"]:
@@ -412,10 +419,15 @@ def authorise_connection(
     )
     session.commit()
 
+    token = None
+    if account is not None:
+        token = video.token_for(account, booking, expires_at=booking.connect_closes_at)
+
     return {
         "authorised": True,
-        "room_id": booking.room_id,
-        "token": secrets.token_urlsafe(24),
+        "room_id": video.room_name(booking),
+        "token": token,
+        "video_live": video.is_available(),
         **state,
     }
 

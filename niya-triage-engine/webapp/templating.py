@@ -50,6 +50,17 @@ def utc_iso(moment: datetime) -> str:
     return moment.isoformat()
 
 
+def utc_stamp(moment: datetime) -> int:
+    """Seconds since the epoch, for arithmetic in the browser.
+
+    Stored times are naive UTC, and a browser reading one as local time would be
+    wrong by its own offset - hours out for most of NIYA's users.
+    """
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return int(moment.timestamp())
+
+
 def strengths(counsellor, limit: int = 3) -> str:
     """The categories this counsellor is strongest in, as readable text.
 
@@ -104,6 +115,7 @@ templates.env.filters["clock"] = clock
 templates.env.filters["day_label"] = day_label
 templates.env.filters["duration"] = duration
 templates.env.filters["utc_iso"] = utc_iso
+templates.env.filters["utc_stamp"] = utc_stamp
 templates.env.filters["strengths"] = strengths
 templates.env.filters["titles"] = titles
 templates.env.filters["zone_label"] = zone_label

@@ -489,6 +489,83 @@ def test_one_account_cannot_join_another_accounts_call(client):
     assert response.headers["location"] == "/appointments"
 
 
+def test_the_session_page_says_so_plainly_when_video_is_not_configured(client):
+    """No credentials should mean an honest placeholder, not a broken call."""
+    booking_ref = _confirmed_booking(client)
+    _move_session(booking_ref, timedelta(minutes=2))
+
+    body = client.get(f"/session/{booking_ref}").text
+    assert "Video is not connected yet" in body
+    assert "twilio-video" not in body
+
+
+def test_the_call_surface_appears_once_video_is_configured(client, monkeypatch):
+    from webapp import video
+
+    booking_ref = _confirmed_booking(client)
+    _move_session(booking_ref, timedelta(minutes=2))
+
+    monkeypatch.setattr(video.settings, "VIDEO_LIVE", True)
+    monkeypatch.setattr(video.settings, "TWILIO_ACCOUNT_SID", "AC" + "0" * 32)
+    monkeypatch.setattr(video.settings, "TWILIO_API_KEY_SID", "SK" + "1" * 32)
+    monkeypatch.setattr(video.settings, "TWILIO_API_KEY_SECRET", "secret")
+
+    body = client.get(f"/session/{booking_ref}").text
+    assert "Video is not connected yet" not in body
+    assert "data-video-token" in body
+    assert "/static/vendor/twilio-video" in body
+
+
+def test_the_sdk_is_served_from_our_own_origin(client, monkeypatch):
+    """Vendored rather than a CDN, so script-src can stay 'self'."""
+    from webapp import video
+
+    booking_ref = _confirmed_booking(client)
+    _move_session(booking_ref, timedelta(minutes=2))
+
+    monkeypatch.setattr(video.settings, "VIDEO_LIVE", True)
+    monkeypatch.setattr(video.settings, "TWILIO_ACCOUNT_SID", "AC" + "0" * 32)
+    monkeypatch.setattr(video.settings, "TWILIO_API_KEY_SID", "SK" + "1" * 32)
+    monkeypatch.setattr(video.settings, "TWILIO_API_KEY_SECRET", "secret")
+
+    body = client.get(f"/session/{booking_ref}").text
+    assert "sdk.twilio.com" not in body
+    assert client.get("/static/vendor/twilio-video-2.29.0.min.js").status_code == 200
+
+
+def test_a_closed_session_hands_out_no_token(client):
+    """Outside the window there is nothing to join, so nothing to mint."""
+    booking_ref = _confirmed_booking(client)
+    _move_session(booking_ref, timedelta(hours=3))
+
+    response = client.get(f"/session/{booking_ref}")
+    assert response.status_code == 403
+    assert "data-video-token" not in response.text
+
+
+def test_the_policy_stays_strict_when_video_is_off(client):
+    policy = client.get("/").headers["content-security-policy"]
+    assert "script-src 'self'" in policy
+    assert "twilio.com" not in policy
+
+
+def test_the_policy_admits_twilio_only_when_video_is_on(client, monkeypatch):
+    from webapp import main
+
+    monkeypatch.setattr(main.settings, "VIDEO_LIVE", True)
+    policy = client.get("/").headers["content-security-policy"]
+
+    assert "wss://*.twilio.com" in policy
+    # Widened for signalling only; third-party script origins stay barred.
+    assert "script-src 'self';" in policy
+
+
+def test_the_camera_is_only_available_to_our_own_pages(client):
+    policy = client.get("/").headers["permissions-policy"]
+    assert "camera=(self)" in policy
+    assert "geolocation=()" in policy
+
+
 def test_an_unpaid_booking_cannot_be_joined(client):
     register(client)
     case_ref = make_case(client)
