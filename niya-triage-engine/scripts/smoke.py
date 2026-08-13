@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import http.cookiejar
 import json
+import os
 import re
 import sys
 import urllib.error
@@ -22,8 +23,11 @@ import urllib.request
 import uuid
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8080").rstrip("/")
-ADMIN_EMAIL = "admin@niya.app"
-ADMIN_PASSWORD = "a-long-enough-passphrase"
+
+# A deployment sets its own administrator, so take the credentials from the
+# environment and fall back to the local development pair.
+ADMIN_EMAIL = os.environ.get("SMOKE_ADMIN_EMAIL", "admin@niya.app")
+ADMIN_PASSWORD = os.environ.get("SMOKE_ADMIN_PASSWORD", "a-long-enough-passphrase")
 
 passed = 0
 failed = 0
@@ -139,7 +143,9 @@ def main() -> int:
         status, _, _ = get(admin, "/admin/bookings")
         check("sessions page renders", status == 200, f"status {status}")
     else:
-        print(f"        No admin account for {ADMIN_EMAIL}. Create one: .\\run.ps1 admin")
+        print(f"        Could not sign in as {ADMIN_EMAIL}. Locally, create one with")
+        print("        .\\run.ps1 admin. Against a deployment, set SMOKE_ADMIN_EMAIL")
+        print("        and SMOKE_ADMIN_PASSWORD to that deployment's administrator.")
 
     print("\nRole separation")
     status, _, headers = get(client, "/admin")
