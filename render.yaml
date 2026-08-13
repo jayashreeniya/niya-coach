@@ -5,6 +5,12 @@ services:
     dockerfilePath: ./back-end/Dockerfile
     dockerContext: ./back-end
     plan: free
+    # Only rebuild when this service's own code changes. Without this, every
+    # commit to master redeploys the live API, including commits that only
+    # touch an unrelated service.
+    buildFilters:
+      paths:
+        - back-end/**
     envVars:
       - key: RAILS_ENV
         value: production
@@ -39,6 +45,9 @@ services:
     dockerfilePath: ./niya-practice/Dockerfile
     dockerContext: ./niya-practice
     plan: free
+    buildFilters:
+      paths:
+        - niya-practice/**
     envVars:
       - key: NODE_ENV
         value: production
@@ -96,11 +105,15 @@ services:
     dockerContext: ./niya-triage-engine
     plan: free
     healthCheckPath: /healthz
+    buildFilters:
+      paths:
+        - niya-triage-engine/**
+        - render.yaml
     envVars:
       - key: APP_ENV
         value: production
       - key: BASE_URL
-        value: https://triage.niya.app
+        value: https://niya-triage.onrender.com
       - key: SESSION_PRICE_MINOR
         value: "150000"
       - key: SESSION_CURRENCY
@@ -141,11 +154,15 @@ services:
     plan: starter
     schedule: "*/5 * * * *"
     dockerCommand: python scripts/send_due_notifications.py
+    buildFilters:
+      paths:
+        - niya-triage-engine/**
+        - render.yaml
     envVars:
       - key: APP_ENV
         value: production
       - key: BASE_URL
-        value: https://triage.niya.app
+        value: https://niya-triage.onrender.com
       - key: DATABASE_URL
         sync: false
       - key: APP_SECRET_KEY

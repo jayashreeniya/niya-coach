@@ -162,6 +162,12 @@ def validate() -> None:
         problems.append(
             "DATABASE_URL still points at SQLite. Set it to the niyatriage MySQL database."
         )
+    if "localhost" in BASE_URL or "127.0.0.1" in BASE_URL:
+        problems.append(
+            "BASE_URL still points at localhost. It is used to build the links in "
+            "confirmation emails and texts, so booting with it would send people "
+            "addresses they cannot open."
+        )
     if problems:
         raise ConfigurationError(" ".join(problems))
 
