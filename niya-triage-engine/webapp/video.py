@@ -155,3 +155,76 @@ def describe_mode() -> dict:
         "video": "Twilio Programmable Video" if is_available()
         else "Not connected (no Twilio API key pair)"
     }
+
+
+# ---------------------------------------------------------------------------
+# Credential verification
+#
+# Configured is not the same as working. Credentials that are merely present
+# report healthy and then fail when somebody tries to join, which is the worst
+# moment to discover it. This checks once at startup instead.
+# ---------------------------------------------------------------------------
+
+#: None until checked. True or False once a verification has been attempted.
+_verified: Optional[bool] = None
+_verification_detail: str = "not checked"
+
+
+def verify_credentials(timeout: int = 10) -> tuple:
+    """Ask Twilio whether the API key pair actually authenticates.
+
+    Returns (ok, detail). Never raises: a network problem at boot should not
+    stop the app serving everything that does not need video.
+    """
+    global _verified, _verification_detail
+
+    if not is_available():
+        _verified, _verification_detail = False, "no credentials set"
+        return _verified, _verification_detail
+
+    import base64
+    import urllib.error
+    import urllib.request
+
+    credentials = base64.b64encode(
+        f"{settings.TWILIO_API_KEY_SID}:{settings.TWILIO_API_KEY_SECRET}".encode()
+    ).decode()
+    # The Video API, not the account resource. API keys are not permitted to
+    # read the account, so checking there returns 401 for a perfectly good key
+    # and would condemn working credentials. This asks the service the app
+    # actually uses.
+    url = "https://video.twilio.com/v1/Rooms?PageSize=1"
+    request = urllib.request.Request(url)
+    request.add_header("Authorization", f"Basic {credentials}")
+
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            ok = response.status == 200
+            detail = "authenticated" if ok else f"HTTP {response.status}"
+    except urllib.error.HTTPError as error:
+        ok = False
+        detail = (
+            "rejected by Twilio (HTTP 401) - check TWILIO_API_KEY_SID and "
+            "TWILIO_API_KEY_SECRET belong to TWILIO_ACCOUNT_SID"
+            if error.code == 401
+            else f"HTTP {error.code}"
+        )
+    except Exception as error:  # noqa: BLE001
+        ok = False
+        detail = f"could not reach Twilio: {type(error).__name__}"
+
+    _verified, _verification_detail = ok, detail
+    if ok:
+        logger.info("twilio video credentials verified")
+    else:
+        logger.error("twilio video credentials unusable: %s", detail)
+    return ok, detail
+
+
+def status() -> str:
+    """What to report on the health endpoint."""
+    if not is_available():
+        return "not connected"
+    if _verified is None:
+        return "twilio (unverified)"
+    return "twilio" if _verified else f"twilio BROKEN: {_verification_detail}"

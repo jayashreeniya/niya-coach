@@ -21,7 +21,7 @@ from fastapi.staticfiles import StaticFiles
 
 from niya_triage import __version__ as engine_version
 
-from . import bootstrap, db, notify, payments, schema_check, settings
+from . import bootstrap, db, notify, payments, schema_check, settings, video
 from .deps import RedirectException
 from .templating import templates
 
@@ -56,6 +56,10 @@ def on_startup() -> None:
     schema_check.verify(db.engine, strict=settings.IS_PRODUCTION)
     with db.session_scope() as session:
         bootstrap.run(session)
+    # Configured is not the same as working. Checked once here so bad video
+    # credentials surface in the deploy log and on /healthz, rather than when
+    # somebody tries to join a session.
+    video.verify_credentials()
     logger.info("started: %s", settings.describe())
 
 
@@ -174,6 +178,9 @@ def healthz() -> JSONResponse:
     database_ok = db.healthcheck()
     payload = {
         **settings.describe(),
+        # Overrides the settings view, which can only report whether the
+        # variables are set, with whether Twilio accepted them.
+        "video": video.status(),
         "status": "ok" if database_ok else "degraded",
         "database": "ok" if database_ok else "unreachable",
         "engine_version": engine_version,

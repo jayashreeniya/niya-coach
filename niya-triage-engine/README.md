@@ -59,7 +59,7 @@ Read this before quoting anything from this repository.
 | Category accuracy on the hard set | Measured: **68.2%** — **below the 80% target** |
 | Business-impact figures | Modelled, not observed |
 
-221 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
+226 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
 accuracy misses its target and is reported as it stands rather than rounded up.
 
 Worth knowing before you trust the suite: the first evaluation run scored 62.5%

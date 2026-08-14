@@ -29,6 +29,36 @@ In the Rails app these same values are read from `CHAT_API_KEY` and
 `CHAT_API_SECRET`, named after an earlier use. They are named for what they are
 here.
 
+### Where to get the real values
+
+**From the Render dashboard, on the `niya-backend` service, under Environment.**
+Copy `ACCOUNT_SID`, `CHAT_API_KEY` and `CHAT_API_SECRET` from there.
+
+Not from `back-end/.env.local`, and not from `back-end/config/secrets.yml`.
+Both contain Twilio credentials, and as of August 2026 **every one of them is
+dead** — checked against Twilio, all return 401. They are left over from
+accounts or keys that have since been rotated. The same file also carried a
+retired database host, so treat it as historical throughout.
+
+The key pair must belong to the account in `TWILIO_ACCOUNT_SID`. An API key from
+a different account authenticates but then fails to mint usable tokens.
+
+### Checking the credentials work
+
+Configured is not the same as working, and the difference only shows up when
+somebody tries to join. So the app asks Twilio at startup and reports the answer
+on `/healthz`:
+
+| `video` value | Meaning |
+| --- | --- |
+| `not connected` | No credentials set. Session page shows the placeholder. |
+| `twilio` | Twilio accepted the key pair. |
+| `twilio BROKEN: ...` | Credentials are set but Twilio rejected them. Video will fail on join. |
+| `twilio (unverified)` | The check has not run yet. |
+
+A failure is also logged as an error in the deploy log. The check is one request
+per boot, and a network problem while making it never stops the app starting.
+
 ## How access is decided
 
 A Twilio access token is a JWT signed with the API key secret. `webapp/video.py`

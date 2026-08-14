@@ -241,6 +241,95 @@ def test_a_window_that_has_already_closed_still_mints_a_usable_token(configured)
     assert payload["exp"] > payload["iat"]
 
 
+# ---------------------------------------------------------------------------
+# Credential verification
+#
+# Present is not the same as working. A deployment with a rotated key reported
+# healthy right up until somebody tried to join.
+# ---------------------------------------------------------------------------
+
+
+def test_unconfigured_video_reports_not_connected(monkeypatch):
+    monkeypatch.setattr(settings, "VIDEO_LIVE", False)
+    monkeypatch.setattr(video, "_verified", None)
+    assert video.status() == "not connected"
+
+
+def test_credentials_that_twilio_rejects_are_reported_as_broken(configured, monkeypatch):
+    import urllib.error
+
+    def reject(*args, **kwargs):
+        raise urllib.error.HTTPError("url", 401, "Authenticate", {}, None)
+
+    monkeypatch.setattr("urllib.request.urlopen", reject)
+
+    ok, detail = video.verify_credentials()
+
+    assert ok is False
+    assert "401" in detail
+    assert "BROKEN" in video.status()
+
+
+def test_working_credentials_are_reported_plainly(configured, monkeypatch):
+    class Response:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: Response())
+
+    ok, _ = video.verify_credentials()
+
+    assert ok is True
+    assert video.status() == "twilio"
+
+
+def test_the_check_asks_the_video_api_not_the_account_resource(configured, monkeypatch):
+    """API keys cannot read the account resource.
+
+    Checking there returns 401 for a valid key, which would report working
+    credentials as broken. Ask the service the app actually uses.
+    """
+    seen = {}
+
+    class Response:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def capture(request, *args, **kwargs):
+        seen["url"] = request.full_url
+        return Response()
+
+    monkeypatch.setattr("urllib.request.urlopen", capture)
+
+    video.verify_credentials()
+
+    assert "video.twilio.com" in seen["url"]
+    assert "api.twilio.com" not in seen["url"]
+
+
+def test_a_network_failure_does_not_raise(configured, monkeypatch):
+    """A hiccup at boot must not stop the app serving everything else."""
+    def explode(*args, **kwargs):
+        raise OSError("no route to host")
+
+    monkeypatch.setattr("urllib.request.urlopen", explode)
+
+    ok, detail = video.verify_credentials()
+
+    assert ok is False
+    assert "could not reach Twilio" in detail
+
+
 def test_expiry_is_capped_at_twilios_maximum(configured):
     now = datetime(2026, 5, 1, 12, 0, 0, tzinfo=timezone.utc)
     absurd = now + timedelta(days=30)
