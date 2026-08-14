@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -26,6 +27,8 @@ from sqlalchemy.orm import Session
 
 from . import settings
 from .models import Booking, Notification, utcnow
+
+logger = logging.getLogger("niya.triage.notify")
 
 REQUEST_TIMEOUT_SECONDS = 15
 
@@ -355,3 +358,79 @@ def describe_mode() -> dict:
         "email": "SendGrid" if settings.EMAIL_LIVE else "Queued only (no SENDGRID_API_KEY)",
         "sms": "Twilio" if settings.SMS_LIVE else "Queued only (no Twilio credentials)",
     }
+
+
+# ---------------------------------------------------------------------------
+# Credential verification
+#
+# A key that is present is not a key that works. Confirmations are queued and
+# sent in the background, so a rejected key produces no error anyone sees: the
+# booking succeeds, the page says a confirmation is on its way, and nothing
+# arrives. Checked once at startup instead.
+# ---------------------------------------------------------------------------
+
+#: None until checked. True or False once a verification has been attempted.
+_email_verified: Optional[bool] = None
+_email_detail: str = "not checked"
+
+
+def verify_email_credentials(timeout: int = 10) -> tuple:
+    """Ask SendGrid whether the key works and may actually send mail.
+
+    Returns (ok, detail). Never raises: a network problem at boot should not
+    stop the app serving everything that does not need email.
+    """
+    global _email_verified, _email_detail
+
+    if not settings.EMAIL_LIVE:
+        _email_verified, _email_detail = False, "no SENDGRID_API_KEY set"
+        return _email_verified, _email_detail
+
+    # The scopes endpoint both authenticates the key and reveals its
+    # permissions, so a restricted key created without Mail Send is caught
+    # here rather than silently failing on the first confirmation.
+    request = urllib.request.Request("https://api.sendgrid.com/v3/scopes")
+    request.add_header("Authorization", f"Bearer {settings.SENDGRID_API_KEY}")
+
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            payload = json.loads(response.read().decode())
+            scopes = payload.get("scopes", [])
+            if "mail.send" in scopes:
+                ok, detail = True, "authenticated, may send mail"
+            else:
+                ok = False
+                detail = (
+                    "key authenticates but lacks the mail.send permission - "
+                    "recreate it as Restricted Access with Mail Send enabled"
+                )
+    except urllib.error.HTTPError as error:
+        ok = False
+        detail = (
+            "rejected by SendGrid (HTTP 401) - check SENDGRID_API_KEY"
+            if error.code == 401
+            else f"HTTP {error.code}"
+        )
+    except Exception as error:  # noqa: BLE001
+        ok = False
+        detail = f"could not reach SendGrid: {type(error).__name__}"
+
+    _email_verified, _email_detail = ok, detail
+    if ok:
+        logger.info("sendgrid credentials verified")
+    else:
+        logger.error("sendgrid credentials unusable: %s", detail)
+    return ok, detail
+
+
+def email_status() -> str:
+    """What to report on the health endpoint.
+
+    Says nothing about whether EMAIL_FROM is a verified sender. SendGrid only
+    rejects that at send time, so it cannot be established here.
+    """
+    if not settings.EMAIL_LIVE:
+        return "outbox only"
+    if _email_verified is None:
+        return "sendgrid (unverified)"
+    return "sendgrid (verified)" if _email_verified else f"sendgrid BROKEN: {_email_detail}"

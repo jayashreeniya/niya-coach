@@ -70,7 +70,30 @@ version control):
 | `APP_SECRET_KEY` | Yes | `generateValue: true` handles it. Changing it signs everyone out |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | No | Absent means payments are simulated |
 | `SENDGRID_API_KEY` | No | Absent means email queues instead of sending |
+| `EMAIL_FROM` | With SendGrid | Must be a sender you have verified with SendGrid |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` | No | Absent means SMS queues instead of sending |
+| `TWILIO_API_KEY_SID` / `TWILIO_API_KEY_SECRET` | No | Absent means the session page stays a placeholder. See `VIDEO.md` |
+
+## Checking credentials actually work
+
+`/healthz` reports what each provider said, not merely whether variables were
+set. The two are easily confused, and a key that is present but rejected fails
+silently: video fails when someone tries to join, and email fails in a
+background job where nobody sees the error.
+
+| Reading | Meaning |
+| --- | --- |
+| `outbox only` / `not connected` | Nothing configured. Queued or placeholder. |
+| `sendgrid (verified)` / `twilio (verified)` | The provider accepted the credentials at startup. |
+| `sendgrid BROKEN: …` / `twilio BROKEN: …` | Configured and rejected. Fix before anyone relies on it. |
+
+Failures are also logged as errors in the deploy log. The checks never stop the
+app booting: a transient network problem should not take down everything that
+has nothing to do with email or video.
+
+One thing they cannot establish is whether `EMAIL_FROM` is a sender SendGrid
+will accept. That is only rejected at send time, so verify the sender in the
+SendGrid dashboard as well.
 
 The app refuses to start in production without `APP_SECRET_KEY` or with
 `DATABASE_URL` still pointing at SQLite. Failing to boot is better than running:

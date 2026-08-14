@@ -56,10 +56,12 @@ def on_startup() -> None:
     schema_check.verify(db.engine, strict=settings.IS_PRODUCTION)
     with db.session_scope() as session:
         bootstrap.run(session)
-    # Configured is not the same as working. Checked once here so bad video
+    # Configured is not the same as working. Checked once here so bad
     # credentials surface in the deploy log and on /healthz, rather than when
-    # somebody tries to join a session.
+    # somebody tries to join a session or waits for a confirmation that was
+    # never sent.
     video.verify_credentials()
+    notify.verify_email_credentials()
     logger.info("started: %s", settings.describe())
 
 
@@ -179,8 +181,9 @@ def healthz() -> JSONResponse:
     payload = {
         **settings.describe(),
         # Overrides the settings view, which can only report whether the
-        # variables are set, with whether Twilio accepted them.
+        # variables are set, with whether the provider accepted them.
         "video": video.status(),
+        "email": notify.email_status(),
         "status": "ok" if database_ok else "degraded",
         "database": "ok" if database_ok else "unreachable",
         "engine_version": engine_version,
