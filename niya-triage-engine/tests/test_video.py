@@ -285,7 +285,9 @@ def test_working_credentials_are_reported_plainly(configured, monkeypatch):
     ok, _ = video.verify_credentials()
 
     assert ok is True
-    assert video.status() == "twilio"
+    # Not the bare "twilio" the old presence-only check reported, so that the
+    # health endpoint distinguishes accepted credentials from present ones.
+    assert video.status() == "twilio (verified)"
 
 
 def test_the_check_asks_the_video_api_not_the_account_resource(configured, monkeypatch):

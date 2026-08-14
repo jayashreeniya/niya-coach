@@ -52,7 +52,7 @@ on `/healthz`:
 | `video` value | Meaning |
 | --- | --- |
 | `not connected` | No credentials set. Session page shows the placeholder. |
-| `twilio` | Twilio accepted the key pair. |
+| `twilio (verified)` | Twilio accepted the key pair. |
 | `twilio BROKEN: ...` | Credentials are set but Twilio rejected them. Video will fail on join. |
 | `twilio (unverified)` | The check has not run yet. |
 

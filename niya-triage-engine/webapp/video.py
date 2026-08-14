@@ -227,4 +227,8 @@ def status() -> str:
         return "not connected"
     if _verified is None:
         return "twilio (unverified)"
-    return "twilio" if _verified else f"twilio BROKEN: {_verification_detail}"
+    # Says "verified" rather than plain "twilio" so that reading the health
+    # endpoint distinguishes credentials Twilio has accepted from credentials
+    # that merely exist. The two used to be indistinguishable, which is how a
+    # rejected key managed to report healthy for a day.
+    return "twilio (verified)" if _verified else f"twilio BROKEN: {_verification_detail}"
