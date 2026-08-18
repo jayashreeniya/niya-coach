@@ -70,7 +70,7 @@ module BxBlockAppointmentManagement
       
       filtered_timeslots = timeslots.select do |slot|
         slot_time = Time.parse(slot['from'])
-        slot_time >= start_time && slot_time <= end_time
+        slot_time >= Time.parse(start_time) && slot_time <= Time.parse(end_time)
       end
     
       booked_slots = filtered_timeslots.map {|obj| true if obj["booked_status"] == true}
@@ -104,19 +104,25 @@ module BxBlockAppointmentManagement
       end
     
       available_slots = availability.timeslots
-      start_time = Time.parse(self.start_time).strftime(Time_Format)
-      end_time = Time.parse(self.end_time).strftime(Time_Format)
-      available_slot = available_slots.map do |slot|
-        if Time.parse(slot['from']) >= Time.parse(start_time) && Time.parse(slot['to']) <= Time.parse(end_time)
-          slot['booked_status'] = true
-        end
-       slot
-      end
-      if available_slots.nil?
+      if available_slots.blank?
         errors.add(:booking_date, "No booking for this time")
         return
       end
-      availability.update(timeslots: available_slot)
+
+      # Read-only on purpose: slots are marked booked by the controller only after
+      # the record saves, so an abandoned or rejected attempt can't consume them.
+      start_time = Time.parse(Time.parse(self.start_time).strftime(Time_Format))
+      end_time = Time.parse(Time.parse(self.end_time).strftime(Time_Format))
+      overlapping = available_slots.select do |slot|
+        slot['from'].present? && slot['to'].present? &&
+          Time.parse(slot['from']) >= start_time && Time.parse(slot['to']) <= end_time
+      end
+
+      if overlapping.empty?
+        errors.add(:booking_date, "No booking for this time")
+      elsif overlapping.any? { |slot| slot['booked_status'] == true }
+        errors.add(:booking_date, "This slot is already booked")
+      end
     end
 
     def check_booked_date

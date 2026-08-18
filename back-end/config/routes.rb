@@ -213,6 +213,7 @@ Rails.application.routes.draw do
     get "booked_slots/user_appointments"
     get "booked_slots/video_call"
     post "booked_slots/user_action_item"
+    post "booked_slots/validate_slot" , to: "booked_slots#validate_slot"
     post "booked_slots/confirm_payment" , to: "booked_slots#confirm_payment"
     post "booked_slots/cancel_booking" , to: "booked_slots#cancel_booking"
     get "booked_slots/cancelled_booked_slots" , to: "booked_slots#cancelled_booked_slots"

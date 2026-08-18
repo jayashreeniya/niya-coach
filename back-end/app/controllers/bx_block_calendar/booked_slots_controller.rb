@@ -9,8 +9,8 @@ module BxBlockCalendar
     include Pagy::Backend
     skip_before_action :verify_authenticity_token
     # before_action :track_login, only: [:video_call]
-    before_action :validate_time_intervals,  only: [:create]
-    before_action :validating_appointments,  only: [:create]
+    before_action :validate_time_intervals,  only: [:create, :validate_slot]
+    before_action :validating_appointments,  only: [:create, :validate_slot]
     before_action :validate_json_web_token, except: [:all_slots, :booked_slot_details]
     before_action :validate_coach_id, only: [:user_appointments, :coach_upcoming_appointments, :coach_past_appointments]
 
@@ -77,6 +77,24 @@ module BxBlockCalendar
       end
     end
 
+    # Runs the exact same validations as #create but persists nothing, so the
+    # frontend can confirm the slot is bookable before taking payment.
+    def validate_slot
+      book_appoint = BxBlockAppointmentManagement::BookedSlot.new(book_params)
+      book_appoint.service_user = current_user
+      book_appoint.meeting_code = "validation-only"
+
+      if book_appoint.valid?
+        render json: { valid: true }, status: :ok
+      else
+        error_hash = {}
+        book_appoint.errors.messages.each_pair do |column_name, message|
+          error_hash[column_name] = message.first
+        end
+        render json: { valid: false, errors: [error_hash] }, status: :unprocessable_entity
+      end
+    end
+
     def create
       book_appoint = BxBlockAppointmentManagement::BookedSlot.new(book_params)
       book_appoint.service_user = current_user
@@ -92,17 +110,20 @@ module BxBlockCalendar
         # BxBlockAppointmentManagement::Availability.find_by("service_provider_id = ? and availability_date = ?",
         #  book_appoint.service_provider_id, book_appoint.booking_date.strftime("%d-%m-%Y").to_s.gsub("-","/"))
 
-        availability.available_slots_count -= 1
-        
-        availability.timeslots.each_with_index do |timeslot, index|
-          if timeslot["to"]== Time.parse(book_appoint.end_time.split[1]).strftime(TIME) && 
-            timeslot["from"]== Time.parse(book_appoint.start_time.split[1]).strftime(TIME)
-            matched_slot = availability.timeslots[index]
-            matched_slot["booked_status"] = true
-            availability.timeslots[index] = matched_slot
-            availability.save
-            break
+        if availability.present?
+          availability.available_slots_count -= 1
+
+          slot_start = Time.parse(Time.parse(book_appoint.start_time.split[1]).strftime(TIME))
+          slot_end = Time.parse(Time.parse(book_appoint.end_time.split[1]).strftime(TIME))
+          availability.timeslots = availability.timeslots.map do |timeslot|
+            if timeslot["from"].present? && timeslot["to"].present? &&
+              Time.parse(timeslot["from"]) >= slot_start && Time.parse(timeslot["to"]) <= slot_end
+              timeslot.merge("booked_status" => true)
+            else
+              timeslot
+            end
           end
+          availability.save
         end
         # DON'T send emails here - booking is created but payment not confirmed yet
         # Emails will be sent from confirm_payment endpoint after Razorpay confirms payment
