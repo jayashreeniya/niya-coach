@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Sign in - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Sign in</h1>
+
+{% if error %}
+  <div class="notice error">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/login" novalidate>
+  <input type="hidden" name="next" value="{{ next }}">
+  <div class="card">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" autocomplete="email" inputmode="email"
+             required autofocus value="{{ email or '' }}">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" required>
+    </div>
+  </div>
+  <button class="btn" type="submit">Sign in</button>
+</form>
+
+<p class="small muted" style="margin:16px 0 0">No account yet?</p>
+<p style="margin-top:0"><a class="backlink" href="/signup">Create one</a></p>
+{% endblock %}

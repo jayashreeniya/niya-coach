@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% set active = 'schedule' %}
+{% block title %}Your sessions - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Your sessions</h1>
+
+{% if not profile.active %}
+  <div class="notice warn small">
+    You are not accepting new clients, so you will not appear in anyone's
+    matches. Existing sessions below are unaffected.
+    <a href="/expert/availability">Change this</a>.
+  </div>
+{% endif %}
+
+{% if bookings %}
+  <div class="card tight">
+    <div class="row between">
+      <span class="small muted">Booked sessions</span>
+      <strong>{{ bookings|length }}</strong>
+    </div>
+    <div class="row between" style="margin-top:8px">
+      <span class="small muted">Your fees from these</span>
+      <strong>{{ expected_minor|money(currency) }}</strong>
+    </div>
+  </div>
+{% endif %}
+
+{# All times in the counsellor's own timezone, with the client's shown beneath.
+   The mirror image of what the client sees, from the same stored UTC value. #}
+{% for item in bookings %}
+  {% set booking = item.booking %}
+  {% set connect = item.connect %}
+  <div class="card appt">
+    <div class="row between">
+      <span class="status {{ booking.status }}">{{ booking.status|title }}</span>
+      <span class="tiny muted">{{ booking.booking_ref }}</span>
+    </div>
+
+    <div class="when" style="margin-top:10px">
+      {{ booking.start|zone(profile.timezone)|day_label }},
+      {{ booking.start|zone(profile.timezone)|clock }}–{{ booking.end|zone(profile.timezone)|clock }}
+    </div>
+    <div class="their">
+      {{ profile.timezone|zone_label }} · that is
+      {{ booking.start|zone(booking.client_timezone)|clock }} for them
+      ({{ booking.client_timezone|zone_label }})
+    </div>
+
+    {# What the person needs help with, not who they are. The counsellor learns
+       the rest from them directly, in the session. #}
+    <p class="small" style="margin:12px 0 0">
+      <span class="pill tag">{{ booking.primary_category.replace('_', ' ')|title or 'Not categorised' }}</span>
+      <span class="pill {{ booking.urgency }}">{{ booking.urgency }}</span>
+    </p>
+
+    <div class="window">
+      {% if connect.can_connect %}
+        <a class="btn" href="/expert/session/{{ booking.booking_ref }}">Connect now</a>
+        <p class="tiny muted" style="margin:10px 0 0">
+          Open until {{ connect.closes_at|zone(profile.timezone)|clock }}. You can
+          leave and rejoin during the session.
+        </p>
+      {% elif connect.reason == 'too_early' %}
+        <button class="btn" disabled aria-disabled="true">Connect now</button>
+        <p class="tiny muted" style="margin:10px 0 0">
+          Opens five minutes before, at
+          <strong>{{ connect.opens_at|zone(profile.timezone)|clock }}</strong> — in
+          <span class="countdown" data-opens-in="{{ connect.seconds_until_open }}">{{ connect.seconds_until_open|duration }}</span>.
+        </p>
+      {% elif connect.reason == 'too_late' %}
+        <button class="btn" disabled aria-disabled="true">Connect now</button>
+        <p class="tiny muted" style="margin:10px 0 0">This session has ended.</p>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <div class="card">
+    <p>You have no sessions booked.</p>
+    <p class="small muted" style="margin-bottom:0">
+      Clients reach you through matching. Keeping your availability current is
+      the main thing that affects how often that happens.
+    </p>
+  </div>
+{% endfor %}
+
+<script src="/static/connect.js" defer></script>
+{% endblock %}

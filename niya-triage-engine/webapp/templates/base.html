@@ -1,0 +1,71 @@
+{# Shared shell. Mobile-first: bottom tab bar on phones, top bar on desktop. #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  {# viewport-fit=cover so the tab bar clears the iPhone home indicator #}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#6c4ab6">
+  {# Nothing here should ever be indexed or previewed. #}
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+{# Each role gets its own home, so the brand never links somewhere the signed-in
+   account is not allowed to go. #}
+{% set home = '/' %}
+{% if account %}
+  {% if account.is_admin %}{% set home = '/admin' %}
+  {% elif account.is_counsellor %}{% set home = '/expert' %}
+  {% else %}{% set home = '/intake' %}{% endif %}
+{% endif %}
+
+<header class="top">
+  <a class="brand" href="{{ home }}">NIYA <span>Triage</span></a>
+  {% if account %}
+    <form method="post" action="/logout" style="margin:0">
+      <button class="btn quiet" style="width:auto;padding:6px 14px;font-size:14px">Sign out</button>
+    </form>
+  {% else %}
+    <a class="small" href="/login">Sign in</a>
+  {% endif %}
+</header>
+
+{% if account %}
+<nav class="tabs">
+  {% if account.is_admin %}
+    <a href="/admin" class="{{ 'active' if active == 'roster' }}">Counsellors</a>
+    <a href="/admin/bookings" class="{{ 'active' if active == 'admin_bookings' }}">Sessions</a>
+    <a href="/admin/counsellors/new" class="{{ 'active' if active == 'onboard' }}">Add</a>
+  {% elif account.is_counsellor %}
+    <a href="/expert" class="{{ 'active' if active == 'schedule' }}">Sessions</a>
+    <a href="/expert/availability" class="{{ 'active' if active == 'availability' }}">Availability</a>
+    <a href="/expert/password" class="{{ 'active' if active == 'password' }}">Password</a>
+  {% else %}
+    <a href="/intake" class="{{ 'active' if active == 'intake' }}">Get help</a>
+    <a href="/appointments" class="{{ 'active' if active == 'appointments' }}">Appointments</a>
+    <a href="/account" class="{{ 'active' if active == 'account' }}">Account</a>
+  {% endif %}
+</nav>
+{% endif %}
+
+<main class="wrap">
+  {% block content %}{% endblock %}
+
+  {% block footnote %}
+  <p class="footnote">
+    This service supports human judgement, it does not replace it. It offers no
+    diagnosis and no medical advice.
+    {% if not is_production %}
+    <br><strong>Non-production environment.</strong> Counsellor data is synthetic
+    {%- if not payments_live %} and no real payment is taken{% endif %}.
+    {% endif %}
+  </p>
+  {% endblock %}
+</main>
+
+</body>
+</html>

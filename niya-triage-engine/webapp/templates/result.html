@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% set active = 'intake' %}
+{% block title %}What we found - {{ app_name }}{% endblock %}
+
+{% block content %}
+
+{% if case.safety_blocked %}
+  {# Safety outranks everything. No booking flow is offered on this page,
+     because a scheduled appointment is the wrong answer to a crisis. #}
+  <div class="notice crisis">
+    <h2 style="margin-top:0">Please reach out to someone now.</h2>
+    <p>
+      From what you wrote, you need support faster than a booked appointment can
+      give you. That is not a judgement about you - it is about timing.
+    </p>
+    <p style="margin-bottom:0"><strong>You are not wasting anyone's time by calling.</strong></p>
+  </div>
+
+  {% if emergency %}
+  <div class="card">
+    <h3>People you can talk to right now</h3>
+    <ul class="stack" style="padding-left:18px;margin:0">
+      {% for resource in emergency %}
+        <li>
+          <strong>{{ resource.label }}</strong> — {{ resource.contact }}
+          {% if resource.note %}<br><span class="tiny muted">{{ resource.note }}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <p class="small">
+      A member of our team has been alerted and will try to reach you. If you
+      would still like to book a session for later, you can do that once you have
+      spoken to someone.
+    </p>
+    <a class="btn secondary" href="/intake">Go back</a>
+  </div>
+
+{% else %}
+
+  <h1>Here is what we think would help.</h1>
+
+  <div class="card">
+    <div class="row between" style="margin-bottom:10px">
+      <span class="pill tag">{{ case.primary_category.replace('_', ' ')|title }}</span>
+      <span class="pill {{ case.urgency }}">{{ case.urgency }}</span>
+    </div>
+
+    {% if pathway %}
+      <h3 style="margin-top:6px">{{ pathway.label }}</h3>
+      <p class="small">{{ pathway.description }}</p>
+    {% endif %}
+
+    {% if case.confidence < 55 %}
+      <div class="notice info small" style="margin-bottom:0">
+        We are not certain we have read this correctly. The counsellors below are
+        a reasonable starting point, and whoever you speak to will work it out
+        with you properly.
+      </div>
+    {% endif %}
+  </div>
+
+  {% if case.human_review_required %}
+    <div class="notice warn">
+      A member of our team will look at this personally as well, so nothing gets
+      missed.
+    </div>
+  {% endif %}
+
+  <h2>Counsellors who fit</h2>
+  {% if shortlist %}
+    <p class="small muted">
+      Ranked by how well they match what you described, the languages you speak,
+      and who has time available near when you want it. Fees are set by each
+      counsellor and are not part of that ranking.
+    </p>
+
+    {% for item in shortlist %}
+    {% set counsellor = item.counsellor %}
+    <div class="card tight">
+      <div class="row between">
+        <div>
+          <div class="name" style="font-weight:600;font-size:17px">{{ counsellor.display_name }}</div>
+          <div class="meta small muted">{{ counsellor.credentials }}</div>
+        </div>
+        {# Counsellors set their own rates, so the price belongs on the card
+           rather than in one figure at checkout. Seeing it before choosing is
+           the difference between picking someone and being surprised later. #}
+        <div class="price">
+          <strong>{{ item.price_minor|money(item.currency) }}</strong>
+          <span class="tiny muted">60 min</span>
+        </div>
+      </div>
+      <p class="small" style="margin:10px 0 6px">
+        {{ counsellor|strengths }}
+      </p>
+      <p class="tiny muted" style="margin-bottom:12px">
+        Speaks {{ counsellor.languages|titles }} ·
+        {{ counsellor.timezone }} ·
+        {{ counsellor.years_experience }} years experience
+      </p>
+      <a class="btn" href="/book/{{ case.case_ref }}/{{ counsellor.id }}">See {{ counsellor.display_name.split(' ')[0] }}'s times</a>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="notice warn">
+      We could not find a good match with availability right now. Our team has
+      been notified and will find someone for you.
+    </div>
+  {% endif %}
+
+  <p class="small muted" style="margin-top:20px;margin-bottom:0">Not quite right?</p>
+  <p style="margin-top:0">
+    <a class="backlink" href="/intake">Describe it differently</a>
+  </p>
+
+{% endif %}
+{% endblock %}

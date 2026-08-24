@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% set active = 'schedule' %}
+{% block title %}In session - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>You are in</h1>
+
+<div class="notice ok">
+  Connected to your session. Reference {{ booking.booking_ref }}.
+</div>
+
+<div class="card">
+  {# Same honest placeholder as the client side, and the same room id, so when a
+     video provider is wired in both parties land in one place. #}
+  <h3 style="margin-top:0">Video is not connected yet</h3>
+  <p class="small">
+    The window is open and you are authorised. The video provider has not been
+    wired in, so there is nothing to see or hear here yet.
+  </p>
+  <p class="small muted" style="margin-bottom:0">
+    Room <code>{{ booking.room_id }}</code>
+  </p>
+</div>
+
+<div class="card tight">
+  <div class="row between">
+    <span class="small">What they came for</span>
+    <strong>{{ booking.primary_category.replace('_', ' ')|title or 'Not categorised' }}</strong>
+  </div>
+  <div class="row between" style="margin-top:6px">
+    <span class="small">Urgency at intake</span>
+    <strong>{{ booking.urgency|title }}</strong>
+  </div>
+  <div class="row between" style="margin-top:6px">
+    <span class="small">Session ends</span>
+    <strong>{{ booking.end|zone(profile.timezone)|clock }}</strong>
+  </div>
+  <div class="row between" style="margin-top:6px">
+    <span class="small">You can rejoin until</span>
+    <strong>{{ connect.closes_at|zone(profile.timezone)|clock }}</strong>
+  </div>
+</div>
+
+<form method="post" action="/expert/session/{{ booking.booking_ref }}/leave">
+  <button class="btn secondary" type="submit">Leave the session</button>
+</form>
+
+<p class="tiny muted" style="margin-top:14px">
+  Leaving does not end the session. You can rejoin from your sessions page until
+  {{ connect.closes_at|zone(profile.timezone)|clock }}.
+</p>
+{% endblock %}

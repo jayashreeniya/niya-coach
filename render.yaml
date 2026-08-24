@@ -5,6 +5,12 @@ services:
     dockerfilePath: ./back-end/Dockerfile
     dockerContext: ./back-end
     plan: free
+    # Only rebuild when this service's own code changes. Without this, every
+    # commit to master redeploys the live API, including commits that only
+    # touch an unrelated service.
+    buildFilters:
+      paths:
+        - back-end/**
     envVars:
       - key: RAILS_ENV
         value: production
@@ -39,6 +45,9 @@ services:
     dockerfilePath: ./niya-practice/Dockerfile
     dockerContext: ./niya-practice
     plan: free
+    buildFilters:
+      paths:
+        - niya-practice/**
     envVars:
       - key: NODE_ENV
         value: production
@@ -85,4 +94,86 @@ services:
       - key: GOOGLE_SA_KEY
         sync: false
       - key: ADMIN_EMAILS
+        sync: false
+
+  # AI triage and matching. Standalone: its own `niyatriage` database, its own
+  # accounts, no connection to niya-backend or niya_admin_db.
+  - type: web
+    name: niya-triage
+    runtime: docker
+    dockerfilePath: ./niya-triage-engine/Dockerfile
+    dockerContext: ./niya-triage-engine
+    plan: free
+    healthCheckPath: /healthz
+    buildFilters:
+      paths:
+        - niya-triage-engine/**
+        - render.yaml
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: BASE_URL
+        value: https://niya-triage.onrender.com
+      - key: SESSION_PRICE_MINOR
+        value: "150000"
+      - key: SESSION_CURRENCY
+        value: INR
+      # Points at the `niyatriage` database on the same TiDB Cloud cluster.
+      # TiDB requires TLS, hence ssl_verify_cert:
+      #   mysql+pymysql://USER:PASS@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/niyatriage?ssl_verify_cert=true&ssl_verify_identity=true
+      - key: DATABASE_URL
+        sync: false
+      # At least 32 characters. Changing it signs everybody out.
+      - key: APP_SECRET_KEY
+        generateValue: true
+      # Absent until go-live, so payments stay simulated and no card is taken.
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      # Absent until go-live, so messages queue and are visible in the app
+      # rather than being sent.
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: hello@niya.app
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_NUMBER
+        sync: false
+
+  # Reminders. A cron job rather than a thread in the web service, because two
+  # replicas would otherwise each send every reminder.
+  - type: cron
+    name: niya-triage-reminders
+    runtime: docker
+    dockerfilePath: ./niya-triage-engine/Dockerfile
+    dockerContext: ./niya-triage-engine
+    plan: starter
+    schedule: "*/5 * * * *"
+    dockerCommand: python scripts/send_due_notifications.py
+    buildFilters:
+      paths:
+        - niya-triage-engine/**
+        - render.yaml
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: BASE_URL
+        value: https://niya-triage.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_SECRET_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: hello@niya.app
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_NUMBER
         sync: false

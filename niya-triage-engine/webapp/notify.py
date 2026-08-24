@@ -1,0 +1,357 @@
+"""Email and SMS delivery, plus the message templates.
+
+Every message is written to the `notifications` table first and sent second, so
+there is always a record of what was meant to go out, whether or not the
+provider accepted it. Delivery failures mark the row `failed` with the reason
+rather than raising, because a booking must not be lost because SendGrid had a
+bad minute.
+
+SendGrid and Twilio are reached over their REST APIs with `urllib`; both calls
+are a single POST, so the SDKs would add dependencies without adding anything.
+When credentials are absent the message stays `queued` and is visible in the UI
+- the same behaviour the prototype had, now durable.
+"""
+
+from __future__ import annotations
+
+import base64
+import json
+import urllib.error
+import urllib.parse
+import urllib.request
+from datetime import datetime, timedelta, timezone
+from typing import List, Optional
+
+from sqlalchemy.orm import Session
+
+from . import settings
+from .models import Booking, Notification, utcnow
+
+REQUEST_TIMEOUT_SECONDS = 15
+
+#: How hard to try before giving up on a message, and how long to wait between
+#: attempts. A reminder that arrives twenty minutes late is still useful; one
+#: dropped because SendGrid returned a 503 once is not.
+MAX_SEND_ATTEMPTS = 4
+RETRY_BACKOFF_MINUTES = (2, 10, 30)
+
+#: Lead times before the session. NIYA has a worker for this that the live
+#: controller never enqueues, so in practice no reminder has been sent since
+#: that refactor.
+REMINDER_LEAD_TIMES = (
+    (timedelta(hours=24), "24 hours"),
+    (timedelta(hours=1), "1 hour"),
+    (timedelta(minutes=5), "5 minutes"),
+)
+
+
+# ---------------------------------------------------------------------------
+# Masking
+# ---------------------------------------------------------------------------
+
+
+def mask_email(value: Optional[str]) -> str:
+    if not value or "@" not in value:
+        return ""
+    local, _, domain = value.partition("@")
+    return f"{local[:1]}{'*' * max(1, len(local) - 1)}@{domain}"
+
+
+def mask_phone(value: Optional[str]) -> str:
+    if not value:
+        return ""
+    return f"{value[:3]}{'*' * max(1, len(value) - 6)}{value[-3:]}"
+
+
+# ---------------------------------------------------------------------------
+# Formatting
+# ---------------------------------------------------------------------------
+
+
+def _offset(timezone_name: str):
+    from niya_triage.tz import offset_hours
+
+    return timezone(timedelta(hours=offset_hours(timezone_name)))
+
+
+def local_time(moment: datetime, timezone_name: str) -> datetime:
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.astimezone(_offset(timezone_name))
+
+
+def format_when(booking: Booking, timezone_name: str) -> str:
+    start = local_time(booking.start, timezone_name)
+    end = local_time(booking.end, timezone_name)
+    return f"{start:%A %d %B %Y}, {start:%H:%M}-{end:%H:%M} ({timezone_name})"
+
+
+def _money(booking: Booking) -> str:
+    if booking.payment is None:
+        return ""
+    return f"{booking.payment.amount_minor / 100:,.2f} {booking.payment.currency}"
+
+
+# ---------------------------------------------------------------------------
+# Queueing
+# ---------------------------------------------------------------------------
+
+
+def _queue(
+    session: Session,
+    booking: Booking,
+    channel: str,
+    kind: str,
+    recipient: str,
+    subject: str,
+    body: str,
+    send_at: datetime,
+) -> Optional[Notification]:
+    if not recipient:
+        return None
+
+    masked = mask_email(recipient) if channel == "email" else mask_phone(recipient)
+    notification = Notification(
+        booking_id=booking.id,
+        channel=channel,
+        kind=kind,
+        recipient=recipient,
+        recipient_masked=masked,
+        subject=subject,
+        body=body,
+        send_at=send_at,
+        status="queued",
+    )
+    session.add(notification)
+    return notification
+
+
+def queue_booking_confirmed(session: Session, booking: Booking, account) -> List[Notification]:
+    """Confirmation on every channel we have, plus the reminders."""
+    queued: List[Notification] = []
+    now = utcnow()
+    yours = format_when(booking, booking.client_timezone)
+    theirs = format_when(booking, booking.counsellor_timezone)
+
+    email_body = f"""Hello {account.full_name or 'there'},
+
+Your session with {booking.counsellor_name} is confirmed.
+
+  When (your time):  {yours}
+  Counsellor's time: {theirs}
+  Reference:         {booking.booking_ref}
+  Paid:              {_money(booking)}
+
+Joining
+  Sign in and open My appointments. The "Connect now" button becomes active
+  5 minutes before the start time and stays active until 5 minutes after the
+  end. If your connection drops you can rejoin as many times as you need.
+
+  {settings.BASE_URL}/appointments
+
+If you need to cancel, you can do it from that page.
+"""
+
+    queued.append(
+        _queue(
+            session, booking, "email", "confirmation", account.email,
+            f"Your session with {booking.counsellor_name} is confirmed",
+            email_body, now,
+        )
+    )
+
+    start_local = local_time(booking.start, booking.client_timezone)
+    queued.append(
+        _queue(
+            session, booking, "sms", "confirmation", account.phone or "",
+            "",
+            (
+                f"NIYA: session with {booking.counsellor_name} confirmed for "
+                f"{start_local:%a %d %b, %H:%M} ({booking.client_timezone}). "
+                f"Join from {settings.BASE_URL}/appointments 5 min before. "
+                f"Ref {booking.booking_ref}"
+            ),
+            now,
+        )
+    )
+
+    for lead, label in REMINDER_LEAD_TIMES:
+        send_at = booking.start - lead
+        if send_at <= now:
+            continue
+        queued.append(
+            _queue(
+                session, booking, "email", "reminder", account.email,
+                f"Your session with {booking.counsellor_name} is in {label}",
+                (
+                    f"A reminder that your session starts in {label}, at "
+                    f"{start_local:%H:%M} ({booking.client_timezone}).\n\n"
+                    f"Connect now opens 5 minutes before:\n"
+                    f"{settings.BASE_URL}/appointments\n\n"
+                    f"Reference {booking.booking_ref}.\n"
+                ),
+                send_at,
+            )
+        )
+        queued.append(
+            _queue(
+                session, booking, "sms", "reminder", account.phone or "",
+                "",
+                (
+                    f"NIYA: your session with {booking.counsellor_name} starts in "
+                    f"{label} ({start_local:%H:%M} {booking.client_timezone}). "
+                    f"Ref {booking.booking_ref}"
+                ),
+                send_at,
+            )
+        )
+
+    session.commit()
+    return [item for item in queued if item is not None]
+
+
+def queue_booking_cancelled(session: Session, booking: Booking, account) -> List[Notification]:
+    now = utcnow()
+    when = format_when(booking, booking.client_timezone)
+
+    # Pending reminders for a cancelled session must not go out.
+    for notification in booking.notifications:
+        if notification.kind == "reminder" and notification.status == "queued":
+            notification.status = "cancelled"
+
+    queued = [
+        _queue(
+            session, booking, "email", "cancellation", account.email,
+            "Your session has been cancelled",
+            (
+                f"Your session with {booking.counsellor_name} on {when} has been "
+                f"cancelled.\n\nAny payment taken will be refunded.\n"
+                f"Reference {booking.booking_ref}.\n"
+            ),
+            now,
+        ),
+        _queue(
+            session, booking, "sms", "cancellation", account.phone or "",
+            "",
+            (
+                f"NIYA: your session with {booking.counsellor_name} on {when} is "
+                f"cancelled. Ref {booking.booking_ref}"
+            ),
+            now,
+        ),
+    ]
+    session.commit()
+    return [item for item in queued if item is not None]
+
+
+# ---------------------------------------------------------------------------
+# Delivery
+# ---------------------------------------------------------------------------
+
+
+def _send_email(to: str, subject: str, body: str) -> None:
+    request = urllib.request.Request(
+        "https://api.sendgrid.com/v3/mail/send",
+        data=json.dumps(
+            {
+                "personalizations": [{"to": [{"email": to}]}],
+                "from": {"email": settings.EMAIL_FROM, "name": settings.EMAIL_FROM_NAME},
+                "subject": subject,
+                "content": [{"type": "text/plain", "value": body}],
+            }
+        ).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {settings.SENDGRID_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+        if response.status >= 300:
+            raise RuntimeError(f"SendGrid returned {response.status}")
+
+
+def _send_sms(to: str, body: str) -> None:
+    credentials = f"{settings.TWILIO_ACCOUNT_SID}:{settings.TWILIO_AUTH_TOKEN}".encode()
+    request = urllib.request.Request(
+        f"https://api.twilio.com/2010-04-01/Accounts/{settings.TWILIO_ACCOUNT_SID}/Messages.json",
+        data=urllib.parse.urlencode(
+            {"To": to, "From": settings.TWILIO_FROM_NUMBER, "Body": body}
+        ).encode("utf-8"),
+        headers={
+            "Authorization": "Basic " + base64.b64encode(credentials).decode(),
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+        if response.status >= 300:
+            raise RuntimeError(f"Twilio returned {response.status}")
+
+
+def deliver_due(session: Session, limit: int = 50, now: Optional[datetime] = None) -> dict:
+    """Send everything whose time has come.
+
+    Called after booking so confirmations go immediately, and from
+    `scripts/send_due_notifications.py` on a schedule for the reminders. On
+    Render that is a Cron Job; there is no in-process scheduler because a web
+    service with more than one replica would send every reminder twice.
+    """
+    reference = now or utcnow()
+    pending = (
+        session.query(Notification)
+        .filter(Notification.status == "queued", Notification.send_at <= reference)
+        .order_by(Notification.send_at)
+        .limit(limit)
+        .all()
+    )
+
+    sent = failed = skipped = retried = 0
+    for notification in pending:
+        live = settings.EMAIL_LIVE if notification.channel == "email" else settings.SMS_LIVE
+        if not live:
+            skipped += 1
+            continue
+
+        notification.attempts += 1
+        try:
+            if notification.channel == "email":
+                _send_email(notification.recipient, notification.subject, notification.body)
+                notification.provider = "sendgrid"
+            else:
+                _send_sms(notification.recipient, notification.body)
+                notification.provider = "twilio"
+        except Exception as error:  # noqa: BLE001 - a failed send must not break the caller
+            notification.error = str(error)[:255]
+            if notification.attempts >= MAX_SEND_ATTEMPTS:
+                notification.status = "failed"
+                failed += 1
+            else:
+                # Stay queued and try again later, with the delay growing each
+                # time, so a brief provider outage does not lose the message.
+                retry_in = RETRY_BACKOFF_MINUTES[
+                    min(notification.attempts - 1, len(RETRY_BACKOFF_MINUTES) - 1)
+                ]
+                notification.send_at = (
+                    reference + timedelta(minutes=retry_in)
+                ).replace(tzinfo=None)
+                retried += 1
+        else:
+            notification.status = "sent"
+            notification.sent_at = utcnow()
+            sent += 1
+
+    session.commit()
+    return {
+        "sent": sent,
+        "retrying": retried,
+        "failed": failed,
+        "skipped_not_configured": skipped,
+    }
+
+
+def describe_mode() -> dict:
+    return {
+        "email": "SendGrid" if settings.EMAIL_LIVE else "Queued only (no SENDGRID_API_KEY)",
+        "sms": "Twilio" if settings.SMS_LIVE else "Queued only (no Twilio credentials)",
+    }
