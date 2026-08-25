@@ -1,8 +1,9 @@
-import React, { useState,useEffect  } from "react";
+import React, { useState,useEffect,useRef  } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/niyalogo.png";
 import DatePicker from 'react-date-picker';
 import "./calebder.css";
+import "./myAppointments.css";
 import Select from 'react-select';
 import dateFormat from 'dateformat';
 // Bootstrap components
@@ -17,6 +18,35 @@ import { FaLanguage } from "react-icons/fa6";
 import "../../components/login/card.scss";
 import CustomPopup2 from "../../components/CustomPopup2";
 import axios from "axios";
+
+const RAZORPAY_BUTTON_ID = "pl_TRCE2nX6hdQyB3";
+
+/**
+ * Razorpay Payment Button embed. The redirect after payment is configured in the
+ * Razorpay dashboard (set to /payment-success), not here.
+ * React strips <script> from JSX, so the tag is injected imperatively.
+ */
+const RazorpayPayButton = ({ buttonId }) => {
+  const formRef = useRef(null);
+
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return undefined;
+
+    form.innerHTML = "";
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/payment-button.js";
+    script.async = true;
+    script.setAttribute("data-payment_button_id", buttonId);
+    form.appendChild(script);
+
+    return () => {
+      form.innerHTML = "";
+    };
+  }, [buttonId]);
+
+  return <form ref={formRef} />;
+};
 
 const Bookappointment = () => {
     let token = localStorage.getItem('accessToken');
@@ -34,7 +64,22 @@ const Bookappointment = () => {
     const [mints, setMints] = useState("00");
     const [visibility, setVisibility] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showPayModal, setShowPayModal] = useState(false);
+    const [pendingBooking, setPendingBooking] = useState(null);
    // const BOUNDARY = "----WebKitFormBoundary7MA4YWxkTrZu0gW";
+
+  useEffect(() => {
+    const role = (localStorage.getItem("userRole") || "").toLowerCase();
+    if (role === "coach") {
+      navigate("/coach-appointments", { replace: true });
+      return;
+    }
+    const authToken = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+    if (!authToken) {
+      navigate("/login", { replace: true, state: { from: "/bookappointment" } });
+    }
+  }, [navigate]);
+
   const setSelectvalue4 = async (e) => {
 
    const selectedMinute = e.value;
@@ -476,10 +521,47 @@ const Bookappointment = () => {
           //alert(d2.toLocaleTimeString([], { hour: '2-digit', minute: "2-digit", hour12: false }));
          
           var endtime = d2.toLocaleTimeString([], { hour: '2-digit', minute: "2-digit", hour12: false });
-          var starttime = hovers+":"+mints;
+          var starttime = String(hovers).padStart(2, "0")+":"+String(mints).padStart(2, "0");
 
-       console.log("🚀 Storing booking details and redirecting to payment...");
+       console.log("🚀 Validating slot before payment...");
        console.log("Coach:", coachid, coachname, "Date:", selecteddate, "Time:", starttime, "-", endtime);
+
+        // Confirm the slot is actually bookable BEFORE charging the customer.
+        try {
+          const validateRes = await fetch(
+            "https://niya-backend-oiut.onrender.com/bx_block_calendar/booked_slots/validate_slot",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json", token: token },
+              body: JSON.stringify({
+                booked_slot: {
+                  service_provider_id: coachid,
+                  booking_date: selecteddate,
+                  start_time: starttime,
+                  end_time: endtime,
+                },
+              }),
+            }
+          );
+          const validateData = await validateRes.json();
+          if (!validateRes.ok || validateData.valid !== true) {
+            const errObj = validateData?.errors?.[0] || {};
+            const reason =
+              errObj.booking_date ||
+              errObj.start_time ||
+              errObj.end_time ||
+              validateData?.message ||
+              "This slot is no longer available.";
+            alert(reason + " Please pick another time.");
+            return;
+          }
+        } catch (e) {
+          console.error("Slot validation failed:", e);
+          alert("We couldn't confirm the slot right now. Please try again in a moment.");
+          return;
+        }
+
+        console.log("✅ Slot available - proceeding to payment");
 
         // Store ALL booking details in localStorage + sessionStorage for payment success page
         // DON'T create booking in database yet - only after payment succeeds!
@@ -505,11 +587,43 @@ const Bookappointment = () => {
         if (userId) sessionStorage.setItem("userId", userId);
         
         console.log("✅ Booking details stored in localStorage");
-        console.log("➡️ Redirecting to Razorpay...");
 
-        // Redirect to Razorpay
-        // After successful payment, Razorpay should redirect to: https://book-appointment.niya.app/payment-success
-        window.location.href="https://razorpay.com/payment-button/pl_PlfPpsIDwS9SkD/view/?utm_source=payment_button&utm_medium=button&utm_campaign=payment_button";
+        setPendingBooking({
+          coachname: coachname,
+          selecteddate: selecteddate,
+          starttime: starttime,
+          endtime: endtime,
+        });
+        setShowPayModal(true);
+      }
+
+      const closePayModal = () => {
+        setShowPayModal(false);
+        setPendingBooking(null);
+        localStorage.removeItem("payment_redirect");
+      };
+
+      function PayModal() {
+        return (
+          <Modal show={showPayModal} onHide={closePayModal} centered>
+            <Modal.Header closeButton>
+              <Modal.Title style={{ fontSize: 20 }}>Confirm and pay</Modal.Title>
+            </Modal.Header>
+            <Modal.Body style={{ textAlign: "center" }}>
+              {pendingBooking && (
+                <div style={{ marginBottom: 18, lineHeight: 1.7 }}>
+                  <div><b>Coach:</b> {pendingBooking.coachname}</div>
+                  <div><b>Date:</b> {pendingBooking.selecteddate}</div>
+                  <div><b>Time:</b> {pendingBooking.starttime} - {pendingBooking.endtime}</div>
+                </div>
+              )}
+              <p style={{ fontSize: 14, color: "#555" }}>
+                Your slot is held while you pay. Complete the payment to confirm the appointment.
+              </p>
+              <RazorpayPayButton buttonId={RAZORPAY_BUTTON_ID} />
+            </Modal.Body>
+          </Modal>
+        );
       }
 
       function BookCoachSuccess() {
@@ -607,7 +721,34 @@ const Bookappointment = () => {
     return (
        
         <div style={{"textAlign":"center"}}>
-            <img className="img-thumbnail mx-auto d-block" src={Logo} alt="logo" style={{"width":180,"marginTop":50,"backgroundColor":"var(--body-bg)"}}/><br></br><br></br>
+            <header className="appointments-header" style={{ textAlign: "left", marginBottom: 8 }}>
+              <img
+                className="appointments-logo"
+                src={Logo}
+                alt="Niya"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/")}
+              />
+              <nav className="appointments-nav">
+                <button type="button" className="nav-link" onClick={() => navigate("/")}>
+                  Home
+                </button>
+                <button type="button" className="nav-link active" onClick={() => navigate("/bookappointment")}>
+                  Book Appointment
+                </button>
+                {!token ? (
+                  <button type="button" className="nav-link" onClick={() => navigate("/login", { state: { from: "/bookappointment" } })}>
+                    Login
+                  </button>
+                ) : (
+                  <button type="button" className="nav-link" onClick={() => navigate("/appointments")}>
+                    My Appointments
+                  </button>
+                )}
+              </nav>
+            </header>
+
+            <img className="img-thumbnail mx-auto d-block" src={Logo} alt="logo" style={{"width":180,"marginTop":24,"backgroundColor":"var(--body-bg)"}}/><br></br><br></br>
       
             <App/><br></br>
 
@@ -643,6 +784,8 @@ const Bookappointment = () => {
            
             <App2/>
             </div>
+
+           <PayModal/>
 
            <BookCoachSuccess/>
 
