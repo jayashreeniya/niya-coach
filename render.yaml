@@ -4,7 +4,9 @@ services:
     runtime: docker
     dockerfilePath: ./back-end/Dockerfile
     dockerContext: ./back-end
-    plan: free
+    # Not free: this API sits on the booking and payment path, and a free
+    # instance spinning down turns slot validation into a multi-minute hang.
+    plan: starter
     envVars:
       - key: RAILS_ENV
         value: production
