@@ -74,7 +74,7 @@ const CoachAppointments = () => {
 
   const loadAppointments = useCallback(async () => {
     if (!token) {
-      navigate("/");
+      navigate("/coach-login");
       return;
     }
     setLoading(true);
@@ -111,7 +111,7 @@ const CoachAppointments = () => {
     localStorage.removeItem("authenticated");
     localStorage.removeItem("userRole");
     localStorage.removeItem("userId");
-    navigate("/");
+    navigate("/coach-login");
   };
 
   const startCall = async (item) => {

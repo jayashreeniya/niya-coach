@@ -136,7 +136,7 @@ const PaymentSuccess = () => {
             <h1>Almost there</h1>
             <p className="appointments-error">{errorMessage}</p>
             <div className="success-actions">
-              <button type="button" className="primary-btn" onClick={() => navigate("/")}>
+              <button type="button" className="primary-btn" onClick={() => navigate("/login")}>
                 Log in again
               </button>
               <button type="button" className="refresh-btn" onClick={() => navigate("/appointments")}>

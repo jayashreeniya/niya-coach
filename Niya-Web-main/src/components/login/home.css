@@ -1,0 +1,73 @@
+.home-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f7f4fb 0%, #eef6f8 100%);
+  color: #2d3745;
+}
+
+.home-login-btn {
+  background: #6c4ab6 !important;
+  color: #fff !important;
+}
+
+.home-login-btn:hover {
+  background: #5a3c9a !important;
+  color: #fff !important;
+}
+
+.home-landing {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 20px 64px;
+}
+
+.home-landing-hero {
+  background: #b9c5a2;
+  border-radius: 18px;
+  padding: 40px 28px;
+  text-align: center;
+  color: #1f2a1c;
+}
+
+.home-landing-mark {
+  height: 56px;
+  width: auto;
+  margin-bottom: 12px;
+  background: transparent;
+}
+
+.home-landing-hero h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2.4rem, 6vw, 3.4rem);
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+
+.home-landing-hero p {
+  margin: 0 auto 28px;
+  max-width: 34rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.home-landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .home-landing-hero {
+    padding: 32px 18px;
+  }
+
+  .home-landing-actions {
+    flex-direction: column;
+  }
+
+  .home-landing-actions .primary-btn,
+  .home-landing-actions .refresh-btn {
+    width: 100%;
+  }
+}
