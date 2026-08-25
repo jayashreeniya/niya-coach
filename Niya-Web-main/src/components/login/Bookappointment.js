@@ -66,6 +66,7 @@ const Bookappointment = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showPayModal, setShowPayModal] = useState(false);
     const [pendingBooking, setPendingBooking] = useState(null);
+    const [validatingCoachId, setValidatingCoachId] = useState(null);
    // const BOUNDARY = "----WebKitFormBoundary7MA4YWxkTrZu0gW";
 
   useEffect(() => {
@@ -527,6 +528,8 @@ const Bookappointment = () => {
        console.log("Coach:", coachid, coachname, "Date:", selecteddate, "Time:", starttime, "-", endtime);
 
         // Confirm the slot is actually bookable BEFORE charging the customer.
+        // A cold backend can take a while to answer, so the button reflects it.
+        setValidatingCoachId(coachid);
         try {
           const validateRes = await fetch(
             "https://niya-backend-oiut.onrender.com/bx_block_calendar/booked_slots/validate_slot",
@@ -559,6 +562,8 @@ const Bookappointment = () => {
           console.error("Slot validation failed:", e);
           alert("We couldn't confirm the slot right now. Please try again in a moment.");
           return;
+        } finally {
+          setValidatingCoachId(null);
         }
 
         console.log("✅ Slot available - proceeding to payment");
@@ -699,7 +704,7 @@ const Bookappointment = () => {
       <FaLanguage  size={20} style={{"marginRight":5,"paddingTop":5}}/><span style={{"marginRight":50}}>{user.attributes.coach_details.languages}</span>
    
       </div>      
-                <Button className="w-100" variant="primary" type="submit" style={{"marginTop":10,"height":50}} onClick={() => bookcoack(user.attributes.coach_details.id, user.attributes.coach_details.full_name)}>Schedule a call</Button>
+                <Button className="w-100" variant="primary" type="submit" style={{"marginTop":10,"height":50}} disabled={validatingCoachId !== null} onClick={() => bookcoack(user.attributes.coach_details.id, user.attributes.coach_details.full_name)}>{validatingCoachId === user.attributes.coach_details.id ? "Checking availability..." : "Schedule a call"}</Button>
                 
               </Card.Body>
             </Card>
