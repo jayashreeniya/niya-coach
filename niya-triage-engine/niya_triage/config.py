@@ -19,6 +19,12 @@ DATA_DIR = PROJECT_ROOT / "data"
 COUNSELLOR_FILE = DATA_DIR / "counsellors.json"
 DATASET_FILE = DATA_DIR / "test_cases.jsonl"
 HARD_SET_FILE = DATA_DIR / "hard_cases.jsonl"
+#: Ordinary phrasing, the way people actually write when they are not being
+#: subtle. The hard set is deliberately adversarial and contains nothing like
+#: "need workplace coaching", so it stayed at 68% while the engine was failing
+#: to classify plain sentences at all. Easy cases measure a different and
+#: equally real thing: whether common vocabulary is covered.
+PLAIN_SET_FILE = DATA_DIR / "plain_cases.jsonl"
 
 AUDIT_DIR = Path(os.environ.get("NIYA_AUDIT_DIR", str(PROJECT_ROOT / "audit")))
 AUDIT_LOG = AUDIT_DIR / "decisions.jsonl"

@@ -57,10 +57,22 @@ Read this before quoting anything from this repository.
 | Database migrations | **Not implemented.** Schema drift is detected at startup, not fixed; the next change after real data needs Alembic. |
 | Safety recall on the hard set | Measured: **100%** (target 95%+) |
 | Category accuracy on the hard set | Measured: **68.2%** — **below the 80% target** |
+| Category accuracy on the plain set | Measured: **100%** (was 62.5% before the signal fix) |
 | Business-impact figures | Modelled, not observed |
 
-242 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
-accuracy misses its target and is reported as it stands rather than rounded up.
+262 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
+accuracy on the hard set misses its target and is reported as it stands rather
+than rounded up.
+
+The two category figures are worth reading together. The hard set is adversarial
+by design — euphemism, misdirection, figurative language — so 68.2% is the score
+against deliberately difficult input. The plain set exists because that number
+was hiding a plainer failure: real users were typing "need workplace coaching"
+and "sleeping issues" and getting routed to generic adjustment support at 12%
+confidence, since signals match whole words and the lexicon knew "at work" but
+not "workplace". A hard set full of subtlety will never catch a system that
+cannot classify a simple sentence, so ordinary phrasing is now measured
+separately.
 
 Worth knowing before you trust the suite: the first evaluation run scored 62.5%
 unsafe-case recall *while every unit test passed*, because the safety rules had

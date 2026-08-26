@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from niya_triage import IntakeRequest, triage  # noqa: E402
-from niya_triage.config import DATASET_FILE, HARD_SET_FILE  # noqa: E402
+from niya_triage.config import DATASET_FILE, HARD_SET_FILE, PLAIN_SET_FILE  # noqa: E402
 from niya_triage.counsellors import CounsellorRepository  # noqa: E402
 from niya_triage.types import Urgency  # noqa: E402
 
@@ -259,6 +259,13 @@ def render_report(sections: Dict[str, Dict[str, Any]], use_llm: bool) -> str:
         "overstates accuracy; the hand-written set is the honest measure."
     )
     lines.append("")
+    lines.append(
+        "The plain set is deliberately easy: short, ordinary sentences of the kind "
+        "people actually submit. It is not a measure of subtlety but of vocabulary "
+        "coverage, and it exists because the hard set stayed at 68% while the "
+        "engine was scoring zero on sentences like \"need workplace coaching\"."
+    )
+    lines.append("")
 
     lines.append("## Headline")
     lines.append("")
@@ -405,6 +412,9 @@ def main() -> int:
         hard_rows = load_jsonl(HARD_SET_FILE)
         if hard_rows:
             sections["Hand-written hard set"] = run_dataset(hard_rows, repository, use_llm)
+        plain_rows = load_jsonl(PLAIN_SET_FILE)
+        if plain_rows:
+            sections["Plain phrasing set"] = run_dataset(plain_rows, repository, use_llm)
         template_rows = load_jsonl(DATASET_FILE)
         if template_rows:
             sections["Template set"] = run_dataset(template_rows, repository, use_llm)

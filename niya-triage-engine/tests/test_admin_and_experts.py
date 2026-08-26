@@ -599,3 +599,38 @@ def _move_session(booking_ref: str, starts_in: timedelta) -> None:
         booking.start_utc = start.replace(tzinfo=None)
         booking.end_utc = (start + timedelta(hours=1)).replace(tzinfo=None)
         booking.start_utc_active = booking.start_utc
+
+
+# ---------------------------------------------------------------------------
+# The onboarding form must not answer its own questions
+# ---------------------------------------------------------------------------
+
+
+def test_the_timezone_field_starts_unanswered(client):
+    """A select whose first option is a real zone is pre-answered.
+
+    `required` never fires, so an admin who skips the field silently onboards
+    a counsellor into America/Chicago, the alphabetical first. That happened:
+    a coach onboarded from India was given Chicago working hours, putting
+    their 9-to-18 at roughly 19:30 to 04:30 India time.
+    """
+    make_admin(client)
+
+    body = client.get("/admin/counsellors/new").text
+    select_start = body.index('name="timezone_name"')
+    first_option = body.index("<option", select_start)
+    end_of_first = body.index("</option>", first_option)
+
+    assert 'value=""' in body[first_option:end_of_first]
+    assert "selected" in body[first_option:end_of_first]
+
+
+def test_a_counsellor_cannot_be_onboarded_without_a_timezone(client):
+    make_admin(client)
+
+    payload = onboarding_payload()
+    payload["timezone_name"] = ""
+    response = client.post("/admin/counsellors/new", data=payload)
+
+    assert response.status_code == 400
+    assert "timezone" in response.text.lower()

@@ -135,7 +135,12 @@
 
     <div class="field">
       <label for="timezone_name">Their timezone</label>
+      {# A select whose first option is a real value is pre-answered: `required`
+         never fires, and whoever skips the field silently onboards a counsellor
+         into America/Chicago, the alphabetical first. An empty option makes the
+         browser insist on a deliberate choice. #}
       <select id="timezone_name" name="timezone_name" required>
+        <option value="" {{ 'selected' if not form.timezone_name }}>Select their timezone…</option>
         {% for zone in zones %}
           <option value="{{ zone }}" {{ 'selected' if form.timezone_name == zone }}>{{ zone|zone_label }}</option>
         {% endfor %}
