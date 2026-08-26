@@ -108,15 +108,44 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 # ---------------------------------------------------------------------------
 # Email and SMS
 #
-# SendGrid and Twilio are what NIYA already runs, so those are the two adapters.
-# Without credentials both fall back to the outbox, which records the message
-# instead of sending it.
+# Two email adapters, because NIYA has used both. The Rails app was configured
+# for SendGrid and now sends through Microsoft 365 instead, its SendGrid
+# account having been left with a sending allowance of zero since September
+# 2025. SMTP is therefore the route that works, and the one preferred here when
+# both are configured.
+#
+# Without credentials either way, email falls back to the outbox, which records
+# the message instead of sending it.
 # ---------------------------------------------------------------------------
 
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
+
+#: Microsoft 365 is smtp.office365.com:587 with STARTTLS, which is what the
+#: Rails app uses. Any SMTP server works; nothing here is Microsoft-specific.
+SMTP_HOST = os.environ.get("SMTP_HOST", "")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+
 EMAIL_FROM = os.environ.get("EMAIL_FROM", "hello@niya.app")
 EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME", "NIYA")
-EMAIL_LIVE = bool(SENDGRID_API_KEY)
+
+SMTP_LIVE = bool(SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD)
+EMAIL_LIVE = bool(SENDGRID_API_KEY) or SMTP_LIVE
+
+
+def email_provider() -> str:
+    """Which adapter will actually be used.
+
+    SMTP wins when both are set. Configuring SMTP is the deliberate act of
+    someone who has decided not to use SendGrid, and silently preferring a
+    stale SendGrid key over it would be the wrong way round.
+    """
+    if SMTP_LIVE:
+        return "smtp"
+    if SENDGRID_API_KEY:
+        return "sendgrid"
+    return "outbox"
 
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")

@@ -4,7 +4,9 @@ services:
     runtime: docker
     dockerfilePath: ./back-end/Dockerfile
     dockerContext: ./back-end
-    plan: free
+    # Not free: this API sits on the booking and payment path, and a free
+    # instance spinning down turns slot validation into a multi-minute hang.
+    plan: starter
     # Only rebuild when this service's own code changes. Without this, every
     # commit to master redeploys the live API, including commits that only
     # touch an unrelated service.
@@ -132,7 +134,16 @@ services:
       - key: RAZORPAY_KEY_SECRET
         sync: false
       # Absent until go-live, so messages queue and are visible in the app
-      # rather than being sent.
+      # rather than being sent. Email goes over SMTP, as the Rails app's does;
+      # the SendGrid account has had no sending allowance since Sept 2025.
+      - key: SMTP_HOST
+        value: smtp.office365.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
       - key: SENDGRID_API_KEY
         sync: false
       - key: EMAIL_FROM
@@ -174,6 +185,15 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: APP_SECRET_KEY
+        sync: false
+      # The reminders job sends the same way the web service does.
+      - key: SMTP_HOST
+        value: smtp.office365.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
         sync: false
       - key: SENDGRID_API_KEY
         sync: false

@@ -17,9 +17,13 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import smtplib
+import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
+from email.message import EmailMessage
+from email.utils import formataddr
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
@@ -253,6 +257,32 @@ def queue_booking_cancelled(session: Session, booking: Booking, account) -> List
 
 
 def _send_email(to: str, subject: str, body: str) -> None:
+    if settings.email_provider() == "smtp":
+        return _send_email_smtp(to, subject, body)
+    return _send_email_sendgrid(to, subject, body)
+
+
+def _send_email_smtp(to: str, subject: str, body: str) -> None:
+    """Send through a plain SMTP server, which for NIYA is Microsoft 365.
+
+    Built on the standard library rather than a client package: this is one
+    STARTTLS connection and one message, and a dependency to maintain would
+    earn its keep only if there were more to it than that.
+    """
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = formataddr((settings.EMAIL_FROM_NAME, settings.EMAIL_FROM))
+    message["To"] = to
+    message.set_content(body)
+
+    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT,
+                      timeout=REQUEST_TIMEOUT_SECONDS) as server:
+        server.starttls(context=ssl.create_default_context())
+        server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+        server.send_message(message)
+
+
+def _send_email_sendgrid(to: str, subject: str, body: str) -> None:
     request = urllib.request.Request(
         "https://api.sendgrid.com/v3/mail/send",
         data=json.dumps(
@@ -320,7 +350,9 @@ def deliver_due(session: Session, limit: int = 50, now: Optional[datetime] = Non
         try:
             if notification.channel == "email":
                 _send_email(notification.recipient, notification.subject, notification.body)
-                notification.provider = "sendgrid"
+                # Which route carried it, not which one we assumed. These rows
+                # are the evidence that somebody was told.
+                notification.provider = settings.email_provider()
             else:
                 _send_sms(notification.recipient, notification.body)
                 notification.provider = "twilio"
@@ -354,8 +386,12 @@ def deliver_due(session: Session, limit: int = 50, now: Optional[datetime] = Non
 
 
 def describe_mode() -> dict:
+    provider = settings.email_provider()
     return {
-        "email": "SendGrid" if settings.EMAIL_LIVE else "Queued only (no SENDGRID_API_KEY)",
+        "email": {
+            "smtp": f"SMTP via {settings.SMTP_HOST}",
+            "sendgrid": "SendGrid",
+        }.get(provider, "Queued only (no email credentials)"),
         "sms": "Twilio" if settings.SMS_LIVE else "Queued only (no Twilio credentials)",
     }
 
@@ -383,8 +419,11 @@ def verify_email_credentials(timeout: int = 10) -> tuple:
     global _email_verified, _email_detail
 
     if not settings.EMAIL_LIVE:
-        _email_verified, _email_detail = False, "no SENDGRID_API_KEY set"
+        _email_verified, _email_detail = False, "no email credentials set"
         return _email_verified, _email_detail
+
+    if settings.email_provider() == "smtp":
+        return _verify_smtp(timeout)
 
     # The scopes endpoint both authenticates the key and reveals its
     # permissions, so a restricted key created without Mail Send is caught
@@ -423,14 +462,52 @@ def verify_email_credentials(timeout: int = 10) -> tuple:
     return ok, detail
 
 
+def _verify_smtp(timeout: int) -> tuple:
+    """Log in to the SMTP server and immediately disconnect.
+
+    Authentication is the part that silently breaks: a rotated mailbox
+    password, or a tenant that has turned off basic SMTP authentication, both
+    present as mail simply never arriving.
+    """
+    global _email_verified, _email_detail
+
+    try:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT,
+                          timeout=timeout) as server:
+            server.starttls(context=ssl.create_default_context())
+            server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+        ok, detail = True, f"authenticated to {settings.SMTP_HOST}"
+    except smtplib.SMTPAuthenticationError as error:
+        ok = False
+        detail = (
+            f"{settings.SMTP_HOST} rejected the login ({error.smtp_code}) - "
+            "check SMTP_USERNAME and SMTP_PASSWORD, and that the tenant still "
+            "permits SMTP authentication"
+        )
+    except Exception as error:  # noqa: BLE001
+        ok = False
+        detail = f"could not reach {settings.SMTP_HOST}: {type(error).__name__}"
+
+    _email_verified, _email_detail = ok, detail
+    if ok:
+        logger.info("smtp credentials verified against %s", settings.SMTP_HOST)
+    else:
+        logger.error("smtp credentials unusable: %s", detail)
+    return ok, detail
+
+
 def email_status() -> str:
     """What to report on the health endpoint.
 
-    Says nothing about whether EMAIL_FROM is a verified sender. SendGrid only
-    rejects that at send time, so it cannot be established here.
+    Says nothing about whether EMAIL_FROM is an address the provider will
+    accept. SendGrid enforces sender verification, and Microsoft 365 rejects
+    sending as a mailbox you lack permission for, but both only at send time.
     """
-    if not settings.EMAIL_LIVE:
+    provider = settings.email_provider()
+    if provider == "outbox":
         return "outbox only"
     if _email_verified is None:
-        return "sendgrid (unverified)"
-    return "sendgrid (verified)" if _email_verified else f"sendgrid BROKEN: {_email_detail}"
+        return f"{provider} (unverified)"
+    if _email_verified:
+        return f"{provider} (verified)"
+    return f"{provider} BROKEN: {_email_detail}"

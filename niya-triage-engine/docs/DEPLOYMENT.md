@@ -69,8 +69,9 @@ version control):
 | `DATABASE_URL` | Yes | The connection string above |
 | `APP_SECRET_KEY` | Yes | `generateValue: true` handles it. Changing it signs everyone out |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | No | Absent means payments are simulated |
-| `SENDGRID_API_KEY` | No | Absent means email queues instead of sending |
-| `EMAIL_FROM` | With SendGrid | Must be a sender you have verified with SendGrid |
+| `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` | For email | Microsoft 365 is `smtp.office365.com`. `SMTP_PORT` defaults to 587 |
+| `SENDGRID_API_KEY` | No | Alternative to SMTP. SMTP wins if both are set |
+| `EMAIL_FROM` | With either | A mailbox you may send as. See below |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM_NUMBER` | No | Absent means SMS queues instead of sending |
 | `TWILIO_API_KEY_SID` / `TWILIO_API_KEY_SECRET` | No | Absent means the session page stays a placeholder. See `VIDEO.md` |
 
@@ -91,9 +92,37 @@ Failures are also logged as errors in the deploy log. The checks never stop the
 app booting: a transient network problem should not take down everything that
 has nothing to do with email or video.
 
-One thing they cannot establish is whether `EMAIL_FROM` is a sender SendGrid
-will accept. That is only rejected at send time, so verify the sender in the
-SendGrid dashboard as well.
+One thing they cannot establish is whether `EMAIL_FROM` is an address the
+provider will let you send as. Microsoft 365 refuses a `From` the authenticated
+mailbox has no permission for, and SendGrid refuses one it has not verified.
+Both only at send time, so neither can be checked at startup.
+
+## Which email route to use
+
+**Microsoft 365 SMTP.** It is what the Rails app sends through, so its
+deliverability is already proven, and it costs nothing beyond the mailbox you
+have.
+
+```
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_USERNAME=hello@niya.app
+SMTP_PASSWORD=<the mailbox password>
+EMAIL_FROM=hello@niya.app
+```
+
+Two things to know about it. The password is a full mailbox credential rather
+than a scoped key, so whatever holds it can read that mailbox as well as send
+from it; a dedicated `noreply@` mailbox limits the damage if it leaks.
+Microsoft has also been progressively retiring basic authentication for SMTP
+submission in Exchange Online, so confirm your tenant still permits it before
+depending on this.
+
+SendGrid remains supported and needs no code change to use, but NIYA's account
+has had a sending allowance of zero since September 2025 — `total 0`, not a
+daily limit that had been used up — which is why the Rails app moved to
+Microsoft 365 in the first place. Reviving it means a paid plan or a support
+ticket.
 
 The app refuses to start in production without `APP_SECRET_KEY` or with
 `DATABASE_URL` still pointing at SQLite. Failing to boot is better than running:
