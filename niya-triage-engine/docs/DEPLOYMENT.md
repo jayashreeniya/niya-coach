@@ -154,6 +154,44 @@ curl https://triage.niya.app/healthz
 Razorpay keys and it still says `simulated`, the variable did not reach the
 container.
 
+## Schema changes
+
+There is no Alembic here. `create_all` adds missing tables and columns on
+startup but never alters an existing column, so a change to a column's *type*
+has to be applied by hand before the version that expects it is deployed.
+
+`webapp/schema_check.py` runs at startup and compares the live database against
+the models. In production it refuses to boot on a mismatch, which is deliberate:
+Render keeps the previous version serving when a deploy fails to start, so a
+refusal is a non-event, whereas booting against a wrong schema is either a 500
+on every affected page or — worse — a silent truncation nobody notices.
+
+It reports two kinds of drift, and treats them differently on purpose:
+
+| Reported as | Meaning | In production | Why |
+|---|---|---|---|
+| `missing <column>` | The model has it, the database does not | Refuses to start | Breaks every request touching it, now |
+| `holds N characters, model expects text` | The column is too short | Warns at every boot | Only bites once the data outgrows it |
+
+The second is a warning rather than a refusal so that a pending column widening
+does not block an unrelated deploy. It still needs applying: when the value
+finally exceeds the column, MySQL either truncates it or rejects the write, and
+neither is something you want to discover from a client seeing half a list.
+
+Applied so far, in order:
+
+```sql
+-- August 2026: the client is shown every eligible counsellor rather than a
+-- capped three, so this column has to hold the whole ranked list. At five
+-- characters per reference, varchar(255) ran out at about forty counsellors
+-- and would have dropped the tail of the list without an error.
+ALTER TABLE triage_cases MODIFY shortlist_ids TEXT NOT NULL;
+```
+
+Run it against `niyatriage` before deploying, and re-check `/healthz` after. It
+is safe to apply early: the previous version writes short values that fit a text
+column perfectly well, so there is no window where one or the other is broken.
+
 ## Running it locally
 
 No database or credentials needed — it defaults to SQLite and simulated

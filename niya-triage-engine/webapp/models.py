@@ -323,7 +323,12 @@ class TriageCase(Base):
     safety_blocked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     human_review_required: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     redacted_text: Mapped[str] = mapped_column(Text, default="", nullable=False)
-    shortlist_ids: Mapped[str] = mapped_column(String(255), default="", nullable=False)
+    #: Every eligible counsellor, in rank order, as comma-separated refs. Text
+    #: rather than String(255) because the client is shown the whole roster that
+    #: fits the case: at five characters per ref, a varchar(255) would have run
+    #: out at about forty counsellors and quietly dropped the tail of the list,
+    #: which looks like the engine deciding rather than the storage failing.
+    shortlist_ids: Mapped[str] = mapped_column(Text, default="", nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 

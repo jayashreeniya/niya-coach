@@ -56,10 +56,14 @@ MATCH_WEIGHTS: Dict[str, float] = {
     "historical_outcome": 0.10,
 }
 
-#: How many counsellors to return in a shortlist.
-SHORTLIST_SIZE = 3
+#: How many counsellors the audit log and the evaluation harness record per
+#: case. The client is shown every eligible counsellor, ranked; this is only
+#: the depth at which a decision is worth keeping or scoring. See
+#: `matching.build_shortlist` for why the client-facing list is not capped.
+SHORTLIST_RECORD_DEPTH = 3
 
-#: A counsellor scoring below this is not worth a coordinator's attention.
+#: Below this, a match is weak enough that the case is worth a human's
+#: attention. It does not hide anyone from the client.
 MIN_VIABLE_MATCH_SCORE = 0.35
 
 # ---------------------------------------------------------------------------

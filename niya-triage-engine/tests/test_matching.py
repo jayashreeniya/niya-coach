@@ -169,3 +169,86 @@ def test_breakdown_components_are_bounded(repository: CounsellorRepository) -> N
         for value in vars(match.breakdown).values():
             assert 0.0 <= value <= 1.0
         assert 0.0 <= match.score <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# Everyone eligible is offered, not a top few
+# ---------------------------------------------------------------------------
+
+
+def _work_request() -> IntakeRequest:
+    return IntakeRequest(
+        text="I am struggling badly at work and my manager has noticed.",
+        country="canada",
+        timezone="America/Toronto",
+        user_type="professional",
+    )
+
+
+def test_every_eligible_counsellor_is_returned(repository: CounsellorRepository) -> None:
+    """The list is as long as the gates allow, not a fixed three.
+
+    A cap made a new counsellor unbookable: with no delivered sessions they
+    scored below anyone established, so they never appeared, so they never
+    delivered a session. Ranking is a suggestion about fit; it is not a reason
+    to withhold someone the client might have chosen anyway.
+    """
+    request = _work_request()
+    classification = classify(request)
+
+    shortlist, rejected = build_shortlist(classification, request, repository)
+
+    assert len(shortlist) + len(rejected) == len(repository.all())
+    assert len(shortlist) > 3
+
+
+def test_the_list_is_ordered_by_fit(repository: CounsellorRepository) -> None:
+    request = _work_request()
+    shortlist, _ = build_shortlist(classify(request), request, repository)
+
+    scores = [match.score for match in shortlist]
+    assert scores == sorted(scores, reverse=True)
+
+
+def test_nobody_is_dropped_for_scoring_badly(repository: CounsellorRepository) -> None:
+    """The viability bar decides what needs review, not who may be seen.
+
+    Stated as an invariant rather than by hunting for a low-scoring counsellor,
+    since whether the seed roster contains one is an accident of the fixture.
+    Every counsellor is either offered or gated out with a reason; scoring is
+    never a third outcome.
+    """
+    request = _work_request()
+    shortlist, rejected = build_shortlist(classify(request), request, repository)
+
+    offered = {match.counsellor_id for match in shortlist}
+    refused = {item.counsellor_id for item in rejected}
+    everyone = {counsellor.id for counsellor in repository.all()}
+
+    assert offered | refused == everyone
+    assert not (offered & refused)
+
+
+def test_gates_still_remove_people(repository: CounsellorRepository) -> None:
+    """Showing everyone eligible must not become showing everyone.
+
+    The gates are the safety guarantee. Removing the cap changes how many of
+    the eligible are shown, and nothing about who is eligible.
+    """
+    request = IntakeRequest(
+        text="I have been feeling very low and cannot cope.",
+        country="canada",
+        timezone="America/Vancouver",
+        user_type="student",
+    )
+    shortlist, rejected = build_shortlist(classify(request), request, repository)
+
+    assert rejected
+    assert "C019" not in {match.counsellor_id for match in shortlist}
+
+
+def test_a_caller_can_still_ask_for_the_top_few(repository: CounsellorRepository) -> None:
+    """The audit log and the evaluation harness want a depth, not the lot."""
+    request = _work_request()
+    shortlist, _ = build_shortlist(classify(request), request, repository, limit=3)
+    assert len(shortlist) == 3

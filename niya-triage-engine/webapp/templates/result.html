@@ -70,12 +70,17 @@
     </div>
   {% endif %}
 
-  <h2>Counsellors who fit</h2>
+  <h2>Counsellors who can help</h2>
   {% if shortlist %}
+    {# Everyone eligible is listed, not a top few. Ranking is a suggestion about
+       fit; it is not a good enough reason to withhold someone a client might
+       have chosen on fee, language, or simply liking the look of them. #}
     <p class="small muted">
-      Ranked by how well they match what you described, the languages you speak,
-      and who has time available near when you want it. Fees are set by each
-      counsellor and are not part of that ranking.
+      All {{ shortlist|length }} counsellors available for what you described,
+      in order of how closely they match: what you wrote, the languages you
+      speak, and who has time near when you want it. Fees are set by each
+      counsellor and do not affect that order. Anyone on this list can take
+      this on, so choose whoever feels right.
     </p>
 
     {% for item in shortlist %}
@@ -83,8 +88,13 @@
     <div class="card tight">
       <div class="row between">
         <div>
-          <div class="name" style="font-weight:600;font-size:17px">{{ counsellor.display_name }}</div>
+          <div class="name" style="font-weight:600;font-size:17px">
+            {{ counsellor.display_name }}
+          </div>
           <div class="meta small muted">{{ counsellor.credentials }}</div>
+          {% if loop.first %}
+            <span class="pill tag" style="margin-top:6px">Closest match</span>
+          {% endif %}
         </div>
         {# Counsellors set their own rates, so the price belongs on the card
            rather than in one figure at checkout. Seeing it before choosing is

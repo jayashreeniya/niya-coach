@@ -107,10 +107,15 @@ class AuditLog:
                         for rule_id in hit.rule_ids
                     }
                 ),
+                # The client sees every eligible counsellor, but a log entry
+                # recording twenty of them per case is mostly noise. What a
+                # reviewer needs to reconstruct is who the engine put at the
+                # top and how confident it was, so only that depth is kept.
                 "shortlist": [
                     {"counsellor_id": match.counsellor_id, "score": round(match.score, 4)}
-                    for match in result.shortlist
+                    for match in result.shortlist[: config.SHORTLIST_RECORD_DEPTH]
                 ],
+                "shortlist_size": len(result.shortlist),
                 "processing_ms": result.processing_ms,
             },
         )

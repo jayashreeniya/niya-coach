@@ -319,8 +319,20 @@ def build_shortlist(
     weights: Optional[Dict[str, float]] = None,
     limit: Optional[int] = None,
 ) -> Tuple[List[CounsellorMatch], List[RejectedCounsellor]]:
-    limit = limit or config.SHORTLIST_SIZE
+    """Rank every counsellor who is eligible for this case.
 
+    Everyone who passes the gates is returned, in order of fit. `limit` exists
+    for callers that genuinely want the top few, such as the audit log and the
+    evaluation harness; the client-facing flow passes nothing and gets the lot.
+
+    Truncating by default was a mistake worth recording. A cap of three meant a
+    newly onboarded counsellor was invisible: with no delivered sessions they
+    scored below anyone with a track record, so they could not be booked, so
+    they never acquired a track record. The first real counsellor onboarded
+    through the admin portal ranked fourth of twenty-one and never appeared.
+    Ranking answers "who fits best", which is useful. Truncating answers "who
+    is allowed to be chosen", which is not the engine's decision to make.
+    """
     try:
         pathway = pathway_for_category(classification.primary_category)
         sla_hours = pathway.first_session_within_hours or 24
@@ -344,9 +356,10 @@ def build_shortlist(
         matches.append(score_counsellor(counsellor, classification, request, sla_hours, weights))
 
     matches.sort(key=lambda item: (-item.score, item.counsellor_id))
-    viable = [item for item in matches if item.score >= config.MIN_VIABLE_MATCH_SCORE]
 
-    # If nothing clears the bar, still surface the best available rather than an
-    # empty screen - but the pipeline flags this for human review.
-    shortlist = (viable or matches)[:limit]
-    return shortlist, rejected
+    # MIN_VIABLE_MATCH_SCORE no longer removes anyone. A weak score means "this
+    # is further down the list", not "you may not see this person", and a client
+    # reading the profiles can weigh a modest fit against a fee or a language in
+    # a way the score cannot. The threshold still decides whether the case is
+    # flagged for human review, which is what it is actually good for.
+    return (matches[:limit] if limit else matches), rejected

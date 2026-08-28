@@ -166,9 +166,13 @@ confirm rather than 12: 400 × 0.4 × 5 min = 13.3 hours. A 83% reduction, well
 past the 50% target — but this assumes the review rate lands near 40%. If the
 engine flags 80% for review, the saving roughly halves.
 
-*Conversion.* The mechanism is speed and confidence: a shortlist of three
-explained matches within seconds, rather than an unordered card grid. The brief
-targets +15%; 35% → 40% on 400 enquiries is 20 extra bookings/month ≈ ₹30,000.
+*Conversion.* The mechanism is speed and confidence: every counsellor who fits
+the case, ordered by how well they fit and explained, within seconds — rather
+than an unordered card grid. The order is the product; the list is not cut down
+to a chosen few, because a client weighing a fee or a language against a modest
+difference in fit is making a reasonable decision the score cannot see. The
+brief targets +15%; 35% → 40% on 400 enquiries is 20 extra bookings/month ≈
+₹30,000.
 This is the least defensible number here — conversion depends on price, brand and
 timing far more than on match quality.
 

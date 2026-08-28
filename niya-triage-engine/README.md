@@ -60,7 +60,7 @@ Read this before quoting anything from this repository.
 | Category accuracy on the plain set | Measured: **100%** (was 62.5% before the signal fix) |
 | Business-impact figures | Modelled, not observed |
 
-262 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
+280 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
 accuracy on the hard set misses its target and is reported as it stands rather
 than rounded up.
 
@@ -262,9 +262,17 @@ intake text
     v
 [6] WEIGHTED MATCH  <- 0.30 problem + 0.20 availability + 0.15 language
     |                  + 0.15 cultural + 0.10 timezone + 0.10 outcomes
+    |                  orders the eligible; does not shorten them
     v
-shortlist + pathway + next action + tamper-evident audit entry
+ranked counsellors + pathway + next action + tamper-evident audit entry
 ```
+
+The gates decide who may be offered. The score decides only what order they
+appear in. Everyone who passes the gates is shown, because a client choosing on
+fee, language or availability is making a judgement the score cannot make for
+them — and because a capped list made newly onboarded counsellors unbookable:
+with no delivered sessions they ranked below anyone established, so they were
+never shown, so they never delivered a session.
 
 ### Five decisions worth arguing about
 

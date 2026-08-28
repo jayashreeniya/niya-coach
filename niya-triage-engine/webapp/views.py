@@ -81,6 +81,19 @@ def _load_case(session: Session, account: Account, case_ref: str) -> Optional[Tr
     )
 
 
+def _was_offered(case: TriageCase, counsellor_id: str) -> bool:
+    """Was this counsellor among those the engine judged eligible for this case?
+
+    The list shown to the client is now the whole eligible roster rather than a
+    top few, so anyone genuinely offerable is on it. What stays off it are the
+    counsellors the gates removed: someone without crisis training on a case
+    that needs it, or someone already at capacity. Those exclusions are the
+    point of the gates, and until now nothing stopped a hand-typed URL from
+    walking straight past them to the booking form.
+    """
+    return counsellor_id in {ref for ref in case.shortlist_ids.split(",") if ref}
+
+
 # ---------------------------------------------------------------------------
 # Public
 # ---------------------------------------------------------------------------
@@ -331,6 +344,8 @@ def choose_slot(
     # whatever is in the rest of the URL.
     if case.safety_blocked:
         return RedirectResponse(f"/result/{case_ref}", status_code=303)
+    if not _was_offered(case, counsellor_id):
+        return RedirectResponse(f"/result/{case_ref}", status_code=303)
 
     profile = roster.profile_for(session, counsellor_id)
     if profile is None or not profile.active:
@@ -377,6 +392,8 @@ def hold(
     # The same guard as the GET. Without it, posting this form directly would
     # book a session for a case that was routed to a crisis line.
     if case.safety_blocked:
+        return RedirectResponse(f"/result/{case_ref}", status_code=303)
+    if not _was_offered(case, counsellor_id):
         return RedirectResponse(f"/result/{case_ref}", status_code=303)
 
     profile = roster.profile_for(session, counsellor_id)

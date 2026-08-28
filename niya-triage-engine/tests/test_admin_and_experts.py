@@ -400,8 +400,10 @@ def test_prices_appear_against_each_counsellor_on_the_shortlist(client):
 
     page = booker.get(f"/result/{case_ref}")
     assert page.status_code == 200
-    if "Counsellors who fit" not in page.text:
-        pytest.skip("no shortlist for this case")
+    # Asserted rather than skipped over. This used to skip when the heading was
+    # missing, which meant renaming the heading silently switched the test off
+    # instead of failing it.
+    assert "Counsellors who can help" in page.text
     # A price per card, not one figure for the whole service.
     assert page.text.count('class="price"') >= 1
     assert "60 min" in page.text
@@ -634,3 +636,83 @@ def test_a_counsellor_cannot_be_onboarded_without_a_timezone(client):
 
     assert response.status_code == 400
     assert "timezone" in response.text.lower()
+
+
+# ---------------------------------------------------------------------------
+# A counsellor with no track record must still be reachable
+# ---------------------------------------------------------------------------
+
+
+def test_a_newly_onboarded_counsellor_is_offered_to_clients(client):
+    """The bug this was written for.
+
+    A life coach was onboarded through the admin portal and never appeared for
+    a client asking about work. Two causes: the wording was not understood, and
+    even once it was, the coach ranked fourth against a shortlist of three. With
+    no delivered sessions they could not outscore established counsellors, so
+    they could not be booked, so they could never deliver a session.
+    """
+    make_admin(client)
+    created = onboard(client, display_name="Dr. Brand New")
+
+    booker = TestClient(app, follow_redirects=False)
+    make_client_account(booker)
+    case_ref = make_case(booker)
+
+    page = booker.get(f"/result/{case_ref}")
+    assert page.status_code == 200
+    assert "Dr. Brand New" in page.text
+    assert created["ref"] in page.text
+
+
+def test_the_client_is_shown_more_than_a_handful(client):
+    make_admin(client)
+    for index in range(4):
+        onboard(client, display_name=f"Dr. Extra {index}")
+
+    booker = TestClient(app, follow_redirects=False)
+    make_client_account(booker)
+    page = booker.get(f"/result/{make_case(booker)}")
+
+    assert page.text.count('class="price"') > 3
+
+
+def test_only_the_closest_match_is_labelled_as_such(client):
+    make_admin(client)
+    onboard(client)
+
+    booker = TestClient(app, follow_redirects=False)
+    make_client_account(booker)
+    page = booker.get(f"/result/{make_case(booker)}")
+
+    assert page.text.count("Closest match") == 1
+
+
+def test_a_counsellor_the_gates_refused_cannot_be_booked_by_url(client):
+    """Ranking is advice; the gates are a guarantee, and a URL must not skip them.
+
+    This counsellor takes working professionals only, and intake files these
+    cases as students. Before this, nothing stopped a hand-typed booking URL
+    walking past that decision straight to the slot picker.
+    """
+    make_admin(client)
+    refused = onboard(
+        client, display_name="Dr. Wrong Clients", client_types=["professional"]
+    )
+
+    booker = TestClient(app, follow_redirects=False)
+    make_client_account(booker)
+    case_ref = make_case(booker)
+
+    page = booker.get(f"/result/{case_ref}")
+    assert "Dr. Wrong Clients" not in page.text
+
+    blocked = booker.get(f"/book/{case_ref}/{refused['ref']}")
+    assert blocked.status_code == 303
+    assert blocked.headers["location"] == f"/result/{case_ref}"
+
+    posted = booker.post(
+        f"/book/{case_ref}/{refused['ref']}", data={"slot_id": "whatever"}
+    )
+    assert posted.status_code == 303
+    assert posted.headers["location"] == f"/result/{case_ref}"
