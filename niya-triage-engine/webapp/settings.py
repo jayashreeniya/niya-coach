@@ -17,7 +17,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 WEBAPP_ROOT = Path(__file__).resolve().parent
 
-APP_NAME = "NIYA Triage"
+APP_NAME = "Niyasaathi"
 ENVIRONMENT = os.environ.get("APP_ENV", "development").strip().lower()
 IS_PRODUCTION = ENVIRONMENT == "production"
 
@@ -128,7 +128,7 @@ SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 
 EMAIL_FROM = os.environ.get("EMAIL_FROM", "hello@niya.app")
-EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME", "NIYA")
+EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME", "Niyasaathi")
 
 SMTP_LIVE = bool(SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD)
 EMAIL_LIVE = bool(SENDGRID_API_KEY) or SMTP_LIVE

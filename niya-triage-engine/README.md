@@ -1,4 +1,4 @@
-# NIYA — AI triage and counsellor-matching engine
+# Niyasaathi — AI triage and counsellor-matching
 
 Turns a user's free-text description of what is happening into a routed case:
 **urgency**, **problem category**, **support pathway**, **best-fit counsellor

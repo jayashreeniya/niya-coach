@@ -644,6 +644,14 @@ def test_the_health_endpoint_reports_the_database_and_the_live_integrations(clie
     assert "://" not in payload["database_target"]
 
 
+def test_the_public_name_is_niyasaathi(client):
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "Niyasaathi" in page.text
+    assert "NIYA Triage" not in page.text
+    assert "Niya" in page.text and "saathi" in page.text
+
+
 def test_pages_carry_the_baseline_security_headers(client):
     response = client.get("/")
     assert response.headers["x-frame-options"] == "DENY"

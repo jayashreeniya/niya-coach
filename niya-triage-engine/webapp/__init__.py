@@ -1,4 +1,4 @@
-"""The deployable NIYA Triage application.
+"""The deployable Niyasaathi application.
 
 Standalone: its own accounts, its own `niyatriage` database, its own deployment.
 It imports the triage engine from `niya_triage` but shares no storage, no

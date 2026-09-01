@@ -22,7 +22,7 @@ def smtp_configured(monkeypatch):
     monkeypatch.setattr(settings, "SMTP_LIVE", True)
     monkeypatch.setattr(settings, "EMAIL_LIVE", True)
     monkeypatch.setattr(settings, "EMAIL_FROM", "hello@niya.app")
-    monkeypatch.setattr(settings, "EMAIL_FROM_NAME", "NIYA")
+    monkeypatch.setattr(settings, "EMAIL_FROM_NAME", "Niyasaathi")
     monkeypatch.setattr(notify, "_email_verified", None)
     yield
 
@@ -115,7 +115,7 @@ def test_the_message_is_addressed_and_named_properly(smtp_configured, monkeypatc
     message = FakeSMTP.instances[0].messages[0]
     assert message["To"] == "someone@example.com"
     assert message["Subject"] == "Your session"
-    assert message["From"] == "NIYA <hello@niya.app>"
+    assert message["From"] == "Niyasaathi <hello@niya.app>"
     assert "The body." in message.get_content()
 
 

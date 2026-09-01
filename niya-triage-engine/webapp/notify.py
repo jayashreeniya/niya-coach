@@ -173,7 +173,7 @@ If you need to cancel, you can do it from that page.
             session, booking, "sms", "confirmation", account.phone or "",
             "",
             (
-                f"NIYA: session with {booking.counsellor_name} confirmed for "
+                f"{settings.APP_NAME}: session with {booking.counsellor_name} confirmed for "
                 f"{start_local:%a %d %b, %H:%M} ({booking.client_timezone}). "
                 f"Join from {settings.BASE_URL}/appointments 5 min before. "
                 f"Ref {booking.booking_ref}"
@@ -205,7 +205,7 @@ If you need to cancel, you can do it from that page.
                 session, booking, "sms", "reminder", account.phone or "",
                 "",
                 (
-                    f"NIYA: your session with {booking.counsellor_name} starts in "
+                    f"{settings.APP_NAME}: your session with {booking.counsellor_name} starts in "
                     f"{label} ({start_local:%H:%M} {booking.client_timezone}). "
                     f"Ref {booking.booking_ref}"
                 ),
@@ -241,7 +241,7 @@ def queue_booking_cancelled(session: Session, booking: Booking, account) -> List
             session, booking, "sms", "cancellation", account.phone or "",
             "",
             (
-                f"NIYA: your session with {booking.counsellor_name} on {when} is "
+                f"{settings.APP_NAME}: your session with {booking.counsellor_name} on {when} is "
                 f"cancelled. Ref {booking.booking_ref}"
             ),
             now,

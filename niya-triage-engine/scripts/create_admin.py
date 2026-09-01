@@ -33,7 +33,7 @@ from webapp.security import (  # noqa: E402
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Create or promote a NIYA Triage admin.")
+    parser = argparse.ArgumentParser(description="Create or promote a Niyasaathi admin.")
     parser.add_argument("--email", default="", help="Administrator email address.")
     args = parser.parse_args()
 

@@ -56,7 +56,7 @@ switch ($Command.ToLower()) {
         if (-not $env:APP_SECRET_KEY) {
             $env:APP_SECRET_KEY = "local-development-secret-key-long-enough-for-dev"
         }
-        Write-Host "NIYA Triage -> http://localhost:8080   (Ctrl-C to stop)" -ForegroundColor Cyan
+        Write-Host "Niyasaathi -> http://localhost:8080   (Ctrl-C to stop)" -ForegroundColor Cyan
         Write-Host "Payments and messages are simulated unless provider keys are set." -ForegroundColor DarkGray
         & $VenvPython -m uvicorn webapp.main:app --reload --port 8080
     }

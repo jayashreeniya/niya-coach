@@ -1,4 +1,4 @@
-"""The deployable NIYA Triage web app.
+"""The deployable Niyasaathi web app.
 
     uvicorn webapp.main:app --port 8080
 
