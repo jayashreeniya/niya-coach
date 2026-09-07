@@ -73,6 +73,11 @@ SESSION_COOKIE_SECURE = _flag("SESSION_COOKIE_SECURE", IS_PRODUCTION)
 LOGIN_MAX_ATTEMPTS = int(os.environ.get("LOGIN_MAX_ATTEMPTS", "8"))
 LOGIN_LOCKOUT_MINUTES = int(os.environ.get("LOGIN_LOCKOUT_MINUTES", "15"))
 
+# How long a "forgot password" link stays valid. Short enough that a forwarded
+# inbox is not an open door, long enough that someone can open email on a phone
+# and finish the form without rushing.
+PASSWORD_RESET_TTL_MINUTES = int(os.environ.get("PASSWORD_RESET_TTL_MINUTES", "60"))
+
 
 # ---------------------------------------------------------------------------
 # Payment

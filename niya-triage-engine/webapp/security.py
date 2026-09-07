@@ -23,7 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import settings
-from .models import Account, UserSession, utcnow
+from .models import Account, PasswordResetToken, UserSession, utcnow
 
 # bcrypt truncates silently at 72 bytes. Rejecting longer input is better than
 # accepting a password whose tail is ignored.
@@ -202,3 +202,84 @@ def authenticate(
 
     register_successful_login(session, account)
     return account, None
+
+
+# ---------------------------------------------------------------------------
+# Password reset
+# ---------------------------------------------------------------------------
+
+
+def issue_password_reset(
+    session: Session, account: Account
+) -> Tuple[str, PasswordResetToken]:
+    """Create a fresh reset token for this account.
+
+    Any earlier unused tokens for the same person are revoked first, so only
+    the most recent email works. Returning the raw token is intentional: it
+    goes in the email link and is never written to the database.
+    """
+    open_tokens = session.scalars(
+        select(PasswordResetToken).where(
+            PasswordResetToken.account_id == account.id,
+            PasswordResetToken.used_at.is_(None),
+        )
+    ).all()
+    now = utcnow()
+    for record in open_tokens:
+        record.used_at = now
+
+    token = secrets.token_urlsafe(32)
+    record = PasswordResetToken(
+        token_hash=_hash_token(token),
+        account_id=account.id,
+        expires_at=now + timedelta(minutes=settings.PASSWORD_RESET_TTL_MINUTES),
+    )
+    session.add(record)
+    session.commit()
+    return token, record
+
+
+def resolve_password_reset(
+    session: Session, token: Optional[str]
+) -> Optional[PasswordResetToken]:
+    """Find a still-usable reset token, or None.
+
+    Expired and already-used tokens look the same from the outside. That keeps
+    the reset form from telling an attacker whether a guessed token was ever
+    valid.
+    """
+    if not token:
+        return None
+    record = session.scalar(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == _hash_token(token)
+        )
+    )
+    if record is None or not record.is_usable:
+        return None
+    account = session.get(Account, record.account_id)
+    if account is None or not account.is_active:
+        return None
+    return record
+
+
+def consume_password_reset(
+    session: Session, record: PasswordResetToken, new_password: str
+) -> Account:
+    """Set the new password, burn the token, and end every live session.
+
+    Ending sessions is the important part. Without it, someone who stole a
+    session cookie would keep access after the rightful owner reset their
+    password from another device.
+    """
+    account = session.get(Account, record.account_id)
+    if account is None:
+        raise ValueError("password reset points at a missing account")
+
+    account.password_hash = hash_password(new_password)
+    account.failed_login_count = 0
+    account.locked_until = None
+    record.used_at = utcnow()
+    session.commit()
+    revoke_all_sessions(session, account)
+    return account

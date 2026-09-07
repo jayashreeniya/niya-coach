@@ -262,6 +262,46 @@ def _send_email(to: str, subject: str, body: str) -> None:
     return _send_email_sendgrid(to, subject, body)
 
 
+def send_password_reset(to: str, reset_url: str, minutes_valid: int) -> bool:
+    """Send a password-reset link immediately.
+
+    Unlike booking notifications, this is not queued against a booking row: the
+    person asking may have no bookings, and waiting for a cron would make the
+    link feel broken. Returns True when the provider accepted the message, and
+    False when email is not configured or the send failed - the caller still
+    shows the same confirmation page either way, so the response cannot be used
+    to probe which addresses exist.
+    """
+    subject = f"Reset your {settings.APP_NAME} password"
+    body = (
+        f"Someone asked to reset the password for this {settings.APP_NAME} account.\n\n"
+        f"Use this link within {minutes_valid} minutes to choose a new password:\n\n"
+        f"  {reset_url}\n\n"
+        "If you did not ask for this, you can ignore the email. Your current "
+        "password will keep working.\n"
+    )
+
+    if not settings.EMAIL_LIVE:
+        logger.info(
+            "password reset email held (email not live) for %s -> %s",
+            to.split("@")[-1],
+            reset_url.split("token=")[-1][:8] + "…",
+        )
+        return False
+
+    try:
+        _send_email(to, subject, body)
+        logger.info("password reset email sent to …@%s", to.split("@")[-1])
+        return True
+    except Exception as error:  # noqa: BLE001
+        logger.error(
+            "password reset email failed for …@%s: %s",
+            to.split("@")[-1],
+            error,
+        )
+        return False
+
+
 def _send_email_smtp(to: str, subject: str, body: str) -> None:
     """Send through a plain SMTP server, which for NIYA is Microsoft 365.
 

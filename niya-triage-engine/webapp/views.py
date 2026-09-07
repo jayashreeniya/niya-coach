@@ -26,16 +26,19 @@ from niya_triage.redact import redact_for_audit
 from niya_triage.taxonomy import PATHWAYS
 from niya_triage.tz import known_zones
 
-from . import booking_service, db, payments, roster, settings
+from . import booking_service, db, notify, payments, roster, settings
 from .deps import current_account, home_for, require_account
 from .models import Account, TriageCase, utcnow
 from .security import (
     authenticate,
+    consume_password_reset,
     create_session,
     hash_password,
     is_valid_email,
+    issue_password_reset,
     normalise_email,
     password_problems,
+    resolve_password_reset,
     revoke_session,
 )
 from .templating import templates
@@ -184,8 +187,13 @@ def signup(
 
 
 @router.get("/login", response_class=HTMLResponse)
-def login_form(request: Request, next: str = ""):
-    return _page(request, "login.html", next=next, error=None, email="")
+def login_form(request: Request, next: str = "", reset: str = ""):
+    notice = None
+    if reset == "1":
+        notice = "Your password has been updated. Sign in with the new one."
+    return _page(
+        request, "login.html", next=next, error=None, email="", notice=notice
+    )
 
 
 @router.post("/login", response_class=HTMLResponse)
@@ -220,6 +228,111 @@ def logout(request: Request, session: Session = Depends(db.get_session)):
     response = RedirectResponse("/", status_code=303)
     response.delete_cookie(settings.SESSION_COOKIE_NAME, path="/")
     return response
+
+
+# ---------------------------------------------------------------------------
+# Forgot / reset password
+# ---------------------------------------------------------------------------
+#
+# One login serves clients, coaches and admins, so one reset flow serves them
+# all. The confirmation page never says whether the address exists: that would
+# turn this form into an account-enumeration tool.
+
+
+@router.get("/forgot-password", response_class=HTMLResponse)
+def forgot_password_form(request: Request):
+    return _page(
+        request, "forgot_password.html",
+        sent=False, error=None, email="",
+        minutes=settings.PASSWORD_RESET_TTL_MINUTES,
+    )
+
+
+@router.post("/forgot-password", response_class=HTMLResponse)
+def forgot_password(
+    request: Request,
+    session: Session = Depends(db.get_session),
+    email: str = Form(""),
+):
+    clean = normalise_email(email)
+    if not is_valid_email(clean):
+        return _page(
+            request, "forgot_password.html",
+            sent=False, error="That does not look like an email address.",
+            email=email, minutes=settings.PASSWORD_RESET_TTL_MINUTES,
+            status_code=400,
+        )
+
+    account = session.scalar(select(Account).where(Account.email == clean))
+    if account is not None and account.is_active:
+        token, _ = issue_password_reset(session, account)
+        notify.send_password_reset(
+            account.email,
+            f"{settings.BASE_URL.rstrip('/')}/reset-password?token={token}",
+            settings.PASSWORD_RESET_TTL_MINUTES,
+        )
+
+    # Same page whether or not the address matched. Timing still differs a
+    # little when email is live, but that is far cheaper than advertising who
+    # has an account on a mental-health service.
+    return _page(
+        request, "forgot_password.html",
+        sent=True, error=None, email="",
+        minutes=settings.PASSWORD_RESET_TTL_MINUTES,
+    )
+
+
+@router.get("/reset-password", response_class=HTMLResponse)
+def reset_password_form(
+    request: Request,
+    session: Session = Depends(db.get_session),
+    token: str = "",
+):
+    record = resolve_password_reset(session, token)
+    if record is None:
+        return _page(
+            request, "reset_password.html",
+            invalid=True, token="", errors={}, error=None,
+        )
+    return _page(
+        request, "reset_password.html",
+        invalid=False, token=token, errors={}, error=None,
+    )
+
+
+@router.post("/reset-password", response_class=HTMLResponse)
+def reset_password(
+    request: Request,
+    session: Session = Depends(db.get_session),
+    token: str = Form(""),
+    password: str = Form(""),
+    password_confirm: str = Form(""),
+):
+    record = resolve_password_reset(session, token)
+    if record is None:
+        return _page(
+            request, "reset_password.html",
+            invalid=True, token="", errors={}, error=None,
+            status_code=400,
+        )
+
+    account = session.get(Account, record.account_id)
+    errors = {}
+    problems = password_problems(password, account.email if account else "")
+    if problems:
+        errors["password"] = " ".join(problems)
+    if password != password_confirm:
+        errors["password_confirm"] = "Those two passwords do not match."
+
+    if errors:
+        return _page(
+            request, "reset_password.html",
+            invalid=False, token=token, errors=errors, error=None,
+            status_code=400,
+        )
+
+    consume_password_reset(session, record, password)
+    return RedirectResponse("/login?reset=1", status_code=303)
 
 
 # ---------------------------------------------------------------------------

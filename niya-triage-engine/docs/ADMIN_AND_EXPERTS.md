@@ -174,14 +174,22 @@ For production the honest position is unchanged: the next schema change after
 real data exists needs Alembic. The startup check makes forgetting loud rather
 than making the migration unnecessary.
 
+## Password reset
+
+Clients, coaches and admins share `/login`, so they share `/forgot-password`.
+Entering an email always shows the same confirmation; if the address belongs to
+an active account, a one-time link is emailed (valid for
+`PASSWORD_RESET_TTL_MINUTES`, default 60). Using the link sets a new password
+and revokes every other session for that account.
+
+Counsellors who still know their password can also change it at
+`/expert/password` without going through email.
+
 ## Not done
 
 - **Adding a login to an existing roster entry.** Onboarding creates one if an
   email is given; there is no route to attach one later. The edit form says so
   rather than offering a field that does nothing.
-- **Password reset for counsellors.** They can change a password they know
-  (`/expert/password`). Someone who loses the one-time password needs an admin to
-  issue a new account.
 - **Counsellors setting per-day hours or holidays.** One start and end time
   applies to every weekday. A counsellor who works Saturday mornings only cannot
   express that.

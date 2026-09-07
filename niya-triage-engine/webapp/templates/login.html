@@ -4,6 +4,9 @@
 {% block content %}
 <h1>Sign in</h1>
 
+{% if notice %}
+  <div class="notice info">{{ notice }}</div>
+{% endif %}
 {% if error %}
   <div class="notice error">{{ error }}</div>
 {% endif %}
@@ -24,6 +27,9 @@
   <button class="btn" type="submit">Sign in</button>
 </form>
 
+<p class="small muted" style="margin:16px 0 0">
+  <a class="backlink" href="/forgot-password">Forgot your password?</a>
+</p>
 <p class="small muted" style="margin:16px 0 0">No account yet?</p>
 <p style="margin-top:0"><a class="backlink" href="/signup">Create one</a></p>
 {% endblock %}

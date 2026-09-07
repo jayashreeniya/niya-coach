@@ -153,6 +153,38 @@ class UserSession(Base):
         return expires > utcnow()
 
 
+class PasswordResetToken(Base):
+    """A one-time link for someone who has forgotten their password.
+
+    Same shape as sessions: the cookie-or-URL value is random, only its hash is
+    stored. A leaked database therefore cannot be used to reset anyone's
+    password. Tokens expire quickly and are single-use, so a forwarded email
+    stops working once it has been used or after the window closes.
+    """
+
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    account: Mapped[Account] = relationship()
+
+    @property
+    def is_usable(self) -> bool:
+        if self.used_at is not None:
+            return False
+        expires = self.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        return expires > utcnow()
+
+
 # ---------------------------------------------------------------------------
 # Roster
 # ---------------------------------------------------------------------------
