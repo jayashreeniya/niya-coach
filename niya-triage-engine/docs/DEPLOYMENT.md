@@ -186,7 +186,13 @@ Applied so far, in order:
 -- characters per reference, varchar(255) ran out at about forty counsellors
 -- and would have dropped the tail of the list without an error.
 ALTER TABLE triage_cases MODIFY shortlist_ids TEXT NOT NULL;
-```
+
+-- September 2026: Calendly-style per-day hours. TiDB rejects DEFAULT on TEXT,
+-- so add nullable, backfill, then tighten. Empty string means "use the legacy
+-- Mon–Fri window from working_hours_start/end".
+ALTER TABLE counsellors ADD COLUMN weekly_hours TEXT;
+UPDATE counsellors SET weekly_hours = '' WHERE weekly_hours IS NULL;
+ALTER TABLE counsellors MODIFY weekly_hours TEXT NOT NULL;
 
 Run it against `niyatriage` before deploying, and re-check `/healthz` after. It
 is safe to apply early: the previous version writes short values that fit a text

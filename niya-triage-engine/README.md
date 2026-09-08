@@ -60,7 +60,7 @@ Read this before quoting anything from this repository.
 | Category accuracy on the plain set | Measured: **100%** (was 62.5% before the signal fix) |
 | Business-impact figures | Modelled, not observed |
 
-290 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
+295 tests pass. See `docs/EVALUATION.md` for the accuracy detail. Category
 accuracy on the hard set misses its target and is reported as it stands rather
 than rounded up.
 

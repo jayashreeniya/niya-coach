@@ -148,27 +148,13 @@
       {% if errors.timezone_name %}<p class="field-error">{{ errors.timezone_name }}</p>{% endif %}
     </div>
 
-    <div class="row" style="gap:12px">
-      <div class="field" style="flex:1">
-        <label for="working_hours_start">Day starts</label>
-        <input type="number" id="working_hours_start" name="working_hours_start"
-               min="0" max="23" step="0.5" inputmode="decimal"
-               value="{{ form.working_hours_start or '9' }}">
-      </div>
-      <div class="field" style="flex:1">
-        <label for="working_hours_end">Day ends</label>
-        <input type="number" id="working_hours_end" name="working_hours_end"
-               min="1" max="24" step="0.5" inputmode="decimal"
-               value="{{ form.working_hours_end or '18' }}">
-      </div>
-    </div>
-    {% if errors.working_hours %}<p class="field-error">{{ errors.working_hours }}</p>{% endif %}
-    <p class="hint">
-      In their own local time, as whole or half hours. They can change this
-      themselves once they sign in.
+    <p class="small muted">
+      Set different hours for each day of the week, or turn a day off. They can
+      change this themselves later from their portal.
     </p>
+    {% include "_weekly_schedule.html" %}
 
-    <div class="field">
+    <div class="field" style="margin-top:16px">
       <label for="max_cases">Maximum active clients</label>
       <input type="number" id="max_cases" name="max_cases" min="1" max="200"
              value="{{ form.max_cases or '20' }}">

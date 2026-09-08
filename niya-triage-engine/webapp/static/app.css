@@ -313,6 +313,60 @@ input:focus, select:focus, textarea:focus {
 
 .field-error { color: var(--danger); font-size: 14px; margin: -12px 0 14px; }
 
+/* ---------- weekly schedule (Calendly-style) ---------- */
+
+.schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 4px;
+}
+
+.schedule-head {
+  padding: 0 4px 4px;
+  border-bottom: 1px solid var(--line, #e8e4f0);
+}
+
+.schedule-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 140px) 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: #faf8ff;
+}
+
+.schedule-row.off {
+  opacity: 0.55;
+  background: #f4f4f6;
+}
+
+.schedule-row.off .schedule-windows input {
+  pointer-events: none;
+}
+
+.schedule-day {
+  padding-top: 6px;
+  font-weight: 600;
+}
+
+.schedule-windows input[type="number"] {
+  width: 100%;
+  max-width: 110px;
+  min-height: 44px;
+}
+
+.schedule-window + .schedule-window {
+  margin-top: 8px;
+}
+
+@media (max-width: 560px) {
+  .schedule-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- pills and badges ---------- */
 
 .pill {

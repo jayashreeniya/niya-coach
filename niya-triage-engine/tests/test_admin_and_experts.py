@@ -79,6 +79,28 @@ def make_client_account(client: TestClient) -> str:
     return email
 
 
+def week_payload(days=None, start="9", end="18"):
+    """Calendly-style week fields for admin/expert forms.
+
+    `days` is an iterable of day keys that should be available (default Mon–Fri).
+    """
+    from niya_triage.weekly_hours import DAY_KEYS
+
+    active = set(days if days is not None else ("mon", "tue", "wed", "thu", "fri"))
+    payload = {}
+    for key in DAY_KEYS:
+        if key in active:
+            payload[f"{key}_on"] = "1"
+            payload[f"{key}_start_0"] = start
+            payload[f"{key}_end_0"] = end
+        else:
+            payload[f"{key}_start_0"] = ""
+            payload[f"{key}_end_0"] = ""
+        payload[f"{key}_start_1"] = ""
+        payload[f"{key}_end_1"] = ""
+    return payload
+
+
 def onboarding_payload(**overrides) -> dict:
     payload = {
         "display_name": "Dr. Test Counsellor",
@@ -88,8 +110,6 @@ def onboarding_payload(**overrides) -> dict:
         "counsellor_fee": "1000",
         "client_price": "1400",
         "timezone_name": "asia/calcutta",
-        "working_hours_start": "8",
-        "working_hours_end": "20",
         "years_experience": "9",
         "max_cases": "20",
         "max_complexity": "high",
@@ -100,6 +120,7 @@ def onboarding_payload(**overrides) -> dict:
         "categories": ["academic_avoidance"],
         "notes": "",
     }
+    payload.update(week_payload(start="8", end="20"))
     payload.update(overrides)
     return payload
 
@@ -484,16 +505,13 @@ def test_a_counsellor_can_change_their_own_hours_and_stop_taking_clients(client)
     make_admin(client)
     counsellor = make_counsellor(client)
 
-    response = counsellor["portal"].post(
-        "/expert/availability",
-        data={
-            "timezone_name": "europe/london",
-            "working_hours_start": "10",
-            "working_hours_end": "16",
-            "max_cases": "5",
-            "accepting": "",
-        },
-    )
+    data = {
+        "timezone_name": "europe/london",
+        "max_cases": "5",
+        "accepting": "",
+    }
+    data.update(week_payload(start="10", end="16"))
+    response = counsellor["portal"].post("/expert/availability", data=data)
     assert response.status_code == 303
 
     with db.session_scope() as session:
@@ -505,24 +523,52 @@ def test_a_counsellor_can_change_their_own_hours_and_stop_taking_clients(client)
         assert profile.working_hours_end == 16
         assert profile.max_cases == 5
         assert profile.active is False
+        schedule = profile.weekly_schedule
+        assert schedule["mon"] == [(10.0, 16.0)]
+        assert schedule["sat"] == []
+
+
+def test_a_counsellor_can_take_saturday_and_turn_wednesday_off(client):
+    make_admin(client)
+    counsellor = make_counsellor(client)
+
+    data = {"timezone_name": "asia/calcutta", "max_cases": "20", "accepting": "1"}
+    data.update(
+        week_payload(
+            days=("mon", "tue", "thu", "fri", "sat"),
+            start="9",
+            end="13",
+        )
+    )
+    # Afternoon window on Saturday only.
+    data["sat_start_1"] = "15"
+    data["sat_end_1"] = "18"
+
+    response = counsellor["portal"].post("/expert/availability", data=data)
+    assert response.status_code == 303
+
+    with db.session_scope() as session:
+        profile = session.scalar(
+            select(CounsellorProfile).where(CounsellorProfile.ref == counsellor["ref"])
+        )
+        schedule = profile.weekly_schedule
+        assert schedule["wed"] == []
+        assert schedule["sat"] == [(9.0, 13.0), (15.0, 18.0)]
 
 
 def test_a_counsellor_cannot_set_hours_that_end_before_they_start(client):
     make_admin(client)
     counsellor = make_counsellor(client)
 
-    response = counsellor["portal"].post(
-        "/expert/availability",
-        data={
-            "timezone_name": "asia/calcutta",
-            "working_hours_start": "18",
-            "working_hours_end": "9",
-            "max_cases": "20",
-            "accepting": "1",
-        },
-    )
+    data = {
+        "timezone_name": "asia/calcutta",
+        "max_cases": "20",
+        "accepting": "1",
+    }
+    data.update(week_payload(start="18", end="9"))
+    response = counsellor["portal"].post("/expert/availability", data=data)
     assert response.status_code == 400
-    assert "start before it ends" in response.text
+    assert "start before" in response.text.lower()
 
 
 def test_a_counsellor_cannot_change_their_own_fee(client):
@@ -534,20 +580,19 @@ def test_a_counsellor_cannot_change_their_own_fee(client):
     assert page.status_code == 200
     assert "counsellor_fee" not in page.text
     assert "client_price" not in page.text
+    assert "Monday" in page.text
+    assert "Saturday" in page.text
 
     # Posting the fields anyway changes nothing.
-    counsellor["portal"].post(
-        "/expert/availability",
-        data={
-            "timezone_name": "asia/calcutta",
-            "working_hours_start": "9",
-            "working_hours_end": "18",
-            "max_cases": "20",
-            "accepting": "1",
-            "counsellor_fee": "9999",
-            "client_price": "9999",
-        },
-    )
+    data = {
+        "timezone_name": "asia/calcutta",
+        "max_cases": "20",
+        "accepting": "1",
+        "counsellor_fee": "9999",
+        "client_price": "9999",
+    }
+    data.update(week_payload())
+    counsellor["portal"].post("/expert/availability", data=data)
 
     with db.session_scope() as session:
         profile = session.scalar(

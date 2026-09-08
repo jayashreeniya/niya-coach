@@ -19,6 +19,13 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from niya_triage.tz import known_zones
+from niya_triage.weekly_hours import (
+    days_for_template,
+    dumps as dumps_weekly,
+    envelope,
+    from_form as weekly_from_form,
+    validate_weekly,
+)
 
 from . import booking_service, db, settings
 from .deps import require_counsellor
@@ -119,57 +126,55 @@ def availability_form(
     saved: str = "",
     account: Account = Depends(require_counsellor),
 ):
+    profile = account.counsellor_profile
     return _page(
         request, "expert/availability.html", account,
         zones=known_zones(), errors={}, saved=bool(saved),
+        schedule_days=days_for_template(profile.weekly_schedule),
     )
 
 
 @router.post("/availability", response_class=HTMLResponse)
-def update_availability(
+async def update_availability(
     request: Request,
     account: Account = Depends(require_counsellor),
     session: Session = Depends(db.get_session),
-    timezone_name: str = Form("Asia/Kolkata"),
-    working_hours_start: str = Form("9"),
-    working_hours_end: str = Form("18"),
-    max_cases: str = Form("20"),
-    accepting: str = Form(""),
 ):
     profile = account.counsellor_profile
+    data = await request.form()
+    form = {key: data.get(key) for key in data.keys()}
     errors = {}
 
+    timezone_name = str(form.get("timezone_name") or "")
     if timezone_name not in known_zones():
         errors["timezone_name"] = "Choose your timezone from the list."
 
-    try:
-        start = float(working_hours_start)
-        end = float(working_hours_end)
-    except ValueError:
-        start, end = -1.0, -1.0
-
-    if not (0 <= start < end <= 24):
-        errors["working_hours"] = "Your day has to start before it ends."
-    elif end - start < 1:
-        errors["working_hours"] = "Leave at least an hour, or nobody can book you."
+    weekly = weekly_from_form(form)
+    schedule_error = validate_weekly(weekly)
+    if schedule_error:
+        errors["working_hours"] = schedule_error
 
     if errors:
         return _page(
             request, "expert/availability.html", account,
-            zones=known_zones(), errors=errors, saved=False, status_code=400,
+            zones=known_zones(), errors=errors, saved=False,
+            schedule_days=days_for_template(weekly),
+            status_code=400,
         )
 
     # Changing the timezone moves every future slot this counsellor offers.
     # Stored bookings are UTC and are unaffected, which is exactly why times are
     # stored that way - an existing appointment keeps its real moment.
+    start, end = envelope(weekly)
     profile.timezone = timezone_name
+    profile.weekly_hours = dumps_weekly(weekly)
     profile.working_hours_start = start
     profile.working_hours_end = end
     try:
-        profile.max_cases = max(1, int(float(max_cases)))
+        profile.max_cases = max(1, int(float(form.get("max_cases") or "20")))
     except ValueError:
         pass
-    profile.active = bool(accepting)
+    profile.active = bool(form.get("accepting"))
     session.commit()
 
     return RedirectResponse("/expert/availability?saved=1", status_code=303)

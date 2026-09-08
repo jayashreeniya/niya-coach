@@ -256,6 +256,10 @@ class CounsellorProfile(Base):
     timezone: Mapped[str] = mapped_column(String(64), default="Asia/Kolkata", nullable=False)
     working_hours_start: Mapped[float] = mapped_column(Float, default=9.0, nullable=False)
     working_hours_end: Mapped[float] = mapped_column(Float, default=18.0, nullable=False)
+    #: Per-weekday windows as JSON. See `niya_triage.weekly_hours`. Empty or
+    #: missing falls back to Mon–Fri between working_hours_start/end so existing
+    #: counsellors keep their calendar when this column is first added.
+    weekly_hours: Mapped[str] = mapped_column(Text, default="", nullable=False)
     next_available_hours: Mapped[float] = mapped_column(Float, default=24.0, nullable=False)
     slots_next_7_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
@@ -322,6 +326,16 @@ class CounsellorProfile(Base):
         except json.JSONDecodeError:
             return {}
         return {str(key): float(value) for key, value in loaded.items()}
+
+    @property
+    def weekly_schedule(self) -> dict:
+        from niya_triage.weekly_hours import loads as load_weekly
+
+        return load_weekly(
+            self.weekly_hours,
+            self.working_hours_start,
+            self.working_hours_end,
+        )
 
 
 # ---------------------------------------------------------------------------

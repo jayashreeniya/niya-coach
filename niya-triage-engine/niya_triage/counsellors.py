@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from . import config
 
@@ -53,6 +53,9 @@ class Counsellor:
     # --- scheduling -----------------------------------------------------
     timezone: str = "Asia/Kolkata"
     working_hours_local: Sequence[float] = (9.0, 18.0)
+    #: Per-weekday windows. Empty list for a day means unavailable. When empty
+    #: overall, callers fall back to `working_hours_local` on Mon–Fri.
+    weekly_hours: Dict[str, List[Tuple[float, float]]] = field(default_factory=dict)
     #: Hours until this counsellor's next free slot.
     next_available_hours: float = 72.0
     slots_next_7_days: int = 0
@@ -123,6 +126,10 @@ class Counsellor:
             "client_types": list(self.client_types),
             "timezone": self.timezone,
             "working_hours_local": list(self.working_hours_local),
+            "weekly_hours": {
+                day: [list(window) for window in windows]
+                for day, windows in (self.weekly_hours or {}).items()
+            },
             "next_available_hours": self.next_available_hours,
             "slots_next_7_days": self.slots_next_7_days,
             "active_cases": self.active_cases,
@@ -157,6 +164,7 @@ class Counsellor:
             "client_types",
             "timezone",
             "working_hours_local",
+            "weekly_hours",
             "next_available_hours",
             "slots_next_7_days",
             "active_cases",
@@ -197,6 +205,13 @@ class Counsellor:
         if "working_hours_local" in filtered:
             hours = filtered["working_hours_local"]
             filtered["working_hours_local"] = (float(hours[0]), float(hours[1]))
+        if "weekly_hours" in filtered:
+            from .weekly_hours import loads as load_weekly
+
+            hours = filtered.get("working_hours_local") or (9.0, 18.0)
+            filtered["weekly_hours"] = load_weekly(
+                filtered["weekly_hours"], float(hours[0]), float(hours[1])
+            )
 
         return cls(**filtered)
 

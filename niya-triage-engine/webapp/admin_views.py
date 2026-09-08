@@ -24,6 +24,14 @@ from niya_triage.contact import normalise_phone
 from niya_triage.emergency import supported_countries
 from niya_triage.taxonomy import CATEGORIES, all_capabilities
 from niya_triage.tz import known_zones
+from niya_triage.weekly_hours import (
+    days_for_template,
+    default_weekdays,
+    dumps as dumps_weekly,
+    envelope,
+    from_form as weekly_from_form,
+    validate_weekly,
+)
 
 from . import db, roster, settings
 from .deps import require_admin
@@ -52,7 +60,8 @@ def _page(request: Request, name: str, account: Account, status_code: int = 200,
     )
 
 
-def _form_options() -> dict:
+def _form_options(schedule=None) -> dict:
+    weekly = schedule if schedule is not None else default_weekdays()
     return {
         "zones": known_zones(),
         "countries": supported_countries(),
@@ -62,6 +71,41 @@ def _form_options() -> dict:
         "capabilities": all_capabilities(),
         "categories": sorted(CATEGORIES.values(), key=lambda item: item.label),
         "currency": settings.SESSION_CURRENCY,
+        "schedule_days": days_for_template(weekly),
+    }
+
+
+def _multi(data, name: str) -> List[str]:
+    return [str(value) for value in data.getlist(name) if str(value).strip()]
+
+
+def _counsellor_form_from_request(data) -> dict:
+    """Pull the onboarding/edit fields, including the weekly schedule grid."""
+    weekly = weekly_from_form({key: data.get(key) for key in data.keys()})
+    start, end = envelope(weekly) if any(weekly.values()) else (9.0, 18.0)
+    return {
+        "display_name": str(data.get("display_name") or ""),
+        "email": str(data.get("email") or ""),
+        "credentials": str(data.get("credentials") or ""),
+        "phone": str(data.get("phone") or ""),
+        "counsellor_fee": str(data.get("counsellor_fee") or ""),
+        "client_price": str(data.get("client_price") or ""),
+        "timezone_name": str(data.get("timezone_name") or ""),
+        "working_hours_start": f"{start:g}",
+        "working_hours_end": f"{end:g}",
+        "weekly": weekly,
+        "years_experience": str(data.get("years_experience") or "0"),
+        "max_cases": str(data.get("max_cases") or "20"),
+        "max_complexity": str(data.get("max_complexity") or "high"),
+        "languages": _multi(data, "languages"),
+        "country_context": _multi(data, "country_context"),
+        "client_types": _multi(data, "client_types"),
+        "capabilities": _multi(data, "capabilities"),
+        "categories": _multi(data, "categories"),
+        "notes": str(data.get("notes") or ""),
+        "clinically_qualified": bool(data.get("clinically_qualified")),
+        "crisis_trained": bool(data.get("crisis_trained")),
+        "escalation_capability": bool(data.get("escalation_capability")),
     }
 
 
@@ -161,63 +205,30 @@ def new_counsellor_form(
     return _page(
         request, "admin/counsellor_form.html", account,
         profile=None, form={"ref": roster.next_ref(session)}, errors={},
-        created=None, **_form_options(),
+        created=None, **_form_options(default_weekdays()),
     )
 
 
 @router.post("/counsellors/new", response_class=HTMLResponse)
-def create_counsellor(
+async def create_counsellor(
     request: Request,
     account: Account = Depends(require_admin),
     session: Session = Depends(db.get_session),
-    display_name: str = Form(""),
-    email: str = Form(""),
-    credentials: str = Form(""),
-    phone: str = Form(""),
-    counsellor_fee: str = Form(""),
-    client_price: str = Form(""),
-    timezone_name: str = Form("Asia/Kolkata"),
-    working_hours_start: str = Form("9"),
-    working_hours_end: str = Form("18"),
-    years_experience: str = Form("0"),
-    max_cases: str = Form("20"),
-    max_complexity: str = Form("high"),
-    languages: List[str] = Form(default=[]),
-    country_context: List[str] = Form(default=[]),
-    client_types: List[str] = Form(default=[]),
-    capabilities: List[str] = Form(default=[]),
-    categories: List[str] = Form(default=[]),
-    clinically_qualified: str = Form(""),
-    crisis_trained: str = Form(""),
-    escalation_capability: str = Form(""),
-    notes: str = Form(""),
 ):
-    form = {
-        "display_name": display_name, "email": email, "credentials": credentials,
-        "phone": phone, "counsellor_fee": counsellor_fee, "client_price": client_price,
-        "timezone_name": timezone_name, "working_hours_start": working_hours_start,
-        "working_hours_end": working_hours_end, "years_experience": years_experience,
-        "max_cases": max_cases, "max_complexity": max_complexity,
-        "languages": languages, "country_context": country_context,
-        "client_types": client_types, "capabilities": capabilities,
-        "categories": categories, "notes": notes,
-        "clinically_qualified": bool(clinically_qualified),
-        "crisis_trained": bool(crisis_trained),
-        "escalation_capability": bool(escalation_capability),
-    }
-
-    fee_minor = _to_minor(counsellor_fee)
-    price_minor = _to_minor(client_price)
+    data = await request.form()
+    form = _counsellor_form_from_request(data)
+    fee_minor = _to_minor(form["counsellor_fee"])
+    price_minor = _to_minor(form["client_price"])
     errors = _validate(session, form, fee_minor, price_minor, existing=None)
 
     if errors:
         return _page(
             request, "admin/counsellor_form.html", account,
             profile=None, form=form, errors=errors, created=None,
-            status_code=400, **_form_options(),
+            status_code=400, **_form_options(form.get("weekly")),
         )
 
-    clean_email = normalise_email(email)
+    clean_email = normalise_email(form["email"])
     login: Optional[Account] = None
     temporary_password: Optional[str] = None
     if clean_email:
@@ -228,9 +239,9 @@ def create_counsellor(
         login = Account(
             email=clean_email,
             password_hash=hash_password(temporary_password),
-            full_name=display_name.strip()[:120],
-            phone=normalise_phone(phone) if phone.strip() else None,
-            timezone=timezone_name,
+            full_name=form["display_name"].strip()[:120],
+            phone=normalise_phone(form["phone"]) if form["phone"].strip() else None,
+            timezone=form["timezone_name"],
             role="counsellor",
             email_verified=True,
         )
@@ -246,7 +257,7 @@ def create_counsellor(
         request, "admin/counsellor_form.html", account,
         profile=profile, form=_form_from(profile), errors={},
         created={"ref": profile.ref, "email": clean_email, "password": temporary_password},
-        **_form_options(),
+        **_form_options(profile.weekly_schedule),
     )
 
 
@@ -268,63 +279,35 @@ def edit_counsellor_form(
     return _page(
         request, "admin/counsellor_form.html", account,
         profile=profile, form=_form_from(profile), errors={}, created=None,
-        **_form_options(),
+        **_form_options(profile.weekly_schedule),
     )
 
 
 @router.post("/counsellors/{ref}", response_class=HTMLResponse)
-def update_counsellor(
+async def update_counsellor(
     request: Request,
     ref: str,
     account: Account = Depends(require_admin),
     session: Session = Depends(db.get_session),
-    display_name: str = Form(""),
-    credentials: str = Form(""),
-    counsellor_fee: str = Form(""),
-    client_price: str = Form(""),
-    timezone_name: str = Form("Asia/Kolkata"),
-    working_hours_start: str = Form("9"),
-    working_hours_end: str = Form("18"),
-    years_experience: str = Form("0"),
-    max_cases: str = Form("20"),
-    max_complexity: str = Form("high"),
-    languages: List[str] = Form(default=[]),
-    country_context: List[str] = Form(default=[]),
-    client_types: List[str] = Form(default=[]),
-    capabilities: List[str] = Form(default=[]),
-    categories: List[str] = Form(default=[]),
-    clinically_qualified: str = Form(""),
-    crisis_trained: str = Form(""),
-    escalation_capability: str = Form(""),
-    notes: str = Form(""),
 ):
     profile = roster.profile_for(session, ref)
     if profile is None:
         return RedirectResponse("/admin", status_code=303)
 
-    form = {
-        "display_name": display_name, "credentials": credentials,
-        "counsellor_fee": counsellor_fee, "client_price": client_price,
-        "timezone_name": timezone_name, "working_hours_start": working_hours_start,
-        "working_hours_end": working_hours_end, "years_experience": years_experience,
-        "max_cases": max_cases, "max_complexity": max_complexity,
-        "languages": languages, "country_context": country_context,
-        "client_types": client_types, "capabilities": capabilities,
-        "categories": categories, "notes": notes,
-        "clinically_qualified": bool(clinically_qualified),
-        "crisis_trained": bool(crisis_trained),
-        "escalation_capability": bool(escalation_capability),
-    }
+    data = await request.form()
+    form = _counsellor_form_from_request(data)
+    # Email is not editable here; keep whatever login already exists off the form.
+    form["email"] = ""
 
-    fee_minor = _to_minor(counsellor_fee)
-    price_minor = _to_minor(client_price)
+    fee_minor = _to_minor(form["counsellor_fee"])
+    price_minor = _to_minor(form["client_price"])
     errors = _validate(session, form, fee_minor, price_minor, existing=profile)
 
     if errors:
         return _page(
             request, "admin/counsellor_form.html", account,
             profile=profile, form=form, errors=errors, created=None,
-            status_code=400, **_form_options(),
+            status_code=400, **_form_options(form.get("weekly")),
         )
 
     _apply(profile, form, fee_minor, price_minor)
@@ -391,10 +374,16 @@ def _validate(
     if form["timezone_name"] not in known_zones():
         errors["timezone_name"] = "Choose a timezone from the list."
 
-    start = _to_hour(form["working_hours_start"], -1)
-    end = _to_hour(form["working_hours_end"], -1)
-    if start < 0 or end < 0 or end <= start:
-        errors["working_hours"] = "Working hours must start before they end."
+    weekly = form.get("weekly")
+    if weekly is None:
+        weekly = default_weekdays(
+            _to_hour(form.get("working_hours_start", "9"), 9.0),
+            _to_hour(form.get("working_hours_end", "18"), 18.0),
+        )
+        form["weekly"] = weekly
+    schedule_error = validate_weekly(weekly)
+    if schedule_error:
+        errors["working_hours"] = schedule_error
 
     if not form["languages"]:
         errors["languages"] = "Pick at least one language."
@@ -421,8 +410,11 @@ def _apply(
     profile.client_types = join_values(form["client_types"]) or "student,professional"
 
     profile.timezone = form["timezone_name"]
-    profile.working_hours_start = _to_hour(form["working_hours_start"], 9.0)
-    profile.working_hours_end = _to_hour(form["working_hours_end"], 18.0)
+    weekly = form.get("weekly") or default_weekdays()
+    start, end = envelope(weekly)
+    profile.weekly_hours = dumps_weekly(weekly)
+    profile.working_hours_start = start
+    profile.working_hours_end = end
     profile.max_cases = int(max(1, _to_number(form["max_cases"], 20)))
     profile.max_complexity = (
         form["max_complexity"] if form["max_complexity"] in COMPLEXITIES else "high"
@@ -438,6 +430,8 @@ def _apply(
 
 
 def _form_from(profile: CounsellorProfile) -> dict:
+    weekly = profile.weekly_schedule
+    start, end = envelope(weekly)
     return {
         "ref": profile.ref,
         "display_name": profile.display_name,
@@ -446,8 +440,9 @@ def _form_from(profile: CounsellorProfile) -> dict:
         "counsellor_fee": f"{profile.counsellor_fee_minor / 100:.2f}",
         "client_price": f"{profile.client_price_minor / 100:.2f}",
         "timezone_name": profile.timezone,
-        "working_hours_start": f"{profile.working_hours_start:g}",
-        "working_hours_end": f"{profile.working_hours_end:g}",
+        "working_hours_start": f"{start:g}",
+        "working_hours_end": f"{end:g}",
+        "weekly": weekly,
         "years_experience": f"{profile.years_experience:g}",
         "max_cases": str(profile.max_cases),
         "max_complexity": profile.max_complexity,

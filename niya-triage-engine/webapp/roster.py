@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from niya_triage import config
 from niya_triage.counsellors import Counsellor, CounsellorRepository
+from niya_triage.weekly_hours import default_weekdays, dumps as dumps_weekly, loads as load_weekly
 
 from . import settings
 from .models import CounsellorProfile, join_values
@@ -57,6 +58,7 @@ def to_engine(profile: CounsellorProfile) -> Counsellor:
         client_types=profile.client_type_list or ["student", "professional"],
         timezone=profile.timezone,
         working_hours_local=(profile.working_hours_start, profile.working_hours_end),
+        weekly_hours=profile.weekly_schedule,
         next_available_hours=profile.next_available_hours,
         slots_next_7_days=profile.slots_next_7_days,
         active_cases=profile.active_cases,
@@ -195,6 +197,13 @@ def seed_from_file(session: Session, path=None) -> int:
                 timezone=record.get("timezone", "Asia/Kolkata"),
                 working_hours_start=float(hours[0]),
                 working_hours_end=float(hours[1]),
+                weekly_hours=dumps_weekly(
+                    load_weekly(
+                        record.get("weekly_hours"),
+                        float(hours[0]),
+                        float(hours[1]),
+                    )
+                ),
                 next_available_hours=float(record.get("next_available_hours", 24.0)),
                 slots_next_7_days=int(record.get("slots_next_7_days", 0)),
                 active_cases=int(record.get("active_cases", 0)),

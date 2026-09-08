@@ -15,10 +15,10 @@ previous evening for them.
 Storing UTC and rendering per-viewer means the counsellor sees their morning and
 the student sees their evening, and they are the same moment.
 
-Slots are generated deterministically from each counsellor's `working_hours_local`
-and `timezone`, so the same roster always produces the same calendar without
-needing an availability table. A seeded hash marks some slots already taken, so
-the prototype looks like a real diary rather than a wall of free time.
+Slots are generated deterministically from each counsellor's weekly hours and
+timezone, so the same roster always produces the same calendar without needing
+an availability table. A seeded hash marks some slots already taken, so the
+prototype looks like a real diary rather than a wall of free time.
 """
 
 from __future__ import annotations
@@ -30,6 +30,8 @@ from typing import Dict, List, Optional, Sequence
 
 from . import config, tz
 from .counsellors import Counsellor
+from .weekly_hours import default_weekdays, intervals_for_weekday
+
 
 #: Sessions are 60 minutes, matching the existing web app's fixed duration.
 SESSION_MINUTES = 60
@@ -163,51 +165,57 @@ def generate_slots(
     now: Optional[datetime] = None,
     include_taken: bool = False,
 ) -> List[Slot]:
-    """Every slot inside this counsellor's working hours for the next `days`.
+    """Every slot inside this counsellor's weekly hours for the next `days`.
 
-    Working hours are local to the counsellor, so a 9-18 day in Asia/Kolkata and
-    a 9-18 day in America/Toronto produce completely different UTC instants.
-    That is the whole point.
+    Hours are local to the counsellor, so a Tuesday morning in Asia/Kolkata and
+    a Tuesday morning in America/Toronto are different UTC instants. Days with
+    no windows are skipped entirely - including weekends, unless the counsellor
+    has marked them available.
     """
     reference = now or utc_now()
     counsellor_tz = fixed_offset(counsellor.timezone)
     local_now = reference.astimezone(counsellor_tz)
 
-    start_hour, end_hour = counsellor.working_hours_local
+    start_hour, end_hour = (
+        (counsellor.working_hours_local[0], counsellor.working_hours_local[1])
+        if counsellor.working_hours_local
+        else (9.0, 18.0)
+    )
+    weekly = counsellor.weekly_hours or default_weekdays(start_hour, end_hour)
+    if not any(weekly.values()):
+        weekly = default_weekdays(start_hour, end_hour)
+
     slots: List[Slot] = []
 
     for day_offset in range(days + 1):
         local_day = (local_now + timedelta(days=day_offset)).date()
-        # Counsellors do not work weekends in this prototype.
-        if local_day.weekday() >= 5:
-            continue
-
-        minutes = int(start_hour * 60)
-        closing = int(end_hour * 60)
-        while minutes + SESSION_MINUTES <= closing:
-            local_start = datetime(
-                local_day.year,
-                local_day.month,
-                local_day.day,
-                minutes // 60,
-                minutes % 60,
-                tzinfo=counsellor_tz,
-            )
-            start_utc = local_start.astimezone(timezone.utc)
-            minutes += SLOT_STEP_MINUTES
-
-            if start_utc <= reference:
-                continue
-            if not include_taken and _pseudo_booked(counsellor.id, start_utc):
-                continue
-
-            slots.append(
-                Slot(
-                    counsellor_id=counsellor.id,
-                    start_utc=start_utc,
-                    end_utc=start_utc + timedelta(minutes=SESSION_MINUTES),
+        for start_hour, end_hour in intervals_for_weekday(weekly, local_day.weekday()):
+            minutes = int(start_hour * 60)
+            closing = int(end_hour * 60)
+            while minutes + SESSION_MINUTES <= closing:
+                local_start = datetime(
+                    local_day.year,
+                    local_day.month,
+                    local_day.day,
+                    minutes // 60,
+                    minutes % 60,
+                    tzinfo=counsellor_tz,
                 )
-            )
+                start_utc = local_start.astimezone(timezone.utc)
+                minutes += SLOT_STEP_MINUTES
+
+                if start_utc <= reference:
+                    continue
+                if not include_taken and _pseudo_booked(counsellor.id, start_utc):
+                    continue
+
+                slots.append(
+                    Slot(
+                        counsellor_id=counsellor.id,
+                        start_utc=start_utc,
+                        end_utc=start_utc + timedelta(minutes=SESSION_MINUTES),
+                    )
+                )
 
     return slots
 

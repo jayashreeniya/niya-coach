@@ -185,14 +185,20 @@ and revokes every other session for that account.
 Counsellors who still know their password can also change it at
 `/expert/password` without going through email.
 
+## Weekly availability
+
+Coaches set hours the Calendly way at `/expert/availability`: each day of the
+week can be on or off, with up to two local-time windows (for a lunch break).
+The same grid appears when an admin onboards or edits a counsellor. Weekends
+are bookable only when marked available. Existing counsellors with an empty
+`weekly_hours` column keep the old Mon–Fri window derived from
+`working_hours_start` / `working_hours_end`.
+
 ## Not done
 
 - **Adding a login to an existing roster entry.** Onboarding creates one if an
   email is given; there is no route to attach one later. The edit form says so
   rather than offering a field that does nothing.
-- **Counsellors setting per-day hours or holidays.** One start and end time
-  applies to every weekday. A counsellor who works Saturday mornings only cannot
-  express that.
 - **Refunds.** Cancelling a paid booking sets `payment.status = "refund_due"`,
   which records the intent. Moving the money needs a Razorpay refunds call.
 - **Admin editing an existing counsellor's email address.** Deliberate: the
