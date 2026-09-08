@@ -193,6 +193,7 @@ ALTER TABLE triage_cases MODIFY shortlist_ids TEXT NOT NULL;
 ALTER TABLE counsellors ADD COLUMN weekly_hours TEXT;
 UPDATE counsellors SET weekly_hours = '' WHERE weekly_hours IS NULL;
 ALTER TABLE counsellors MODIFY weekly_hours TEXT NOT NULL;
+```
 
 Run it against `niyatriage` before deploying, and re-check `/healthz` after. It
 is safe to apply early: the previous version writes short values that fit a text
