@@ -43,6 +43,8 @@
   var endTimer = null;
   var intentionalLeave = false;
   var wasConnected = false;
+  var joining = false;
+  var autoRejoin = false;
 
   function say(message, tone) {
     if (!els.status) {
@@ -265,6 +267,9 @@
   }
 
   async function join() {
+    if (joining) {
+      return;
+    }
     if (typeof Twilio === "undefined" || !Twilio.Video) {
       say(
         "The video library could not be loaded. Check your connection and " +
@@ -275,6 +280,7 @@
     }
 
     intentionalLeave = false;
+    joining = true;
     els.join.disabled = true;
     els.join.textContent = "Connecting\u2026";
     say("Asking for permission to use your camera and microphone\u2026", "info");
@@ -288,7 +294,8 @@
       var media = describeMediaError(error);
       say(media || "Could not start your camera or microphone: " + error.message, "error");
       els.join.disabled = false;
-      els.join.textContent = "Try again";
+      els.join.textContent = wasConnected ? "Rejoin the call" : "Try again";
+      joining = false;
       return;
     }
 
@@ -307,12 +314,15 @@
       });
     } catch (error) {
       say(describeConnectError(error), "error");
+      joining = false;
       leave();
       els.join.textContent = "Try again";
       return;
     }
 
     wasConnected = true;
+    autoRejoin = false;
+    joining = false;
     els.join.hidden = true;
     if (els.shell) {
       els.shell.hidden = false;
@@ -341,19 +351,23 @@
     room.on("disconnected", function (_room, error) {
       room = null;
       if (intentionalLeave) {
+        autoRejoin = false;
         leave();
         return;
       }
-      // Background tabs often drop the signalling socket. Keep the UI ready to
-      // rejoin instead of looking like the session was abandoned on purpose.
+      // Laptops throttle background tabs; the signalling socket can drop even
+      // though the user only switched away for a moment. Mark for auto-rejoin
+      // when they come back, rather than making them hunt for a button.
+      autoRejoin = true;
       if (error) {
         say(
-          "The call disconnected while this tab was in the background or the " +
-            "network dropped. Tap rejoin to continue — the session is still open.",
+          "The call dropped while this tab was in the background. " +
+            "It will reconnect when you return to this tab.",
           "warn"
         );
       } else {
         say("The call ended. You can rejoin if the session window is still open.", "info");
+        autoRejoin = false;
       }
       leave();
     });
@@ -396,24 +410,31 @@
   }
 
   document.addEventListener("visibilitychange", function () {
-    if (!room) {
-      return;
-    }
     if (document.visibilityState === "hidden") {
-      // Stay connected. Saying so stops people thinking a quiet tab means the
-      // other person hung up.
-      say(
-        "Call still connected. Come back to this tab to see video.",
-        "info"
-      );
+      if (room) {
+        say(
+          "Call still connected. Come back to this tab to see video.",
+          "info"
+        );
+      }
       return;
     }
-    say("You are back on the call.", "ok");
+
+    // Tab is visible again.
+    if (room) {
+      say("You are back on the call.", "ok");
+      return;
+    }
+    if (autoRejoin && wasConnected && !intentionalLeave && !joining) {
+      say("Reconnecting to the call\u2026", "info");
+      join();
+    }
   });
 
-  // pagehide with persisted=true is the browser parking the page (bfcache /
-  // tab discard). Disconnecting there is what cut the call when someone
-  // switched tabs on mobile. Only release media when the page is discarded.
+  // Desktop browsers fire beforeunload when the tab is closed or navigated
+  // away. pagehide covers iOS Safari. Neither should run for a normal laptop
+  // tab switch — that only flips visibilityState.
+  window.addEventListener("beforeunload", releaseMediaOnUnload);
   window.addEventListener("pagehide", function (event) {
     if (event.persisted) {
       return;
