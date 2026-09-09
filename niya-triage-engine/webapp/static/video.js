@@ -150,6 +150,7 @@
     endTimer = window.setTimeout(function () {
       say("The session time has ended. The call is closing.", "info");
       intentionalLeave = true;
+      autoRejoin = false;
       leave();
     }, remaining);
   }
@@ -251,6 +252,7 @@
     // disconnect merely because another tab was focused — that is what used
     // to cut people off mid-session.
     intentionalLeave = true;
+    autoRejoin = false;
     if (room) {
       try {
         room.disconnect();
