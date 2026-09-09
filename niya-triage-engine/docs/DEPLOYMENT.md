@@ -68,7 +68,7 @@ version control):
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | The connection string above |
 | `APP_SECRET_KEY` | Yes | `generateValue: true` handles it. Changing it signs everyone out |
-| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | No | Absent means payments are simulated |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | For live pay | Both required. Checkout.js uses the Key ID; the secret stays on the server. Absent means payments are simulated |
 | `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` | For email | Microsoft 365 is `smtp.office365.com`. `SMTP_PORT` defaults to 587 |
 | `SENDGRID_API_KEY` | No | Alternative to SMTP. SMTP wins if both are set |
 | `EMAIL_FROM` | With either | A mailbox you may send as. See below |
@@ -150,8 +150,10 @@ curl https://triage.niya.app/healthz
 }
 ```
 
-`payments`, `email` and `sms` tell you what is actually live. If you have added
-Razorpay keys and it still says `simulated`, the variable did not reach the
+`payments`, `email` and `sms` tell you what is actually live. `"payments":
+"razorpay"` means Checkout opens the real gateway; `"simulated"` means the
+one-click confirm button (no card). If you have added Razorpay keys and it
+still says `simulated`, the variable did not reach the
 container.
 
 ## Schema changes

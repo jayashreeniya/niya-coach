@@ -85,6 +85,8 @@ PASSWORD_RESET_TTL_MINUTES = int(os.environ.get("PASSWORD_RESET_TTL_MINUTES", "6
 # Razorpay when keys are present, simulated otherwise. The simulated path is not
 # a stub that skips verification - it runs the same hold -> verify -> confirm
 # state machine, with a locally computed signature standing in for Razorpay's.
+# With both keys set, Checkout.js collects payment and the server verifies
+# Razorpay's HMAC before confirming the booking.
 # ---------------------------------------------------------------------------
 
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")

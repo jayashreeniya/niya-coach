@@ -52,13 +52,25 @@
     <strong>Simulated payment.</strong> No card is taken and no money moves. The
     booking still goes through the same verification the live gateway does.
   </div>
-{% endif %}
 
-<form method="post" action="/checkout/{{ booking.booking_ref }}">
-  <button class="btn" type="submit">
-    Pay {{ booking.payment.amount_minor|money(booking.payment.currency) }} and confirm
-  </button>
-</form>
+  <form method="post" action="/checkout/{{ booking.booking_ref }}">
+    <button class="btn" type="submit">
+      Pay {{ booking.payment.amount_minor|money(booking.payment.currency) }} and confirm
+    </button>
+  </form>
+{% else %}
+  <div class="notice info small" id="pay-status">
+    Pay securely with Razorpay. Cards, UPI, netbanking and wallets are accepted.
+  </div>
+
+  <form id="razorpay-confirm" method="post" action="/checkout/{{ booking.booking_ref }}">
+    <input type="hidden" name="payment_reference" id="payment_reference" value="">
+    <input type="hidden" name="signature" id="signature" value="">
+    <button class="btn" type="button" id="pay-button">
+      Pay {{ booking.payment.amount_minor|money(booking.payment.currency) }} and confirm
+    </button>
+  </form>
+{% endif %}
 
 <form method="post" action="/appointments/{{ booking.booking_ref }}/cancel" style="margin-top:10px">
   <button class="btn quiet" type="submit">Release this slot</button>
@@ -69,4 +81,85 @@
   {{ booking.hold_expires_at|zone(booking.client_timezone)|clock }}. After that it
   goes back to other people and you will need to pick again.
 </p>
+{% endblock %}
+
+{% block scripts %}
+{% if payments_live %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+(function () {
+  var button = document.getElementById("pay-button");
+  var form = document.getElementById("razorpay-confirm");
+  var status = document.getElementById("pay-status");
+  if (!button || !form || typeof Razorpay === "undefined") {
+    if (status) {
+      status.textContent =
+        "The payment window could not load. Check your connection and reload this page.";
+      status.className = "notice error small";
+    }
+    return;
+  }
+
+  var options = {
+    key: {{ razorpay_key_id|tojson }},
+    amount: {{ booking.payment.amount_minor }},
+    currency: {{ booking.payment.currency|tojson }},
+    name: {{ app_name|tojson }},
+    description: "Session with " + {{ booking.counsellor_name|tojson }},
+    order_id: {{ booking.payment.provider_order_id|tojson }},
+    prefill: {
+      name: {{ (account.full_name or "")|tojson }},
+      email: {{ account.email|tojson }},
+      contact: {{ (account.phone or "")|tojson }}
+    },
+    theme: { color: "#6c4ab6" },
+    handler: function (response) {
+      document.getElementById("payment_reference").value = response.razorpay_payment_id || "";
+      document.getElementById("signature").value = response.razorpay_signature || "";
+      button.disabled = true;
+      button.textContent = "Confirming payment\u2026";
+      if (status) {
+        status.textContent = "Payment received. Confirming your booking\u2026";
+        status.className = "notice info small";
+      }
+      form.submit();
+    },
+    modal: {
+      ondismiss: function () {
+        button.disabled = false;
+        if (status) {
+          status.textContent =
+            "Payment was not completed. Your slot is still held — tap Pay again when ready.";
+          status.className = "notice warn small";
+        }
+      }
+    }
+  };
+
+  button.addEventListener("click", function () {
+    button.disabled = true;
+    try {
+      var checkout = new Razorpay(options);
+      checkout.on("payment.failed", function (response) {
+        button.disabled = false;
+        var detail =
+          (response && response.error && (response.error.description || response.error.reason)) ||
+          "Payment failed";
+        if (status) {
+          status.textContent = detail + ". Your slot is still held — try again.";
+          status.className = "notice error small";
+        }
+      });
+      checkout.open();
+    } catch (error) {
+      button.disabled = false;
+      if (status) {
+        status.textContent = "Could not open Razorpay. Reload the page and try again.";
+        status.className = "notice error small";
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}

@@ -322,6 +322,29 @@ def test_a_forged_payment_signature_is_refused(client):
         assert booking.payment.status == "failed"
 
 
+def test_live_checkout_rejects_empty_gateway_fields(client, monkeypatch):
+    """With Razorpay on, a bare POST must not invent a successful payment."""
+    from webapp import settings
+
+    monkeypatch.setattr(settings, "PAYMENTS_LIVE", True)
+
+    register(client)
+    case_ref = make_case(client)
+    counsellor_id, slot_id = _first_bookable(client, case_ref)
+    held = client.post(f"/book/{case_ref}/{counsellor_id}", data={"slot_id": slot_id})
+    booking_ref = held.headers["location"].rsplit("/", 1)[-1]
+
+    response = client.post(f"/checkout/{booking_ref}", data={})
+
+    assert response.status_code == 402
+    assert "Razorpay" in response.text
+
+    with db.session_scope() as session:
+        booking = session.scalar(select(Booking).where(Booking.booking_ref == booking_ref))
+        assert booking.status == "held"
+        assert booking.payment.status == "pending"
+
+
 def test_paying_twice_does_not_charge_twice(client):
     register(client)
     case_ref = make_case(client)

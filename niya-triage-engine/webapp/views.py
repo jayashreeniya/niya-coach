@@ -562,16 +562,33 @@ def pay(
 ):
     """Complete payment.
 
-    With Razorpay configured the gateway supplies the reference and signature.
-    Without it the server generates a valid pair here, which is only possible
-    because `simulate_successful_payment` refuses to run when keys are present.
-    Either way `confirm_payment` verifies before confirming.
+    With Razorpay configured, Checkout.js posts the gateway payment id and
+    signature. Without keys the server generates a valid pair here, which is
+    only possible because `simulate_successful_payment` refuses to run when
+    keys are present. Either way `confirm_payment` verifies before confirming.
     """
     booking = booking_service.get_owned_booking(session, account, booking_ref)
     if booking is None:
         return RedirectResponse("/appointments", status_code=303)
+    if booking.status == "confirmed":
+        return RedirectResponse(f"/appointments?just={booking.booking_ref}", status_code=303)
+    if booking.status != "held" or booking.payment is None:
+        return RedirectResponse("/appointments", status_code=303)
 
-    if not settings.PAYMENTS_LIVE and not payment_reference:
+    if settings.PAYMENTS_LIVE:
+        if not payment_reference.strip() or not signature.strip():
+            return _page(
+                request,
+                "checkout.html",
+                account,
+                booking=booking,
+                error=(
+                    "Payment was not completed. Use the Pay button to open "
+                    "Razorpay, then return here once the charge succeeds."
+                ),
+                status_code=402,
+            )
+    elif not payment_reference:
         simulated = payments.simulate_successful_payment(booking.payment.provider_order_id)
         payment_reference = simulated["payment_reference"]
         signature = simulated["signature"]

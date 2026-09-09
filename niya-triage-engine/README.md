@@ -47,7 +47,7 @@ Read this before quoting anything from this repository.
 | Per-counsellor fees, with NIYA's margin | Implemented. Admin sets both amounts; the split is snapshotted onto each payment |
 | Admin portal: onboarding, pricing, margin | Implemented, tested |
 | Counsellor-facing portal: their sessions, connect now, their own hours | Implemented, tested |
-| Payment | Razorpay integration written; **simulated until keys are set.** No money moves. |
+| Payment | Razorpay Checkout when `RAZORPAY_KEY_ID` + `RAZORPAY_KEY_SECRET` are set; otherwise simulated. |
 | Email and SMS | SendGrid and Twilio integrations written; **queued, not sent, until keys are set.** |
 | Video call | Twilio Programmable Video. Implemented, tested; **placeholder until the API key pair is set.** See `docs/VIDEO.md`. |
 | Session recording | **Not implemented**, deliberately. Consent and retention need answering first. |

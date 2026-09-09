@@ -127,6 +127,8 @@ templates.env.tests["unsociable"] = unsociable
 templates.env.globals["app_name"] = settings.APP_NAME
 templates.env.globals["is_production"] = settings.IS_PRODUCTION
 templates.env.globals["payments_live"] = settings.PAYMENTS_LIVE
+# Public Key ID only — never the secret. Needed by Checkout.js in the browser.
+templates.env.globals["razorpay_key_id"] = settings.RAZORPAY_KEY_ID
 templates.env.globals["session_price"] = money(
     settings.SESSION_PRICE_MINOR, settings.SESSION_CURRENCY
 )
