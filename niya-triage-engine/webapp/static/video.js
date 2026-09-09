@@ -26,6 +26,7 @@
 
   var els = {
     join: document.getElementById("video-join"),
+    shell: document.getElementById("video-shell"),
     stage: document.getElementById("video-stage"),
     remote: document.getElementById("video-remote"),
     local: document.getElementById("video-local"),
@@ -33,12 +34,15 @@
     controls: document.getElementById("video-controls"),
     mic: document.getElementById("video-mic"),
     cam: document.getElementById("video-cam"),
+    fullscreen: document.getElementById("video-fullscreen"),
     waiting: document.getElementById("video-waiting")
   };
 
   var room = null;
   var localTracks = [];
   var endTimer = null;
+  var intentionalLeave = false;
+  var wasConnected = false;
 
   function say(message, tone) {
     if (!els.status) {
@@ -143,6 +147,7 @@
     }
     endTimer = window.setTimeout(function () {
       say("The session time has ended. The call is closing.", "info");
+      intentionalLeave = true;
       leave();
     }, remaining);
   }
@@ -166,6 +171,44 @@
     });
   }
 
+  function fullscreenElement() {
+    return (
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      null
+    );
+  }
+
+  function requestFullscreen(node) {
+    if (node.requestFullscreen) {
+      return node.requestFullscreen();
+    }
+    if (node.webkitRequestFullscreen) {
+      return node.webkitRequestFullscreen();
+    }
+    return Promise.reject(new Error("fullscreen unsupported"));
+  }
+
+  function exitFullscreen() {
+    if (document.exitFullscreen) {
+      return document.exitFullscreen();
+    }
+    if (document.webkitExitFullscreen) {
+      return document.webkitExitFullscreen();
+    }
+    return Promise.resolve();
+  }
+
+  function syncFullscreenLabel() {
+    if (!els.fullscreen) {
+      return;
+    }
+    var active = fullscreenElement();
+    var on = active === els.shell || active === els.stage;
+    els.fullscreen.textContent = on ? "Exit full screen" : "Full screen";
+    els.fullscreen.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+
   function leave() {
     if (room) {
       room.disconnect();
@@ -180,6 +223,10 @@
     localTracks = [];
     if (endTimer) {
       window.clearTimeout(endTimer);
+      endTimer = null;
+    }
+    if (fullscreenElement()) {
+      exitFullscreen().catch(function () {});
     }
     if (els.controls) {
       els.controls.hidden = true;
@@ -187,11 +234,34 @@
     if (els.stage) {
       els.stage.hidden = true;
     }
+    if (els.shell) {
+      els.shell.hidden = true;
+    }
     if (els.join) {
       els.join.hidden = false;
       els.join.disabled = false;
-      els.join.textContent = "Rejoin the call";
+      els.join.textContent = wasConnected ? "Rejoin the call" : "Try again";
     }
+  }
+
+  function releaseMediaOnUnload() {
+    // Stop the camera light when the document is really going away. Do not
+    // disconnect merely because another tab was focused — that is what used
+    // to cut people off mid-session.
+    intentionalLeave = true;
+    if (room) {
+      try {
+        room.disconnect();
+      } catch (_error) {
+        // Best-effort on unload; the browser is leaving anyway.
+      }
+      room = null;
+    }
+    localTracks.forEach(function (track) {
+      if (typeof track.stop === "function") {
+        track.stop();
+      }
+    });
   }
 
   async function join() {
@@ -204,6 +274,7 @@
       return;
     }
 
+    intentionalLeave = false;
     els.join.disabled = true;
     els.join.textContent = "Connecting\u2026";
     say("Asking for permission to use your camera and microphone\u2026", "info");
@@ -241,7 +312,11 @@
       return;
     }
 
+    wasConnected = true;
     els.join.hidden = true;
+    if (els.shell) {
+      els.shell.hidden = false;
+    }
     if (els.stage) {
       els.stage.hidden = false;
     }
@@ -264,8 +339,21 @@
       say("Reconnected.", "ok");
     });
     room.on("disconnected", function (_room, error) {
+      room = null;
+      if (intentionalLeave) {
+        leave();
+        return;
+      }
+      // Background tabs often drop the signalling socket. Keep the UI ready to
+      // rejoin instead of looking like the session was abandoned on purpose.
       if (error) {
-        say(describeConnectError(error), "error");
+        say(
+          "The call disconnected while this tab was in the background or the " +
+            "network dropped. Tap rejoin to continue — the session is still open.",
+          "warn"
+        );
+      } else {
+        say("The call ended. You can rejoin if the session window is still open.", "info");
       }
       leave();
     });
@@ -284,15 +372,52 @@
     toggle("video", els.cam, "Turn off camera", "Turn on camera");
   }
 
-  // Leaving the page should release the camera rather than leave the light on.
-  window.addEventListener("pagehide", function () {
-    if (room) {
-      room.disconnect();
-    }
-    localTracks.forEach(function (track) {
-      if (typeof track.stop === "function") {
-        track.stop();
+  if (els.fullscreen && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+    els.fullscreen.addEventListener("click", function () {
+      var target = els.shell || els.stage;
+      if (!target) {
+        return;
+      }
+      if (fullscreenElement()) {
+        exitFullscreen().catch(function () {});
+      } else {
+        requestFullscreen(target).catch(function () {
+          say(
+            "Full screen was blocked by the browser. Try again from this page.",
+            "warn"
+          );
+        });
       }
     });
+    document.addEventListener("fullscreenchange", syncFullscreenLabel);
+    document.addEventListener("webkitfullscreenchange", syncFullscreenLabel);
+  } else if (els.fullscreen) {
+    els.fullscreen.hidden = true;
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (!room) {
+      return;
+    }
+    if (document.visibilityState === "hidden") {
+      // Stay connected. Saying so stops people thinking a quiet tab means the
+      // other person hung up.
+      say(
+        "Call still connected. Come back to this tab to see video.",
+        "info"
+      );
+      return;
+    }
+    say("You are back on the call.", "ok");
+  });
+
+  // pagehide with persisted=true is the browser parking the page (bfcache /
+  // tab discard). Disconnecting there is what cut the call when someone
+  // switched tabs on mobile. Only release media when the page is discarded.
+  window.addEventListener("pagehide", function (event) {
+    if (event.persisted) {
+      return;
+    }
+    releaseMediaOnUnload();
   });
 })();

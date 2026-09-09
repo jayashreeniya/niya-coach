@@ -22,24 +22,30 @@
 
   <p id="video-status" class="notice info" hidden></p>
 
-  <div id="video-stage" class="videostage" hidden>
-    <div id="video-remote" class="remote">
-      <p id="video-waiting" class="small muted">Waiting for your client to join.</p>
+  <div id="video-shell" class="videoshell" hidden>
+    <div id="video-stage" class="videostage">
+      <div id="video-remote" class="remote">
+        <p id="video-waiting" class="small muted">Waiting for your client to join.</p>
+      </div>
+      <div id="video-local" class="local"></div>
     </div>
-    <div id="video-local" class="local"></div>
-  </div>
 
-  <div id="video-controls" class="videocontrols" hidden>
-    <button id="video-mic" class="btn secondary" type="button" aria-pressed="false">
-      Mute microphone
-    </button>
-    <button id="video-cam" class="btn secondary" type="button" aria-pressed="false">
-      Turn off camera
-    </button>
+    <div id="video-controls" class="videocontrols">
+      <button id="video-mic" class="btn secondary" type="button" aria-pressed="false">
+        Mute microphone
+      </button>
+      <button id="video-cam" class="btn secondary" type="button" aria-pressed="false">
+        Turn off camera
+      </button>
+      <button id="video-fullscreen" class="btn secondary" type="button" aria-pressed="false">
+        Full screen
+      </button>
+    </div>
   </div>
 
   <p class="tiny muted" style="margin-bottom:0">
     Your camera and microphone stay off until you press the button above.
+    Switching tabs keeps the call connected — come back to this tab to see video.
   </p>
 </div>
 {% else %}
