@@ -87,24 +87,49 @@ VIDEO_CSP = {
     "media-src": " blob:",
 }
 
+#: Razorpay Checkout must load from their CDN and open an iframe. Without these
+#: allowances, the Pay button appears but does nothing (CSP blocks the script).
+RAZORPAY_CSP = {
+    "script-src": " https://checkout.razorpay.com",
+    "frame-src": " https://api.razorpay.com https://checkout.razorpay.com",
+    "connect-src": (
+        " https://api.razorpay.com https://lumberjack.razorpay.com"
+        " https://checkout.razorpay.com"
+    ),
+    "img-src": " https://*.razorpay.com",
+    # Checkout injects a little CSS into the modal.
+    "style-src": " 'unsafe-inline'",
+}
+
 
 def _csp() -> str:
-    """The policy, widened only where video genuinely requires it.
+    """The policy, widened only where video or payment genuinely requires it.
 
-    Kept conditional so an instance without video credentials runs the same
+    Kept conditional so an instance without those credentials runs the same
     strict policy as before: a capability nobody can use should not cost
     anybody a weaker header.
     """
     connect = "'self'"
     media = "'self'"
+    script = "'self'"
+    style = "'self'"
+    img = "'self' data:"
+    frame = "'self'"
     if settings.VIDEO_LIVE:
         connect += VIDEO_CSP["connect-src"]
         media += VIDEO_CSP["media-src"]
+    if settings.PAYMENTS_LIVE:
+        script += RAZORPAY_CSP["script-src"]
+        frame += RAZORPAY_CSP["frame-src"]
+        connect += RAZORPAY_CSP["connect-src"]
+        img += RAZORPAY_CSP["img-src"]
+        style += RAZORPAY_CSP["style-src"]
 
     return (
-        "default-src 'self'; img-src 'self' data:; style-src 'self'; "
-        "script-src 'self'; form-action 'self'; frame-ancestors 'none'; "
-        f"base-uri 'self'; connect-src {connect}; media-src {media}"
+        f"default-src 'self'; img-src {img}; style-src {style}; "
+        f"script-src {script}; form-action 'self'; frame-ancestors 'none'; "
+        f"base-uri 'self'; frame-src {frame}; connect-src {connect}; "
+        f"media-src {media}"
     )
 
 
@@ -112,9 +137,9 @@ def _csp() -> str:
 async def security_headers(request: Request, call_next):
     """Baseline headers.
 
-    The CSP is deliberately strict: no inline script and no third-party script
-    origins. The Twilio SDK is vendored rather than loaded from a CDN precisely
-    so that stays true.
+    The CSP is deliberately strict: no inline script. Third-party script is
+    allowed only for Razorpay Checkout when payment keys are configured. The
+    Twilio SDK is vendored rather than loaded from a CDN.
     """
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
