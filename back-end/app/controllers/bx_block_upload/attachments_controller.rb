@@ -1,8 +1,6 @@
 require 'open-uri'
 require 'tmpdir'
 # require 'libreconv' - Libreconv gem not available in production
-# require 'aws-sdk' - Not using AWS, using Azure
-# require 'aws-sdk-s3' - Not using AWS S3, using Azure storage
 require 'base64'
 
 module BxBlockUpload
@@ -23,7 +21,7 @@ module BxBlockUpload
         end
 
         if @attachment.save
-          # AWS S3 functionality disabled - using Azure storage instead
+          # Uploads go through Active Storage to Cloudflare R2.
           # obj = Aws::S3::Object.new('secureprinting-bucket', ('a'..'z').to_a.shuffle[0,10].join, "#{Rails.application.credentials.dig(:aws, :access_key_id)}")
           if @attachment.attachment.image?
             # base64_string = Base64.encode64(File.read(params[:attachment_data][:attachment].path))
@@ -32,7 +30,7 @@ module BxBlockUpload
             # tempfile.write Base64.decode64(base64_string)
             # tempfile.close
             page_count = 1
-            # AWS S3 upload disabled - using Azure storage
+            # AWS S3 upload disabled.
             # if obj.upload_file(tempfile.path, acl:'public-read')
             #   @attachment.update_attributes(pdf_url: obj.public_url, total_attachment_pages: page_count, total_pages: page_count)
             # else
@@ -47,7 +45,7 @@ module BxBlockUpload
             # reader = PDF::Reader.new("public/#{@attachment&.attachment_blob&.filename.to_s.sub(/\..*/, '')}.pdf")
             # page_count = reader.page_count
             page_count = 1 # Default page count since Libreconv is not available
-            # AWS S3 upload disabled - using Azure storage
+            # AWS S3 upload disabled.
             # if obj.upload_file("public/#{@attachment&.attachment_blob&.filename.to_s.sub(/\..*/, '')}.pdf", acl:'public-read')
             #   if @attachment.update_attributes(pdf_url: obj.public_url, total_attachment_pages: page_count, total_pages: page_count)
             #     File.delete(Rails.root + "public/#{@attachment&.attachment_blob&.filename.to_s.sub(/\..*/, '')}.pdf")
