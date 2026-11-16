@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% set active = 'intake' %}
+{% block title %}Tell us what is going on - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>What is going on?</h1>
+<p class="lede">
+  Write it however it comes out. There is no right way to phrase this, and you
+  do not need to know what the problem is called.
+</p>
+
+<form method="post" action="/intake">
+  <div class="card">
+    <label for="text" class="sr-only" style="position:absolute;left:-9999px">Describe what is happening</label>
+    <textarea id="text" name="text" required autofocus
+              placeholder="For example: I moved here four months ago for my masters. I have stopped going to lectures and I am behind on two assignments. I have not spoken to anyone properly in weeks."></textarea>
+    <p class="hint" style="margin-top:-8px">
+      Phone numbers, email addresses and locations are removed automatically
+      before anything is stored. Names are not detected, so please avoid using
+      them - yours or anyone else's.
+    </p>
+
+    <div class="field">
+      <label for="desired_timing">How soon would you like to talk?</label>
+      <select id="desired_timing" name="desired_timing">
+        <option value="flexible">I am flexible</option>
+        <option value="today">Today if possible</option>
+        <option value="this_week">Sometime this week</option>
+        <option value="evenings">Evenings only</option>
+        <option value="weekend">Weekends only</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn" type="submit">Find the right support</button>
+</form>
+
+<div class="notice warn" style="margin-top:24px">
+  <strong>If you are in danger right now,</strong> please call your local
+  emergency number instead of waiting for this. Nobody is reading these messages
+  in real time.
+</div>
+{% endblock %}

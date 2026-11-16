@@ -18,7 +18,7 @@ Rails.application.configure do
   # or in config/master.key. This key is used to decrypt credentials (and other encrypted files).
   # config.require_master_key = true
 
-  # Enable serving static files for Azure App Service
+  # Rails serves static files itself; there is no separate web server in front.
   config.public_file_server.enabled = true
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.

@@ -26,7 +26,13 @@ const Wellbeing = () => {
   useEffect(() => {
     if (!token) {
       alert("Please login.");
-      navigate("/");
+      navigate("/login");
+      return;
+    }
+
+    const role = (localStorage.getItem("userRole") || "").toLowerCase();
+    if (role === "coach") {
+      navigate("/coach-appointments", { replace: true });
       return;
     }
 

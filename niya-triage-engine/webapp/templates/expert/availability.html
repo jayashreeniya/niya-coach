@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% set active = 'availability' %}
+{% block title %}Your availability - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Your availability</h1>
+
+{% if saved %}
+  <div class="notice ok">Saved. New bookings will follow these hours.</div>
+{% endif %}
+
+<form method="post" action="/expert/availability">
+  <div class="card">
+    <label class="check block">
+      <input type="checkbox" name="accepting" value="1" {{ 'checked' if profile.active }}>
+      <span>I am accepting new clients</span>
+    </label>
+    <p class="hint">
+      Turning this off takes you out of matching straight away. Sessions already
+      booked stay in your diary.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Weekly hours</h3>
+    <p class="small muted">
+      Like Calendly: set different hours for each day, or turn a day off entirely.
+      Everything is in your timezone below.
+    </p>
+
+    <div class="field">
+      <label for="timezone_name">Your timezone</label>
+      <select id="timezone_name" name="timezone_name" required>
+        {% for zone in zones %}
+          <option value="{{ zone }}" {{ 'selected' if profile.timezone == zone }}>{{ zone|zone_label }}</option>
+        {% endfor %}
+      </select>
+      {% if errors.timezone_name %}<p class="field-error">{{ errors.timezone_name }}</p>{% endif %}
+    </div>
+
+    {% include "_weekly_schedule.html" %}
+
+    <div class="field" style="margin-top:16px">
+      <label for="max_cases">Maximum active clients</label>
+      <input type="number" id="max_cases" name="max_cases" min="1" max="200"
+             value="{{ profile.max_cases }}">
+      <p class="hint">
+        Once you are at this number you stop being matched to new people.
+      </p>
+    </div>
+  </div>
+
+  <button class="btn" type="submit">Save</button>
+</form>
+
+<div class="card" style="margin-top:24px">
+  <h3 style="margin-top:0">What only an administrator can change</h3>
+  <p class="small" style="margin-bottom:0">
+    Your fee, the areas you are matched on, your languages and your credentials
+    are set by the NIYA team. Ask them if any of it needs updating.
+  </p>
+</div>
+{% endblock %}

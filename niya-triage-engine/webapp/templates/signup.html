@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Create your account - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Create your account</h1>
+<p class="lede">You need an account so we can hold your booking and remind you before it starts.</p>
+
+<form method="post" action="/signup" novalidate>
+  <div class="card">
+    <div class="field">
+      <label for="full_name">Your name</label>
+      <input type="text" id="full_name" name="full_name" autocomplete="name"
+             value="{{ form.full_name or '' }}" placeholder="What should the counsellor call you?">
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" autocomplete="email" inputmode="email"
+             required value="{{ form.email or '' }}">
+      {% if errors.email %}<p class="field-error">{{ errors.email }}</p>{% endif %}
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="new-password" required>
+      {% if errors.password %}
+        <p class="field-error">{{ errors.password }}</p>
+      {% else %}
+        <p class="hint">At least 10 characters. A short phrase you will remember beats a scrambled word.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Where you are</h3>
+    <p class="small muted">This decides which times we show you and which helplines we can point to.</p>
+
+    <div class="field">
+      <label for="country">Country you are living in</label>
+      <select id="country" name="country">
+        <option value="">Select…</option>
+        {% for code in countries %}
+          <option value="{{ code }}" {{ 'selected' if form.country == code }}>{{ code|country_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="timezone_name">Your timezone</label>
+      {# No pre-selected default. Being quietly assigned the alphabetically
+         first zone would show every appointment at the wrong hour. #}
+      <select id="timezone_name" name="timezone_name" required>
+        <option value="">Select your timezone…</option>
+        {% for zone in zones %}
+          <option value="{{ zone }}" {{ 'selected' if form.timezone_name == zone }}>{{ zone|zone_label }}</option>
+        {% endfor %}
+      </select>
+      {% if errors.timezone %}
+        <p class="field-error">{{ errors.timezone }}</p>
+      {% else %}
+        <p class="hint" id="timezone_hint">Every time we show you is in this timezone.</p>
+      {% endif %}
+    </div>
+
+    <div class="field">
+      <label for="phone">Mobile number <span class="muted" style="font-weight:400">(optional)</span></label>
+      <input type="tel" id="phone" name="phone" autocomplete="tel" inputmode="tel"
+             value="{{ form.phone or '' }}" placeholder="+44 7700 900000">
+      {% if errors.phone %}
+        <p class="field-error">{{ errors.phone }}</p>
+      {% else %}
+        <p class="hint">For appointment reminders by text. Include your country code.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Languages you would like to speak</h3>
+    <p class="small muted">Being able to say a hard thing in your first language matters. Pick as many as apply.</p>
+    <div class="choices">
+      {% for language in languages %}
+      <label class="choice">
+        <input type="checkbox" name="languages" value="{{ language }}"
+               {{ 'checked' if language in (form.languages or ['english']) }}>
+        <span class="name">{{ language|title }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <button class="btn" type="submit">Create account</button>
+</form>
+
+<script src="/static/tz.js" defer></script>
+
+<p class="small muted" style="margin:16px 0 0">Already registered?</p>
+<p style="margin-top:0"><a class="backlink" href="/login">Sign in</a></p>
+{% endblock %}

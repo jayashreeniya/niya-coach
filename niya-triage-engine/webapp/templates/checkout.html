@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% set active = 'intake' %}
+{% block title %}Confirm and pay - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Confirm and pay</h1>
+
+{% if error %}
+  <div class="notice error">
+    {{ error }}
+  </div>
+{% endif %}
+
+<div class="card">
+  <h3 style="margin-top:0">{{ booking.counsellor_name }}</h3>
+
+  <div class="when" style="font-size:19px;font-weight:600">
+    {{ booking.start|zone(booking.client_timezone)|day_label }}
+  </div>
+  <div style="font-size:19px;font-weight:600;margin-bottom:2px">
+    {{ booking.start|zone(booking.client_timezone)|clock }}–{{ booking.end|zone(booking.client_timezone)|clock }}
+    <span class="muted" style="font-weight:400;font-size:15px">{{ booking.client_timezone }}</span>
+  </div>
+  <div class="small muted">
+    {{ booking.start|zone(booking.counsellor_timezone)|clock }}–{{ booking.end|zone(booking.counsellor_timezone)|clock }}
+    for {{ booking.counsellor_name.split(' ')[0] }} in {{ booking.counsellor_timezone }}
+  </div>
+
+  <hr>
+
+  <div class="row between">
+    <span>60 minute session</span>
+    <strong>{{ booking.payment.amount_minor|money(booking.payment.currency) }}</strong>
+  </div>
+</div>
+
+<div class="card tight">
+  <h3 style="margin-top:0">Where we will send your confirmation</h3>
+  <p class="small" style="margin-bottom:4px">{{ account.email }}</p>
+  {% if account.phone %}
+    <p class="small muted" style="margin-bottom:0">and by text to {{ account.phone }}</p>
+  {% else %}
+    <p class="tiny muted" style="margin-bottom:0">
+      No mobile number on file, so reminders will be email only.
+      <a href="/account">Add a number</a>.
+    </p>
+  {% endif %}
+</div>
+
+{% if not payments_live %}
+  <div class="notice warn small">
+    <strong>Simulated payment.</strong> No card is taken and no money moves. The
+    booking still goes through the same verification the live gateway does.
+  </div>
+
+  <form method="post" action="/checkout/{{ booking.booking_ref }}">
+    <button class="btn" type="submit">
+      Pay {{ booking.payment.amount_minor|money(booking.payment.currency) }} and confirm
+    </button>
+  </form>
+{% else %}
+  <div class="notice info small" id="pay-status">
+    Pay securely with Razorpay. Cards, UPI, netbanking and wallets are accepted.
+  </div>
+
+  {# Config for /static/checkout.js — kept out of inline JS so CSP can stay tight. #}
+  <div id="razorpay-config" hidden
+       data-key="{{ razorpay_key_id }}"
+       data-amount="{{ booking.payment.amount_minor }}"
+       data-currency="{{ booking.payment.currency }}"
+       data-name="{{ app_name }}"
+       data-description="Session with {{ booking.counsellor_name }}"
+       data-order-id="{{ booking.payment.provider_order_id }}"
+       data-prefill-name="{{ account.full_name or '' }}"
+       data-prefill-email="{{ account.email }}"
+       data-prefill-contact="{{ account.phone or '' }}"></div>
+
+  <form id="razorpay-confirm" method="post" action="/checkout/{{ booking.booking_ref }}">
+    <input type="hidden" name="payment_reference" id="payment_reference" value="">
+    <input type="hidden" name="signature" id="signature" value="">
+    <button class="btn" type="button" id="pay-button">
+      Pay {{ booking.payment.amount_minor|money(booking.payment.currency) }} and confirm
+    </button>
+  </form>
+{% endif %}
+
+<form method="post" action="/appointments/{{ booking.booking_ref }}/cancel" style="margin-top:10px">
+  <button class="btn quiet" type="submit">Release this slot</button>
+</form>
+
+<p class="tiny muted" style="margin-top:16px">
+  Your slot is held until
+  {{ booking.hold_expires_at|zone(booking.client_timezone)|clock }}. After that it
+  goes back to other people and you will need to pick again.
+</p>
+{% endblock %}
+
+{% block scripts %}
+{% if payments_live %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="/static/checkout.js"></script>
+{% endif %}
+{% endblock %}

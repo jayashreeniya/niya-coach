@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% set active = 'account' %}
+{% block title %}Your account - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Your account</h1>
+
+{% if saved %}
+  <div class="notice ok">Saved.</div>
+{% endif %}
+
+<form method="post" action="/account">
+  <div class="card">
+    <div class="field">
+      <label for="full_name">Your name</label>
+      <input type="text" id="full_name" name="full_name" value="{{ account.full_name }}">
+    </div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" value="{{ account.email }}" disabled>
+      <p class="hint">Contact us if you need to change this.</p>
+    </div>
+
+    <div class="field">
+      <label for="phone">Mobile number</label>
+      <input type="tel" id="phone" name="phone" inputmode="tel"
+             value="{{ account.phone or '' }}" placeholder="+44 7700 900000">
+      <p class="hint">Used for appointment reminders. Include your country code.</p>
+    </div>
+
+    <div class="field">
+      <label for="country">Country you are living in</label>
+      <select id="country" name="country">
+        <option value="">Select…</option>
+        {% for code in countries %}
+          <option value="{{ code }}" {{ 'selected' if account.country == code }}>{{ code|country_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="timezone_name">Your timezone</label>
+      <select id="timezone_name" name="timezone_name">
+        {% for zone in zones %}
+          <option value="{{ zone }}" {{ 'selected' if account.timezone == zone }}>{{ zone|zone_label }}</option>
+        {% endfor %}
+      </select>
+      <p class="hint">
+        Changing this changes how every appointment time is displayed. It does
+        not move any session you have already booked.
+      </p>
+    </div>
+  </div>
+
+  <button class="btn" type="submit">Save changes</button>
+</form>
+
+<div class="card" style="margin-top:24px">
+  <h3 style="margin-top:0">Your data</h3>
+  <p class="small">
+    We keep your account details, your bookings, and a version of what you wrote
+    with phone numbers, email addresses and locations removed. Your original
+    words are not stored. We do not share any of it with your university or
+    employer.
+  </p>
+</div>
+{% endblock %}

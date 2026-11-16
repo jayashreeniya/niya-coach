@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% set active = 'intake' %}
+{% block title %}Choose a time - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Book with {{ counsellor.display_name }}</h1>
+
+{# Every time on this page is rendered in the user's timezone, with the
+   counsellor's shown underneath. Stored times are UTC. This is the whole point:
+   showing a raw stored time to whoever happens to be looking is how people miss
+   sessions. #}
+<div class="notice info small">
+  Times below are in <strong>{{ account.timezone }}</strong>, your timezone.
+  {{ counsellor.display_name.split(' ')[0] }} is in {{ counsellor.timezone }}.
+</div>
+
+{% if error %}
+  <div class="notice error">{{ error }}</div>
+{% endif %}
+
+{% if not days %}
+  <div class="card">
+    <p>{{ counsellor.display_name }} has no free times in the next two weeks.</p>
+    <a class="btn secondary" href="/result/{{ case.case_ref }}">See other counsellors</a>
+  </div>
+{% else %}
+
+  <h2>Pick a day</h2>
+  <div class="daystrip">
+    {% for day in days %}
+      <a href="/book/{{ case.case_ref }}/{{ counsellor.id }}?on={{ day }}"
+         class="{{ 'active' if day == chosen_day }}">
+        <span class="dow">{{ day.strftime('%a') }}</span>
+        <span class="dom">{{ day.strftime('%d') }}</span>
+        <span class="dow">{{ day.strftime('%b') }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  <h2>Pick a time</h2>
+  {% if not slots %}
+    <div class="notice warn">Nothing free on that day. Try another.</div>
+  {% else %}
+    <form method="post" action="/book/{{ case.case_ref }}/{{ counsellor.id }}">
+      {% set sociable = slots|rejectattr('start_utc', 'unsociable', account.timezone)|list %}
+      {% if not sociable and slots %}
+        <div class="notice warn small">
+          Every free time with {{ counsellor.display_name.split(' ')[0] }} on this
+          day falls overnight where you are. You can still book one, or try
+          another day.
+        </div>
+      {% endif %}
+
+      <div class="slots">
+        {% for slot in slots %}
+        {% set odd_hour = slot.start_utc|unsociable(account.timezone) %}
+        <label class="choice {{ 'odd-hour' if odd_hour }}">
+          {# Nothing is preselected when the first slot is an overnight one, so
+             a distracted tap on the submit button cannot book a 04:30 call. #}
+          <input type="radio" name="slot_id" value="{{ slot.id }}" required
+                 {{ 'checked' if loop.first and not odd_hour }}>
+          <span class="name">{{ slot.start_utc|zone(account.timezone)|clock }}</span>
+          <span class="meta">{{ slot.start_utc|zone(counsellor.timezone)|clock }} for them</span>
+          {% if odd_hour %}<span class="meta odd">overnight for you</span>{% endif %}
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="card tight">
+        <div class="row between">
+          <span>60 minute session</span>
+          <strong>{{ profile.client_price_minor|money(profile.currency) }}</strong>
+        </div>
+        <p class="tiny muted" style="margin:8px 0 0">
+          We hold your slot for 15 minutes while you pay. Nobody else can take it
+          in that time, and you are not charged until you confirm.
+        </p>
+      </div>
+
+      <button class="btn" type="submit">Hold this time and continue</button>
+    </form>
+  {% endif %}
+
+{% endif %}
+
+<p style="margin-top:12px">
+  <a class="backlink" href="/result/{{ case.case_ref }}">Back to your matches</a>
+</p>
+{% endblock %}

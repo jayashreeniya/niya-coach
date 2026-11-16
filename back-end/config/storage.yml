@@ -40,14 +40,7 @@ cloudflare:
 #   credentials: <%= Rails.root.join("path/to/gcs.keyfile") %>
 #   bucket: your_own_bucket
 
-# Azure Blob Storage configuration
-microsoft:
-  service: AzureStorage
-  storage_account_name: <%= ENV['AZURE_STORAGE_ACCOUNT_NAME'] %>
-  storage_access_key: <%= ENV['AZURE_STORAGE_ACCESS_KEY'] %>
-  container: <%= ENV['AZURE_STORAGE_CONTAINER'] || 'niya-storage' %>
-
 # mirror:
 #   service: Mirror
 #   primary: local
-#   mirrors: [ amazon, google, microsoft ]
+#   mirrors: [ amazon, google ]

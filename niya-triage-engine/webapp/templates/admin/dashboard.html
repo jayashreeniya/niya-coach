@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% set active = 'roster' %}
+{% block title %}Counsellors - {{ app_name }}{% endblock %}
+
+{% block content %}
+<h1>Counsellors</h1>
+
+<div class="card tight">
+  <div class="row between">
+    <span class="small muted">On the roster</span>
+    <strong>{{ active_count }} active / {{ profiles|length }} total</strong>
+  </div>
+  <div class="row between" style="margin-top:8px">
+    <span class="small muted">Sessions paid for</span>
+    <strong>{{ paid_sessions }}</strong>
+  </div>
+  {# Taken from the snapshots on paid bookings, so it is what was actually
+     charged rather than what today's prices would imply. #}
+  <div class="row between" style="margin-top:8px">
+    <span class="small muted">Collected</span>
+    <strong>{{ gross_minor|money(currency) }}</strong>
+  </div>
+  <div class="row between" style="margin-top:8px">
+    <span class="small muted">Owed to counsellors</span>
+    <strong>{{ payout_minor|money(currency) }}</strong>
+  </div>
+  <div class="row between" style="margin-top:8px">
+    <span class="small muted">NIYA margin</span>
+    <strong style="color:var(--ok)">{{ margin_minor|money(currency) }}</strong>
+  </div>
+</div>
+
+{% if without_login %}
+  <div class="notice warn small">
+    {{ without_login|length }} counsellor{{ 's' if without_login|length != 1 }} on the
+    roster {{ 'have' if without_login|length != 1 else 'has' }} no sign-in, so
+    {{ 'they' if without_login|length != 1 else 'he or she' }} cannot see
+    {{ 'their' if without_login|length != 1 else 'his or her' }} own sessions or
+    join a call. Add an email address on their record to create one.
+  </div>
+{% endif %}
+
+<a class="btn" href="/admin/counsellors/new">Onboard a counsellor</a>
+
+<h2>Roster</h2>
+{% for profile in profiles %}
+<div class="card tight {{ 'dimmed' if not profile.active }}">
+  <div class="row between">
+    <div>
+      <div style="font-weight:600;font-size:17px">{{ profile.display_name }}</div>
+      <div class="tiny muted">{{ profile.ref }} · {{ profile.credentials or 'No credentials recorded' }}</div>
+    </div>
+    <span class="pill {{ 'tag' if profile.active else '' }}">{{ 'Active' if profile.active else 'Off roster' }}</span>
+  </div>
+
+  <div class="moneyline">
+    <div>
+      <span class="tiny muted">Client pays</span>
+      <strong>{{ profile.client_price_minor|money(profile.currency) }}</strong>
+    </div>
+    <div>
+      <span class="tiny muted">Counsellor gets</span>
+      <strong>{{ profile.counsellor_fee_minor|money(profile.currency) }}</strong>
+    </div>
+    <div>
+      <span class="tiny muted">Margin</span>
+      <strong style="color:{{ 'var(--ok)' if profile.margin_minor > 0 else 'var(--danger)' }}">
+        {{ profile.margin_minor|money(profile.currency) }}
+        <span class="tiny muted">({{ profile.margin_percent }}%)</span>
+      </strong>
+    </div>
+  </div>
+
+  <p class="tiny muted" style="margin:10px 0">
+    {{ profile.timezone|zone_label }} ·
+    {{ '%g'|format(profile.working_hours_start) }}:00–{{ '%g'|format(profile.working_hours_end) }}:00 ·
+    {{ profile.language_list|titles }}
+    {% if profile.account %}· signs in as {{ profile.account.email }}{% else %}· <span style="color:var(--danger)">no sign-in</span>{% endif %}
+  </p>
+
+  <div class="row" style="gap:8px">
+    <a class="btn secondary" style="flex:1" href="/admin/counsellors/{{ profile.ref }}">Edit</a>
+    <form method="post" action="/admin/counsellors/{{ profile.ref }}/toggle" style="flex:1;margin:0">
+      <button class="btn quiet" type="submit">{{ 'Take off roster' if profile.active else 'Put back' }}</button>
+    </form>
+  </div>
+</div>
+{% else %}
+  <div class="card">
+    <p>Nobody on the roster yet.</p>
+    <a class="btn" href="/admin/counsellors/new">Onboard the first counsellor</a>
+  </div>
+{% endfor %}
+{% endblock %}

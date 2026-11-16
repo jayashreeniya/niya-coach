@@ -1,0 +1,209 @@
+import { execute, queryRows } from '@/lib/db';
+import type { RowDataPacket } from 'mysql2/promise';
+
+interface DailyCountRow extends RowDataPacket {
+  day: string;
+  visitors: number;
+}
+
+interface DailyActivityRow extends RowDataPacket {
+  day: string;
+  activities: number;
+}
+
+interface UserSummaryRow extends RowDataPacket {
+  user_id: number;
+  email: string;
+  full_name: string;
+  last_visit_at: Date | null;
+  total_visit_days: number;
+  total_hit_count: number;
+  last_activity_at: Date | null;
+  total_activities: number;
+}
+
+interface ActivityDetailRow extends RowDataPacket {
+  day: string;
+  user_id: number;
+  full_name: string;
+  email: string;
+  day_number: number;
+  title: string;
+  mode: string;
+  language: string | null;
+  completed_at: Date;
+}
+
+interface TotalsRow extends RowDataPacket {
+  total_visitors: number;
+  total_activity_plays: number;
+}
+
+interface TopActivityRow extends RowDataPacket {
+  day_number: number;
+  title: string;
+  plays: number;
+}
+
+interface LanguageBreakdownRow extends RowDataPacket {
+  language: string;
+  plays: number;
+}
+
+export async function ensureVisitTable(): Promise<void> {
+  await execute(`
+    CREATE TABLE IF NOT EXISTS practice_visits (
+      id BIGINT NOT NULL AUTO_INCREMENT,
+      user_id BIGINT NOT NULL,
+      path VARCHAR(255) NOT NULL DEFAULT '/',
+      visit_date DATE NOT NULL,
+      first_visited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      last_visited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      hit_count INT NOT NULL DEFAULT 1,
+      user_agent VARCHAR(500) DEFAULT NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_visit_user_day (user_id, visit_date),
+      INDEX idx_visit_date (visit_date),
+      INDEX idx_visit_user (user_id),
+      CONSTRAINT fk_practice_visits_user
+        FOREIGN KEY (user_id) REFERENCES practice_users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `);
+}
+
+export async function logVisit(opts: {
+  userId: number;
+  path: string;
+  userAgent?: string | null;
+}): Promise<void> {
+  await ensureVisitTable();
+  await execute(
+    `
+      INSERT INTO practice_visits
+        (user_id, path, visit_date, first_visited_at, last_visited_at, hit_count, user_agent)
+      VALUES (?, ?, CURDATE(), NOW(), NOW(), 1, ?)
+      ON DUPLICATE KEY UPDATE
+        last_visited_at = NOW(),
+        hit_count = hit_count + 1,
+        path = VALUES(path),
+        user_agent = COALESCE(VALUES(user_agent), user_agent)
+    `,
+    [opts.userId, opts.path || '/', opts.userAgent ?? null]
+  );
+}
+
+export async function getAdminAnalytics(days = 30) {
+  await ensureVisitTable();
+
+  const totals = await queryRows<TotalsRow>(
+    `
+      SELECT
+        (SELECT COUNT(DISTINCT user_id) FROM practice_visits) AS total_visitors,
+        (SELECT COUNT(*) FROM user_practices) AS total_activity_plays
+    `
+  );
+
+  const dailyVisitors = await queryRows<DailyCountRow>(
+    `
+      SELECT DATE_FORMAT(visit_date, '%Y-%m-%d') AS day, COUNT(DISTINCT user_id) AS visitors
+      FROM practice_visits
+      WHERE visit_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+      GROUP BY visit_date
+      ORDER BY visit_date DESC
+    `,
+    [days]
+  );
+
+  const dailyActivities = await queryRows<DailyActivityRow>(
+    `
+      SELECT DATE_FORMAT(DATE(completed_at), '%Y-%m-%d') AS day, COUNT(*) AS activities
+      FROM user_practices
+      WHERE completed_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+      GROUP BY DATE(completed_at)
+      ORDER BY DATE(completed_at) DESC
+    `,
+    [days]
+  );
+
+  const users = await queryRows<UserSummaryRow>(
+    `
+      SELECT
+        u.id AS user_id,
+        u.email,
+        u.full_name,
+        MAX(v.last_visited_at) AS last_visit_at,
+        COUNT(DISTINCT v.visit_date) AS total_visit_days,
+        COALESCE(SUM(v.hit_count), 0) AS total_hit_count,
+        MAX(up.completed_at) AS last_activity_at,
+        COUNT(up.id) AS total_activities
+      FROM practice_users u
+      LEFT JOIN practice_visits v ON v.user_id = u.id
+      LEFT JOIN user_practices up ON up.user_id = u.id
+      GROUP BY u.id, u.email, u.full_name
+      ORDER BY last_visit_at DESC
+      LIMIT 500
+    `
+  );
+
+  const activityDetails = await queryRows<ActivityDetailRow>(
+    `
+      SELECT
+        DATE_FORMAT(DATE(up.completed_at), '%Y-%m-%d') AS day,
+        u.id AS user_id,
+        u.full_name,
+        u.email,
+        p.day_number,
+        p.title,
+        up.mode,
+        up.audio_language AS language,
+        up.completed_at
+      FROM user_practices up
+      JOIN practice_users u ON u.id = up.user_id
+      JOIN practices p ON p.id = up.practice_id
+      WHERE up.completed_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+      ORDER BY up.completed_at DESC
+      LIMIT 1000
+    `,
+    [days]
+  );
+
+  const topActivities = await queryRows<TopActivityRow>(
+    `
+      SELECT
+        p.day_number,
+        p.title,
+        COUNT(*) AS plays
+      FROM user_practices up
+      JOIN practices p ON p.id = up.practice_id
+      WHERE up.completed_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+      GROUP BY p.day_number, p.title
+      ORDER BY plays DESC
+      LIMIT 20
+    `,
+    [days]
+  );
+
+  const languageBreakdown = await queryRows<LanguageBreakdownRow>(
+    `
+      SELECT
+        COALESCE(NULLIF(up.audio_language, ''), 'n/a') AS language,
+        COUNT(*) AS plays
+      FROM user_practices up
+      WHERE up.completed_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+      GROUP BY COALESCE(NULLIF(up.audio_language, ''), 'n/a')
+      ORDER BY plays DESC
+    `,
+    [days]
+  );
+
+  return {
+    totals: totals[0] ?? { total_visitors: 0, total_activity_plays: 0 },
+    dailyVisitors,
+    dailyActivities,
+    users,
+    activityDetails,
+    topActivities,
+    languageBreakdown,
+  };
+}

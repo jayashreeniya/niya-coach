@@ -52,7 +52,7 @@ const MyAppointments = () => {
       localStorage.setItem("authenticated", "true");
     }
     if (!authToken) {
-      navigate("/");
+      navigate("/login");
       return;
     }
     setLoading(true);
@@ -172,6 +172,16 @@ const MyAppointments = () => {
             </button>
             <button type="button" className="refresh-btn" onClick={() => navigate("/wellbeingquestions")}>
               Wellbeing check-in
+            </button>
+            <button type="button" className="refresh-btn" onClick={() => navigate("/wellbeing-assessment")}>
+              Well-Being Assessment
+            </button>
+            <button
+              type="button"
+              className="refresh-btn"
+              onClick={() => navigate("/wellbeing-results?from=drawer", { state: { from: "drawer" } })}
+            >
+              Assessment results
             </button>
             <button type="button" className="refresh-btn" onClick={loadAppointments} disabled={loading}>
               Refresh

@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Button, Alert } from "react-bootstrap";
 import "./login.css";
 import CustomPopup from "../../components/CustomPopup";
 import Logo from "../../assets/images/niyalogo.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import PhoneInput from 'react-phone-number-input';
 import { HiLockClosed } from "react-icons/hi2";
 import OtpInput from "react-otp-input";
@@ -28,6 +28,18 @@ const Login = (props) => {
 
  
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectAfterLogin = location.state?.from || "/appointments";
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    const role = (localStorage.getItem("userRole") || "").toLowerCase();
+    if (token && role === "coach") {
+      navigate("/coach-appointments", { replace: true });
+    } else if (token && role) {
+      navigate(redirectAfterLogin, { replace: true });
+    }
+  }, [navigate, redirectAfterLogin]);
 
   const [visibility, setVisibility] = useState(false);
   const [visibility2, setVisibility2] = useState(false);
@@ -125,7 +137,7 @@ const Login = (props) => {
               if (role === "coach") {
                 navigate("/coach-appointments");
               } else {
-                navigate("/appointments");
+                navigate(redirectAfterLogin);
               }
                 
                 if (authenticated === true) {
@@ -245,7 +257,7 @@ const Login = (props) => {
                   if (response.status === 200 || response.status === 201) {
                     alert("Registred Successfully...Please Login");
                     setStatus("Registred Successfully...Please Login");
-                    navigate("/");
+                    navigate("/login");
                     window.location.reload();
                   }
                 }
@@ -456,7 +468,7 @@ const Login = (props) => {
         if (response.status === 200 || response.status === 201) {
           alert("Password Updated Successfully...Please Login");
          
-          navigate("/");
+          navigate("/login");
           window.location.reload();
           
         }
@@ -466,7 +478,7 @@ const Login = (props) => {
     .then((data) =>{ 
       alert("Password Updated Successfully...Please Login");
          
-      navigate("/");
+      navigate("/login");
       window.location.reload();
       
     })
@@ -558,6 +570,15 @@ const Login = (props) => {
         <span className="forgetpwdregister" onClick={() => setVisibility2(true)}>Forgot password?|</span>
         <span className="forgetpwdregister" onClick={() => setVisibility(true)}>Register</span>
        
+        </div>
+        <div style={{ marginTop: 12, textAlign: "center", fontSize: 14 }}>
+          <span
+            className="forgetpwdregister"
+            onClick={() => navigate("/")}
+            style={{ textDecoration: "underline" }}
+          >
+            Home
+          </span>
         </div>
       </Form>
       {/* Footer */}

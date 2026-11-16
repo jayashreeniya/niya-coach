@@ -41,6 +41,16 @@
 .remote-video {
   position: absolute;
   inset: 0;
+  z-index: 0;
+}
+
+.remote-audio {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .local-video {
@@ -65,6 +75,7 @@
   color: #d1d5db;
   font-size: 18px;
   z-index: 1;
+  pointer-events: none;
 }
 
 .video-controls {

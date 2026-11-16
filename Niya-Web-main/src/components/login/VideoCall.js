@@ -12,7 +12,9 @@ const VideoCall = () => {
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
   const roomRef = useRef(null);
+  const localTracksRef = useRef([]);
 
   const [status, setStatus] = useState("Connecting...");
   const [isMuted, setIsMuted] = useState(false);
@@ -26,70 +28,116 @@ const VideoCall = () => {
     }
 
     let cancelled = false;
+    const waitingLabel = isCoach
+      ? "Waiting for coachee to join..."
+      : "Waiting for coach to join...";
+
+    const clearContainer = (el) => {
+      if (!el) return;
+      while (el.firstChild) el.removeChild(el.firstChild);
+    };
 
     const attachTrack = (track, container) => {
-      if (!container) return;
-      const el = track.attach();
-      el.style.width = "100%";
-      el.style.height = "100%";
-      el.style.objectFit = "cover";
-      container.appendChild(el);
+      if (!track || !container) return;
+      const existing = container.querySelector(`[data-track-sid="${track.sid}"]`);
+      if (existing) return;
+      const mediaEl = track.attach();
+      mediaEl.dataset.trackSid = track.sid;
+      if (track.kind === "video") {
+        mediaEl.style.width = "100%";
+        mediaEl.style.height = "100%";
+        mediaEl.style.objectFit = "cover";
+        mediaEl.playsInline = true;
+        mediaEl.autoplay = true;
+        mediaEl.muted = container === localVideoRef.current;
+      } else if (track.kind === "audio") {
+        mediaEl.autoplay = true;
+      }
+      container.appendChild(mediaEl);
+      const playPromise = mediaEl.play?.();
+      if (playPromise?.catch) playPromise.catch(() => {});
     };
 
     const detachTrack = (track) => {
+      if (!track) return;
       track.detach().forEach((el) => el.remove());
+    };
+
+    const handleTrack = (track) => {
+      if (track.kind === "video") {
+        attachTrack(track, remoteVideoRef.current);
+      } else if (track.kind === "audio") {
+        attachTrack(track, remoteAudioRef.current);
+      }
     };
 
     const handleParticipant = (participant) => {
       setHasRemote(true);
       setStatus("Connected");
+
       participant.tracks.forEach((publication) => {
-        if (publication.track) {
-          if (publication.track.kind === "video" || publication.track.kind === "audio") {
-            attachTrack(publication.track, remoteVideoRef.current);
-          }
+        if (publication.isSubscribed && publication.track) {
+          handleTrack(publication.track);
         }
       });
+
       participant.on("trackSubscribed", (track) => {
-        attachTrack(track, remoteVideoRef.current);
+        handleTrack(track);
+        setHasRemote(true);
+        setStatus("Connected");
       });
-      participant.on("trackUnsubscribed", detachTrack);
+
+      participant.on("trackUnsubscribed", (track) => {
+        detachTrack(track);
+      });
     };
 
     const connect = async () => {
       try {
         setStatus("Connecting...");
+
+        const localTracks = await Video.createLocalTracks({
+          audio: true,
+          video: { width: 640, height: 480, facingMode: "user" },
+        });
+        if (cancelled) {
+          localTracks.forEach((t) => t.stop());
+          return;
+        }
+        localTracksRef.current = localTracks;
+
+        localTracks.forEach((track) => {
+          if (track.kind === "video") {
+            attachTrack(track, localVideoRef.current);
+          }
+        });
+
         const room = await Video.connect(meetingToken, {
           name: meetingCode,
-          audio: true,
-          video: { width: 640 },
+          tracks: localTracks,
+          dominantSpeaker: true,
         });
         if (cancelled) {
           room.disconnect();
           return;
         }
         roomRef.current = room;
-        const waitingLabel = isCoach
-          ? "Waiting for coachee to join..."
-          : "Waiting for coach to join...";
         setStatus(room.participants.size > 0 ? "Connected" : waitingLabel);
-
-        room.localParticipant.tracks.forEach((publication) => {
-          if (publication.track) {
-            attachTrack(publication.track, localVideoRef.current);
-          }
-        });
 
         room.participants.forEach(handleParticipant);
         room.on("participantConnected", handleParticipant);
-        room.on("participantDisconnected", () => {
-          setHasRemote(false);
-          setStatus(waitingLabel);
-          if (remoteVideoRef.current) remoteVideoRef.current.innerHTML = "";
+        room.on("participantDisconnected", (participant) => {
+          participant.tracks.forEach((publication) => {
+            if (publication.track) detachTrack(publication.track);
+          });
+          if (room.participants.size === 0) {
+            setHasRemote(false);
+            setStatus(waitingLabel);
+            clearContainer(remoteVideoRef.current);
+            clearContainer(remoteAudioRef.current);
+          }
         });
-        room.on("disconnected", () => {
-          setStatus("Disconnected");
-        });
+        room.on("disconnected", () => setStatus("Disconnected"));
       } catch (e) {
         console.error(e);
         setStatus("Failed to connect: " + (e.message || "Unknown error"));
@@ -100,14 +148,15 @@ const VideoCall = () => {
 
     return () => {
       cancelled = true;
+      localTracksRef.current.forEach((track) => {
+        try {
+          track.stop();
+          detachTrack(track);
+        } catch (_) {}
+      });
+      localTracksRef.current = [];
       const room = roomRef.current;
       if (room) {
-        room.localParticipant.tracks.forEach((publication) => {
-          if (publication.track) {
-            publication.track.stop();
-            detachTrack(publication.track);
-          }
-        });
         room.disconnect();
         roomRef.current = null;
       }
@@ -118,6 +167,7 @@ const VideoCall = () => {
     const room = roomRef.current;
     if (!room) return;
     room.localParticipant.audioTracks.forEach((publication) => {
+      if (!publication.track) return;
       if (isMuted) publication.track.enable();
       else publication.track.disable();
     });
@@ -128,6 +178,7 @@ const VideoCall = () => {
     const room = roomRef.current;
     if (!room) return;
     room.localParticipant.videoTracks.forEach((publication) => {
+      if (!publication.track) return;
       if (isVideoOff) publication.track.enable();
       else publication.track.disable();
     });
@@ -135,15 +186,15 @@ const VideoCall = () => {
   };
 
   const endCall = () => {
-    const room = roomRef.current;
-    if (room) {
-      room.localParticipant.tracks.forEach((publication) => {
-        if (publication.track) {
-          publication.track.stop();
-          publication.track.detach().forEach((el) => el.remove());
-        }
-      });
-      room.disconnect();
+    localTracksRef.current.forEach((track) => {
+      try {
+        track.stop();
+        track.detach().forEach((el) => el.remove());
+      } catch (_) {}
+    });
+    localTracksRef.current = [];
+    if (roomRef.current) {
+      roomRef.current.disconnect();
       roomRef.current = null;
     }
     if (isCoach) {
@@ -165,13 +216,14 @@ const VideoCall = () => {
       </header>
 
       <div className="video-stage">
-        <div className="remote-video" ref={remoteVideoRef}>
-          {!hasRemote && (
-            <div className="waiting-overlay">
-              {isCoach ? "Waiting for coachee to join..." : "Waiting for coach to join..."}
-            </div>
-          )}
-        </div>
+        {/* Empty containers for Twilio DOM attach — do not put React children inside */}
+        <div className="remote-video" ref={remoteVideoRef} />
+        <div className="remote-audio" ref={remoteAudioRef} aria-hidden="true" />
+        {!hasRemote && (
+          <div className="waiting-overlay">
+            {isCoach ? "Waiting for coachee to join..." : "Waiting for coach to join..."}
+          </div>
+        )}
         <div className="local-video" ref={localVideoRef} />
       </div>
 
