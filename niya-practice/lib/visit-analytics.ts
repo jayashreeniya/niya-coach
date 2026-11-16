@@ -1,4 +1,4 @@
-import { execute, queryRows } from '@/lib/db';
+import { execute, queryRows, pool } from '@/lib/db';
 import type { RowDataPacket } from 'mysql2/promise';
 
 interface DailyCountRow extends RowDataPacket {
@@ -51,7 +51,9 @@ interface LanguageBreakdownRow extends RowDataPacket {
 }
 
 export async function ensureVisitTable(): Promise<void> {
-  await execute(`
+  // Use pool().query() instead of execute() because DDL statements
+  // cannot go through prepared-statement path on TiDB / some MySQL versions.
+  const sql = `
     CREATE TABLE IF NOT EXISTS practice_visits (
       id BIGINT NOT NULL AUTO_INCREMENT,
       user_id BIGINT NOT NULL,
@@ -65,11 +67,14 @@ export async function ensureVisitTable(): Promise<void> {
       PRIMARY KEY (id),
       UNIQUE KEY uq_visit_user_day (user_id, visit_date),
       INDEX idx_visit_date (visit_date),
-      INDEX idx_visit_user (user_id),
-      CONSTRAINT fk_practice_visits_user
-        FOREIGN KEY (user_id) REFERENCES practice_users(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-  `);
+      INDEX idx_visit_user (user_id)
+    ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `;
+  try {
+    await pool().query(sql);
+  } catch (err) {
+    console.warn('[visit-analytics] ensureVisitTable failed (table may already exist):', (err as Error).message);
+  }
 }
 
 export async function logVisit(opts: {

@@ -32,7 +32,25 @@ export default async function AdminAnalyticsPage({
   const days = Number.isFinite(daysParam)
     ? Math.max(1, Math.min(365, Math.floor(daysParam)))
     : 30;
-  const data = await getAdminAnalytics(days);
+
+  let data;
+  try {
+    data = await getAdminAnalytics(days);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[admin] getAdminAnalytics failed:', message);
+    return (
+      <main className="mx-auto max-w-4xl p-6">
+        <h1 className="text-2xl font-semibold text-slate-900">Admin Dashboard</h1>
+        <p className="mt-3 text-red-600">
+          Failed to load analytics data. Error: <code className="text-sm">{message}</code>
+        </p>
+        <p className="mt-2 text-slate-500 text-sm">
+          Check that the database is reachable and the <code>practice_visits</code> table exists.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-7xl p-6 space-y-8">
