@@ -114,8 +114,8 @@ export async function getAdminAnalytics(days = 30) {
       SELECT DATE_FORMAT(visit_date, '%Y-%m-%d') AS day, COUNT(DISTINCT user_id) AS visitors
       FROM practice_visits
       WHERE visit_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-      GROUP BY visit_date
-      ORDER BY visit_date DESC
+      GROUP BY DATE_FORMAT(visit_date, '%Y-%m-%d')
+      ORDER BY day DESC
     `,
     [days]
   );
@@ -125,8 +125,8 @@ export async function getAdminAnalytics(days = 30) {
       SELECT DATE_FORMAT(DATE(completed_at), '%Y-%m-%d') AS day, COUNT(*) AS activities
       FROM user_practices
       WHERE completed_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-      GROUP BY DATE(completed_at)
-      ORDER BY DATE(completed_at) DESC
+      GROUP BY DATE_FORMAT(DATE(completed_at), '%Y-%m-%d')
+      ORDER BY day DESC
     `,
     [days]
   );
@@ -137,15 +137,25 @@ export async function getAdminAnalytics(days = 30) {
         u.id AS user_id,
         u.email,
         u.full_name,
-        MAX(v.last_visited_at) AS last_visit_at,
-        COUNT(DISTINCT v.visit_date) AS total_visit_days,
-        COALESCE(SUM(v.hit_count), 0) AS total_hit_count,
-        MAX(up.completed_at) AS last_activity_at,
-        COUNT(up.id) AS total_activities
+        COALESCE(v_agg.last_visit_at, NULL) AS last_visit_at,
+        COALESCE(v_agg.total_visit_days, 0) AS total_visit_days,
+        COALESCE(v_agg.total_hit_count, 0) AS total_hit_count,
+        COALESCE(up_agg.last_activity_at, NULL) AS last_activity_at,
+        COALESCE(up_agg.total_activities, 0) AS total_activities
       FROM practice_users u
-      LEFT JOIN practice_visits v ON v.user_id = u.id
-      LEFT JOIN user_practices up ON up.user_id = u.id
-      GROUP BY u.id, u.email, u.full_name
+      LEFT JOIN (
+        SELECT user_id,
+               MAX(last_visited_at) AS last_visit_at,
+               COUNT(DISTINCT visit_date) AS total_visit_days,
+               SUM(hit_count) AS total_hit_count
+        FROM practice_visits GROUP BY user_id
+      ) v_agg ON v_agg.user_id = u.id
+      LEFT JOIN (
+        SELECT user_id,
+               MAX(completed_at) AS last_activity_at,
+               COUNT(*) AS total_activities
+        FROM user_practices GROUP BY user_id
+      ) up_agg ON up_agg.user_id = u.id
       ORDER BY last_visit_at DESC
       LIMIT 500
     `
